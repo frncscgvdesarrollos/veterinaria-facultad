@@ -1,0 +1,35 @@
+{
+  "node": {
+    "6091545e0ff3735577794c80d201d16465bc00f7ee": {
+      "workers": {
+        "app/mascotas/nueva/page": {
+          "moduleId": "[project]/.next-internal/server/app/mascotas/nueva/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "completarPerfil",
+          "filename": "src/app/actions.js"
+        }
+      },
+      "layer": {
+        "app/mascotas/nueva/page": "action-browser"
+      },
+      "exportedName": "completarPerfil",
+      "filename": "src/app/actions.js"
+    },
+    "600801c1ccfa6576837c5857384475640ff1f06c0a": {
+      "workers": {
+        "app/mascotas/nueva/page": {
+          "moduleId": "[project]/.next-internal/server/app/mascotas/nueva/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "agregarMascota",
+          "filename": "src/app/actions.js"
+        }
+      },
+      "layer": {
+        "app/mascotas/nueva/page": "action-browser"
+      },
+      "exportedName": "agregarMascota",
+      "filename": "src/app/actions.js"
+    }
+  },
+  "edge": {}
+}

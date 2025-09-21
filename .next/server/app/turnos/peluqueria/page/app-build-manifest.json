@@ -1,0 +1,34 @@
+{
+  "pages": {
+    "/turnos/peluqueria/page": [
+      "static/chunks/node_modules_next_dist_8db7fb1f._.js",
+      "static/chunks/src_app_favicon_ico_mjs_243aa161._.js",
+      "static/chunks/node_modules_@firebase_auth_dist_esm_d3951ae3._.js",
+      "static/chunks/node_modules_@firebase_firestore_dist_index_esm_af799df8.js",
+      "static/chunks/node_modules_99c68718._.js",
+      "static/chunks/src_c9a94bf9._.js",
+      "static/chunks/src_app_globals_91e4631d.css",
+      "static/chunks/src_app_layout_0a548d63.js",
+      "static/chunks/src_app_error_5ae81633.js",
+      "static/chunks/src_app_error_16d8c699.js",
+      "static/chunks/node_modules_next_dist_client_components_builtin_global-error_16d8c699.js",
+      "static/chunks/node_modules_date-fns_20b323e5._.js",
+      "static/chunks/node_modules_react-day-picker_dist_esm_3ee78fab._.js",
+      "static/chunks/node_modules_react-icons_fa_index_mjs_0459ff00._.js",
+      "static/chunks/node_modules_react-icons_lib_844c6c50._.js",
+      "static/chunks/node_modules_@date-fns_tz_9d2afe60._.js",
+      "static/chunks/src_app_6ce61c01._.js",
+      "static/chunks/node_modules_react-day-picker_src_style_0c252f82.css",
+      "static/chunks/src_app_turnos_peluqueria_page_16d8c699.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_57d40746._.js",
+      "static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js",
+      "static/chunks/node_modules_next_dist_compiled_next-devtools_index_a9cb0712.js",
+      "static/chunks/node_modules_next_dist_compiled_5150ccfd._.js",
+      "static/chunks/node_modules_next_dist_client_cf1d9188._.js",
+      "static/chunks/node_modules_next_dist_b0daae9a._.js",
+      "static/chunks/node_modules_@swc_helpers_cjs_b3dc30d6._.js",
+      "static/chunks/_a0ff3932._.js",
+      "static/chunks/turbopack-_cdba956c._.js"
+    ]
+  }
+}

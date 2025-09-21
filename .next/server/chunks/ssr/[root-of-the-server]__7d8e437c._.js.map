@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 27, "column": 0}, "map": {"version":3,"sources":["file:///home/user/veterinariamagali/src/app/admin/turnos/page.js"],"sourcesContent":["\nexport default function TurnosPage() {\n  return (\n    <div className=\"p-4 sm:p-6 lg:p-8\">\n      <div className=\"max-w-7xl mx-auto\">\n        <h1 className=\"text-3xl font-bold text-gray-900 mb-2\">Gestión de Turnos</h1>\n        <p className=\"text-gray-600 mb-8\">Aquí podrás ver, crear y administrar todos los turnos.</p>\n        \n        <div className=\"bg-white p-6 rounded-2xl shadow-lg\">\n            <p className=\"text-gray-500\">Próximamente: Una tabla con todos los turnos, filtros, y un botón para crear nuevos turnos...</p>\n            {/* Aquí irá la tabla de turnos y la funcionalidad de gestión */}\n        </div>\n      </div>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;AACe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;kBACb,cAAA,8OAAC;YAAI,WAAU;;8BACb,8OAAC;oBAAG,WAAU;8BAAwC;;;;;;8BACtD,8OAAC;oBAAE,WAAU;8BAAqB;;;;;;8BAElC,8OAAC;oBAAI,WAAU;8BACX,cAAA,8OAAC;wBAAE,WAAU;kCAAgB;;;;;;;;;;;;;;;;;;;;;;AAMzC","debugId":null}}]
+}

@@ -1,0 +1,35 @@
+{
+  "node": {
+    "6091545e0ff3735577794c80d201d16465bc00f7ee": {
+      "workers": {
+        "app/mis-turnos/page": {
+          "moduleId": "[project]/.next-internal/server/app/mis-turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "completarPerfil",
+          "filename": "src/app/actions.js"
+        }
+      },
+      "layer": {
+        "app/mis-turnos/page": "action-browser"
+      },
+      "exportedName": "completarPerfil",
+      "filename": "src/app/actions.js"
+    },
+    "4093a4aa03c2c59627713abff7895576bb00a12544": {
+      "workers": {
+        "app/mis-turnos/page": {
+          "moduleId": "[project]/.next-internal/server/app/mis-turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "cancelarTurnoUsuario",
+          "filename": "src/app/actions/turnosActions.js"
+        }
+      },
+      "layer": {
+        "app/mis-turnos/page": "action-browser"
+      },
+      "exportedName": "cancelarTurnoUsuario",
+      "filename": "src/app/actions/turnosActions.js"
+    }
+  },
+  "edge": {}
+}

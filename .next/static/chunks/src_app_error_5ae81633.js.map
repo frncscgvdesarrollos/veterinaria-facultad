@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///home/user/veterinariamagali/src/app/error.js"],"sourcesContent":["'use client';\n\nexport default function Error({ error, reset }) {\n  return (\n    <div className=\"text-center\">\n      <h2 className=\"text-2xl font-bold mb-4\">¡Ups! Algo salió mal.</h2>\n      <p className=\"mb-4\">{error.message}</p>\n      <button\n        onClick={() => reset()}\n        className=\"bg-violet-500 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded\"\n      >\n        Intentar de nuevo\n      </button>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;AAAA;;AAEe,SAAS,MAAM,KAAgB;QAAhB,EAAE,KAAK,EAAE,KAAK,EAAE,GAAhB;IAC5B,qBACE,6LAAC;QAAI,WAAU;;0BACb,6LAAC;gBAAG,WAAU;0BAA0B;;;;;;0BACxC,6LAAC;gBAAE,WAAU;0BAAQ,MAAM,OAAO;;;;;;0BAClC,6LAAC;gBACC,SAAS,IAAM;gBACf,WAAU;0BACX;;;;;;;;;;;;AAKP;KAbwB","debugId":null}}]
+}

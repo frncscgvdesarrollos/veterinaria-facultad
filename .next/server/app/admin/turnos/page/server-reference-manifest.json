@@ -1,0 +1,50 @@
+{
+  "node": {
+    "6091545e0ff3735577794c80d201d16465bc00f7ee": {
+      "workers": {
+        "app/admin/turnos/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "completarPerfil",
+          "filename": "src/app/actions.js"
+        }
+      },
+      "layer": {
+        "app/admin/turnos/page": "action-browser"
+      },
+      "exportedName": "completarPerfil",
+      "filename": "src/app/actions.js"
+    },
+    "40fc3931ae80e2bbf0b255828b73cef7c5d83f508c": {
+      "workers": {
+        "app/admin/turnos/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "confirmarTurno",
+          "filename": "src/app/admin/actions.js"
+        }
+      },
+      "layer": {
+        "app/admin/turnos/page": "action-browser"
+      },
+      "exportedName": "confirmarTurno",
+      "filename": "src/app/admin/actions.js"
+    },
+    "4051c518dbfb6af23cd9b6b7c2ca9f51f8c42a2252": {
+      "workers": {
+        "app/admin/turnos/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "cancelarTurno",
+          "filename": "src/app/admin/actions.js"
+        }
+      },
+      "layer": {
+        "app/admin/turnos/page": "action-browser"
+      },
+      "exportedName": "cancelarTurno",
+      "filename": "src/app/admin/actions.js"
+    }
+  },
+  "edge": {}
+}
