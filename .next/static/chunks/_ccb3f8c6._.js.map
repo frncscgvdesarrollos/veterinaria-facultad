@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///home/user/veterinariamagali/src/app/components/PrivateRoute.js"],"sourcesContent":["'use client';\nimport { useAuth } from '@/contexts/AuthContext';\nimport { useRouter } from 'next/navigation';\nimport { useEffect } from 'react';\n\nexport default function PrivateRoute({ children }) {\n    const { currentUser } = useAuth();\n    const router = useRouter();\n\n    useEffect(() => {\n        if (!currentUser) {\n            router.push('/login');\n        }\n    }, [currentUser, router]);\n\n    return currentUser ? children : null;\n}\n"],"names":[],"mappings":";;;;AACA;AACA;AACA;;AAHA;;;;AAKe,SAAS,aAAa,KAAY;QAAZ,EAAE,QAAQ,EAAE,GAAZ;;IACjC,MAAM,EAAE,WAAW,EAAE,GAAG,IAAA,4IAAO;IAC/B,MAAM,SAAS,IAAA,kJAAS;IAExB,IAAA,0KAAS;kCAAC;YACN,IAAI,CAAC,aAAa;gBACd,OAAO,IAAI,CAAC;YAChB;QACJ;iCAAG;QAAC;QAAa;KAAO;IAExB,OAAO,cAAc,WAAW;AACpC;GAXwB;;QACI,4IAAO;QAChB,kJAAS;;;KAFJ","debugId":null}},
-    {"offset": {"line": 48, "column": 0}, "map": {"version":3,"sources":["file:///home/user/veterinariamagali/node_modules/next/navigation.js"],"sourcesContent":["module.exports = require('./dist/client/components/navigation')\n"],"names":[],"mappings":"AAAA,OAAO,OAAO","ignoreList":[0],"debugId":null}}]
-}

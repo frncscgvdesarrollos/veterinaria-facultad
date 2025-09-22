@@ -1,9 +1,9 @@
 {
   "node": {
-    "6091545e0ff3735577794c80d201d16465bc00f7ee": {
+    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e": {
       "workers": {
         "app/admin/turnos/page": {
-          "moduleId": "[project]/.next-internal/server/app/admin/turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "22105",
           "async": false,
           "exportedName": "completarPerfil",
           "filename": "src/app/actions.js"
@@ -15,10 +15,10 @@
       "exportedName": "completarPerfil",
       "filename": "src/app/actions.js"
     },
-    "40fc3931ae80e2bbf0b255828b73cef7c5d83f508c": {
+    "407b2bc8c4b38354c68fa222221866fd488c114e12": {
       "workers": {
         "app/admin/turnos/page": {
-          "moduleId": "[project]/.next-internal/server/app/admin/turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "22105",
           "async": false,
           "exportedName": "confirmarTurno",
           "filename": "src/app/admin/actions.js"
@@ -30,10 +30,10 @@
       "exportedName": "confirmarTurno",
       "filename": "src/app/admin/actions.js"
     },
-    "4051c518dbfb6af23cd9b6b7c2ca9f51f8c42a2252": {
+    "406473e1d5621b62c872aeafb574c01b969b1c7ca2": {
       "workers": {
         "app/admin/turnos/page": {
-          "moduleId": "[project]/.next-internal/server/app/admin/turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/admin/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "22105",
           "async": false,
           "exportedName": "cancelarTurno",
           "filename": "src/app/admin/actions.js"

@@ -1,10 +1,10 @@
-
 'use client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useRef, memo } from 'react'; // Importamos memo
+import { useEffect, useState, useRef, memo } from 'react';
 import dynamic from 'next/dynamic';
-import Modal from '@/components/Modal';
+import Image from 'next/image';
+import Modal from '@/app/components/Modal'; // Ruta actualizada
 
 const ReCAPTCHA = dynamic(() => import('react-google-recaptcha'), { ssr: false });
 
@@ -21,7 +21,6 @@ const EyeSlashIcon = () => (
     </svg>
 );
 
-// 1. Definimos FormInput FUERA del componente LoginPage y lo envolvemos en memo
 const FormInput = memo(({ id, name, type, placeholder, value, onChange, required = false, pattern, maxLength, label, children }) => (
     <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={id}>{label}</label>
@@ -35,7 +34,7 @@ const FormInput = memo(({ id, name, type, placeholder, value, onChange, required
         </div>
     </div>
 ));
-FormInput.displayName = 'FormInput'; // Buena práctica para debugging
+FormInput.displayName = 'FormInput';
 
 
 export default function LoginPage() {
@@ -52,10 +51,6 @@ export default function LoginPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isClient, setIsClient] = useState(false);
 
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
     const [formData, setFormData] = useState({
         nombre: '',
         apellido: '',
@@ -67,6 +62,11 @@ export default function LoginPage() {
         nombreContactoEmergencia: '',
         telefonoContactoEmergencia: '',
     });
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
 
     useEffect(() => {
         if (currentUser) {
@@ -82,7 +82,7 @@ export default function LoginPage() {
             setError('Fallo al iniciar sesión con Google');
         }
     };
-
+    
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -257,7 +257,7 @@ export default function LoginPage() {
                             onClick={handleLoginWithGoogle}
                             className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm transition-all"
                         >
-                            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google Logo" className="h-5 w-auto inline-block mr-2 align-middle"/>
+                            <Image src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google Logo" width={72} height={24} className="h-5 w-auto inline-block mr-2 align-middle"/>
                             Continuar con Google
                         </button>
                     </div>

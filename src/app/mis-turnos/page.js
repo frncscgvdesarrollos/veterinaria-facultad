@@ -1,6 +1,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Link from 'next/link'; // Importar Link
 import admin from '@/lib/firebaseAdmin';
 import { getUserIdFromSession } from '@/lib/firebaseAdmin';
 import PrivateRoute from '@/app/components/PrivateRoute';
@@ -12,18 +13,15 @@ async function getUserTurnos(userId) {
     if (!userId) return [];
     const firestore = admin.firestore();
     try {
-        // CORRECCIÓN: Se cambia 'userId' por 'clienteId' para que coincida con el campo guardado en la BD.
         const turnosSnap = await firestore.collection('turnos').where('clienteId', '==', userId).get();
         if (turnosSnap.empty) return [];
 
         const turnosData = turnosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Ordenar por fecha del turno descendente
         turnosData.sort((a, b) => (new Date(b.fecha)) - (new Date(a.fecha)));
 
         const turnosEnriquecidos = await Promise.all(turnosData.map(async (turno) => {
             let mascotaNombre = 'Mascota desconocida';
             if (turno.mascotaId) {
-                // Usamos el clienteId del turno para buscar la mascota, es más seguro
                 const mascotaSnap = await firestore.collection('users').doc(turno.clienteId).collection('mascotas').doc(turno.mascotaId).get();
                 if (mascotaSnap.exists) {
                     mascotaNombre = mascotaSnap.data().nombre;
@@ -80,9 +78,9 @@ export default async function MisTurnosPage() {
                             <FiCalendar className="mx-auto text-6xl text-violet-300 mb-4"/>
                             <h2 className="text-2xl font-semibold text-gray-700 mb-2">Sin Turnos Solicitados</h2>
                             <p className="text-gray-500 mb-6">Parece que tus mascotas aún no tienen citas. ¡Vamos a solucionarlo!</p>
-                            <a href="/" className="mt-6 inline-block bg-violet-600 text-white font-bold py-3 px-8 rounded-full hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
+                            <Link href="/" className="mt-6 inline-block bg-violet-600 text-white font-bold py-3 px-8 rounded-full hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
                                 Pedir un Turno
-                            </a>
+                            </Link>
                         </div>
                     ) : (
                         <div className="space-y-6">

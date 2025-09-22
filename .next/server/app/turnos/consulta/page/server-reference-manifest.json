@@ -1,9 +1,9 @@
 {
   "node": {
-    "6091545e0ff3735577794c80d201d16465bc00f7ee": {
+    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e": {
       "workers": {
         "app/turnos/consulta/page": {
-          "moduleId": "[project]/.next-internal/server/app/turnos/consulta/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "35575",
           "async": false,
           "exportedName": "completarPerfil",
           "filename": "src/app/actions.js"
@@ -15,10 +15,10 @@
       "exportedName": "completarPerfil",
       "filename": "src/app/actions.js"
     },
-    "4091094451d99a15a42d3a057921a66ca60f8ab54c": {
+    "40f3851fa82a1cdd976d911fc02bab21b6987feaa3": {
       "workers": {
         "app/turnos/consulta/page": {
-          "moduleId": "[project]/.next-internal/server/app/turnos/consulta/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "35575",
           "async": false,
           "exportedName": "solicitarTurnoConsulta",
           "filename": "src/app/actions/turnosActions.js"

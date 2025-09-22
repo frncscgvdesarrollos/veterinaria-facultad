@@ -1,4 +1,20 @@
 {
-  "node": {},
+  "node": {
+    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e": {
+      "workers": {
+        "app/admin/productos/page": {
+          "moduleId": "65279",
+          "async": false,
+          "exportedName": "completarPerfil",
+          "filename": "src/app/actions.js"
+        }
+      },
+      "layer": {
+        "app/admin/productos/page": "action-browser"
+      },
+      "exportedName": "completarPerfil",
+      "filename": "src/app/actions.js"
+    }
+  },
   "edge": {}
 }

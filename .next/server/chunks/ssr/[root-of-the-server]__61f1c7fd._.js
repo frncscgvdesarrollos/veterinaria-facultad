@@ -8,6 +8,7 @@ module.exports = mod;
 "[project]/src/lib/firebaseAdmin.js [app-rsc] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
+// Historia de Usuario 5: Gestión de Roles de Usuario
 __turbopack_context__.s([
     "default",
     ()=>__TURBOPACK__default__export__,
@@ -40,7 +41,9 @@ const __TURBOPACK__default__export__ = __TURBOPACK__imported__module__$5b$extern
 "[project]/src/app/actions.js [app-rsc] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
-/* __next_internal_action_entry_do_not_use__ [{"600801c1ccfa6576837c5857384475640ff1f06c0a":"agregarMascota","6091545e0ff3735577794c80d201d16465bc00f7ee":"completarPerfil"},"",""] */ __turbopack_context__.s([
+// Historia de Usuario 5: Gestión de Roles de Usuario
+// Historia de Usuario 6: Completar Perfil de Usuario
+/* __next_internal_action_entry_do_not_use__ [{"607e2e33671e9af3b7c889b8ece695a8d12ed1593e":"completarPerfil","60a8d1efab3c5d77cfe814777f59789d34f62988eb":"agregarMascota"},"",""] */ __turbopack_context__.s([
     "agregarMascota",
     ()=>agregarMascota,
     "completarPerfil",
@@ -55,7 +58,12 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 ;
 ;
 ;
-const aplicationRoles = {
+/**
+ * @constant aplicationRoles
+ * @description Define roles especiales asignados a usuarios específicos según su DNI.
+ * Esto centraliza la lógica de asignación de roles de administrador o empleado.
+ * Corresponde a la "Historia de Usuario 5: Gestión de Roles de Usuario".
+ */ const aplicationRoles = {
     '00000001': 'admin',
     '00000002': 'peluquera',
     '00000003': 'transporte'
@@ -63,9 +71,7 @@ const aplicationRoles = {
 async function completarPerfil(userId, userData) {
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
     const auth = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].auth();
-    // Campos que vienen del formulario de registro
     const { nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, barrio, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
-    // Validación con los campos correctos
     if (!userId || !nombre || !apellido || !dni || !telefonoPrincipal || !direccion || !barrio || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
         console.error('Validation failed. Missing data:', {
             userId,
@@ -77,13 +83,17 @@ async function completarPerfil(userId, userData) {
         };
     }
     try {
-        // Asignar rol. Si el DNI está en la lista, se le da un rol especial.
+        // 1. Asignación de Rol (HU 5)
+        // Se verifica si el DNI del usuario corresponde a un rol especial.
+        // Si no, se le asigna el rol 'dueño' por defecto.
         const userRole = aplicationRoles[dni] || 'dueño';
-        // 1. Asignar el "custom claim" para el rol de usuario en Authentication
+        // Se establece el "custom claim" en Firebase Authentication. Este token de rol
+        // se usará en toda la app para controlar el acceso.
         await auth.setCustomUserClaims(userId, {
             role: userRole
         });
-        // 2. Guardar todos los datos del perfil en la base de datos Firestore
+        // 2. Guardar Datos del Perfil en Firestore (HU 6)
+        // Se almacenan los detalles del perfil en la colección 'users'.
         await firestore.collection('users').doc(userId).set({
             nombre,
             apellido,
@@ -99,8 +109,7 @@ async function completarPerfil(userId, userData) {
             createdAt: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore.FieldValue.serverTimestamp()
         }, {
             merge: true
-        }); // Merge true para no sobrescribir datos si ya existía el doc.
-        // Invalidar caché para que los cambios se reflejen si es necesario
+        });
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])('/');
         return {
             success: true,
@@ -108,7 +117,6 @@ async function completarPerfil(userId, userData) {
         };
     } catch (error) {
         console.error('Error al completar el perfil en el servidor:', error);
-        // Devolver un error genérico para no exponer detalles de implementación
         return {
             success: false,
             error: 'Ocurrió un error en el servidor al procesar tu perfil.'
@@ -158,8 +166,8 @@ async function agregarMascota(userId, mascotaData) {
     completarPerfil,
     agregarMascota
 ]);
-(0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(completarPerfil, "6091545e0ff3735577794c80d201d16465bc00f7ee", null);
-(0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(agregarMascota, "600801c1ccfa6576837c5857384475640ff1f06c0a", null);
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(completarPerfil, "607e2e33671e9af3b7c889b8ece695a8d12ed1593e", null);
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(agregarMascota, "60a8d1efab3c5d77cfe814777f59789d34f62988eb", null);
 }),
 "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <locals>", ((__turbopack_context__) => {
 "use strict";
@@ -172,7 +180,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$js_
 "use strict";
 
 __turbopack_context__.s([
-    "6091545e0ff3735577794c80d201d16465bc00f7ee",
+    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e",
     ()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["completarPerfil"]
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.js [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');

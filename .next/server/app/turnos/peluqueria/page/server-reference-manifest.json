@@ -1,9 +1,9 @@
 {
   "node": {
-    "6091545e0ff3735577794c80d201d16465bc00f7ee": {
+    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e": {
       "workers": {
         "app/turnos/peluqueria/page": {
-          "moduleId": "[project]/.next-internal/server/app/turnos/peluqueria/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "70284",
           "async": false,
           "exportedName": "completarPerfil",
           "filename": "src/app/actions.js"
@@ -15,10 +15,10 @@
       "exportedName": "completarPerfil",
       "filename": "src/app/actions.js"
     },
-    "408ab6792b0821f39cb07c2cc68899e7caf2810bd6": {
+    "40f04a978b523f8db9a71e69d2ff55b681f0c487bd": {
       "workers": {
         "app/turnos/peluqueria/page": {
-          "moduleId": "[project]/.next-internal/server/app/turnos/peluqueria/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "70284",
           "async": false,
           "exportedName": "solicitarTurnoPeluqueria",
           "filename": "src/app/actions/turnosActions.js"
