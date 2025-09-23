@@ -25,8 +25,8 @@ export async function POST(request) {
     // El SDK de Admin debe estar inicializado para que esto funcione
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn: expiresIn * 1000 });
 
-    // Establecer la cookie en el navegador
-    cookies().set('session', sessionCookie, {
+    // CORREGIDO: Establecer la cookie con el prefijo de seguridad __session
+    cookies().set('__session', sessionCookie, {
       maxAge: expiresIn, // Tiempo de vida de la cookie
       httpOnly: true, // La cookie no es accesible desde el JavaScript del cliente
       secure: process.env.NODE_ENV === 'production', // Solo enviar por HTTPS en producción
@@ -52,8 +52,8 @@ export async function POST(request) {
  * Maneja la eliminación de la cookie de sesión (Logout)
  */
 export async function DELETE(request) {
-  // Borrar la cookie estableciendo su tiempo de vida en el pasado
-  cookies().set('session', '', {
+  // CORREGIDO: Borrar la cookie con el prefijo de seguridad __session
+  cookies().set('__session', '', {
     maxAge: -1, 
     path: '/',
   });
