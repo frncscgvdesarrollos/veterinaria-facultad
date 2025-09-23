@@ -12,10 +12,13 @@ const getInitials = (name) => {
   return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
 };
 
-export default function Header() {
-    const { user, logout, loading } = useAuth();
-    // CORRECCIÓN: Usamos `displayName` del objeto de usuario de Firebase
-    const displayName = user?.displayName ? user.displayName.split(' ')[0] : 'Usuario';
+// 1. EL COMPONENTE AHORA RECIBE `userData` COMO PROP
+export default function Header({ userData }) {
+    // 2. USAMOS `useAuth` ÚNICAMENTE PARA LA FUNCIÓN DE LOGOUT
+    const { logout } = useAuth(); 
+    
+    // El nombre de usuario se extrae de las props
+    const displayName = userData?.name ? userData.name.split(' ')[0] : 'Usuario';
 
     return (
         <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
@@ -37,28 +40,26 @@ export default function Header() {
                     <div className="flex-grow"></div>
 
                     <div className="flex items-center gap-4 min-w-[250px] justify-end">
-                        {!loading && (
-                            user ? (
-                                <div className="flex items-center gap-4">
-                                    <span className="hidden lg:inline text-md font-medium text-gray-700">Hola, {displayName}</span>
-                                    <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
-                                        {/* CORRECCIÓN: Usamos `photoURL` para la imagen */}
-                                        {user.photoURL ? (
-                                            <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
-                                        ) : (
-                                            /* CORRECIÓN: Pasamos `displayName` para las iniciales */
-                                            <span>{getInitials(user.displayName)}</span>
-                                        )}
-                                    </div>
-                                    <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
-                                        Logout
-                                    </button>
+                        {/* 3. LA LÓGICA SE BASA EN `userData.isLoggedIn` */}
+                        {userData.isLoggedIn ? (
+                            <div className="flex items-center gap-4">
+                                <span className="hidden lg:inline text-md font-medium text-gray-700">Hola, {displayName}</span>
+                                <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
+                                    {/* 4. SE USA `userData.photoURL` Y `userData.name` */}
+                                    {userData.photoURL ? (
+                                        <Image src={userData.photoURL} alt="Avatar del usuario" width={56} height={56} />
+                                    ) : (
+                                        <span>{getInitials(userData.name)}</span>
+                                    )}
                                 </div>
-                            ) : (
-                                <Link href="/login">
-                                    <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
-                                </Link>
-                            )
+                                <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <Link href="/login">
+                                <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
+                            </Link>
                         )}
                     </div>
                 </div>
