@@ -1,63 +1,68 @@
-
 'use client';
-import Link from 'next/link';
+
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
+import Image from 'next/image';
 
-const Header = () => {
-  const { user, loading, logout, userRole } = useAuth();
-
-  return (
-    <header className="bg-white text-gray-800 p-4 flex flex-wrap justify-between items-center shadow-md sticky top-0 z-50 w-full gap-y-3 sm:gap-y-0">
-
-      {/* 1. Título a la Izquierda */}
-      <div className="flex-shrink-0 mr-4">
-        <Link href="/" className="text-xl md:text-2xl font-bold text-gray-900 hover:text-violet-700 transition-colors">
-          Veterinaria Magali Martin
-        </Link>
-      </div>
-
-      {/* 2. Navegación Principal (SIEMPRE VISIBLE si el usuario está logueado) */}
-      {user && (
-          <nav className="w-full sm:w-auto flex-grow flex justify-center items-center order-3 sm:order-2">
-              <div className="flex justify-center items-center space-x-3 md:space-x-4 border-t sm:border-t-0 pt-3 sm:pt-0 w-full sm:w-auto">
-                <Link href="/mis-datos" className="text-xs md:text-sm font-medium hover:text-violet-600 transition-colors uppercase tracking-wider">
-                  Mis Datos
-                </Link>
-                <span className="text-gray-300">|</span>
-                <Link href="/mascotas" className="text-xs md:text-sm font-medium hover:text-violet-600 transition-colors uppercase tracking-wider">
-                  Mis Mascotas
-                </Link>
-                <span className="text-gray-300">|</span>
-                <Link href="/mis-turnos" className="text-xs md:text-sm font-medium hover:text-violet-600 transition-colors uppercase tracking-wider">
-                  Mis Turnos
-                </Link>
-              </div>
-          </nav>
-      )}
-
-      {/* 3. Acciones a la Derecha */}
-      <div className="flex-shrink-0 flex items-center order-2 sm:order-3">
-        {loading ? (
-          <div className="h-8 w-24 bg-gray-200 rounded-full animate-pulse"></div>
-        ) : user ? (
-          <div className="flex items-center">
-            {userRole === 'admin' && (
-                <Link href="/admin" className="bg-gray-100 text-gray-600 font-semibold px-3 py-2 rounded-full text-xs hover:bg-gray-200 transition-colors mr-2">
-                  Admin
-                </Link>
-            )}
-            <button onClick={logout} className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-3 sm:px-4 py-2 rounded-full transition-colors text-sm">
-              Salir
-            </button>
-          </div>
-        ) : (
-          <Link href="/login" className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-4 py-2 rounded-full transition-colors">
-            Iniciar Sesión
-          </Link>
-        )}
-      </div>
-    </header>
-  );
+// Función para obtener iniciales para el avatar de fallback
+const getInitials = (name) => {
+  if (!name) return '?';
+  const names = name.split(' ');
+  if (names.length === 1) return names[0].charAt(0).toUpperCase();
+  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
 };
 
-export default Header;
+export default function Header() {
+    const { user, logout, loading } = useAuth();
+    // CORRECCIÓN: Usamos `displayName` del objeto de usuario de Firebase
+    const displayName = user?.displayName ? user.displayName.split(' ')[0] : 'Usuario';
+
+    return (
+        <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
+            <nav className="max-w-screen-xl mx-auto px-6 lg:px-8">
+                <div className="flex items-center justify-between h-24">
+                    
+                    <div className="flex-shrink-0">
+                        <Link href="/">
+                            <Image 
+                                src="/LOGO.svg" 
+                                alt="Logo de Veterinaria Magali Martin"
+                                width={200}
+                                height={55}
+                                priority
+                            />
+                        </Link>
+                    </div>
+
+                    <div className="flex-grow"></div>
+
+                    <div className="flex items-center gap-4 min-w-[250px] justify-end">
+                        {!loading && (
+                            user ? (
+                                <div className="flex items-center gap-4">
+                                    <span className="hidden lg:inline text-md font-medium text-gray-700">Hola, {displayName}</span>
+                                    <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
+                                        {/* CORRECCIÓN: Usamos `photoURL` para la imagen */}
+                                        {user.photoURL ? (
+                                            <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
+                                        ) : (
+                                            /* CORRECIÓN: Pasamos `displayName` para las iniciales */
+                                            <span>{getInitials(user.displayName)}</span>
+                                        )}
+                                    </div>
+                                    <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
+                                        Logout
+                                    </button>
+                                </div>
+                            ) : (
+                                <Link href="/login">
+                                    <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
+                                </Link>
+                            )
+                        )}
+                    </div>
+                </div>
+            </nav>
+        </header>
+    );
+}

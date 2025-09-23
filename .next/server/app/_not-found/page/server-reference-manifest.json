@@ -1,20 +1,4 @@
 {
-  "node": {
-    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e": {
-      "workers": {
-        "app/_not-found/page": {
-          "moduleId": "82698",
-          "async": false,
-          "exportedName": "completarPerfil",
-          "filename": "src/app/actions.js"
-        }
-      },
-      "layer": {
-        "app/_not-found/page": "action-browser"
-      },
-      "exportedName": "completarPerfil",
-      "filename": "src/app/actions.js"
-    }
-  },
+  "node": {},
   "edge": {}
 }

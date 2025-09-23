@@ -1,5 +1,10 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/session/route": "app/api/auth/session/route.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/login/page": "app/login/page.js",
+  "/mascotas/page": "app/mascotas/page.js",
+  "/mis-datos/page": "app/mis-datos/page.js",
+  "/mis-turnos/page": "app/mis-turnos/page.js",
   "/page": "app/page.js"
 }

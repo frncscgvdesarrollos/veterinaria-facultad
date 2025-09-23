@@ -142,6 +142,8 @@
     --color-teal-300: #46ecd5;
     --color-teal-500: #00baa7;
     --color-teal-600: #009588;
+    --color-cyan-600: #0092b5;
+    --color-cyan-700: #007492;
     --color-sky-300: #77d4ff;
     --color-sky-400: #00bcfe;
     --color-sky-500: #00a5ef;
@@ -258,6 +260,8 @@
       --color-teal-300: color(display-p3 .484989 .914726 .835079);
       --color-teal-500: color(display-p3 .266569 .721518 .655462);
       --color-teal-600: color(display-p3 .207114 .579584 .53668);
+      --color-cyan-600: color(display-p3 .193249 .564651 .707197);
+      --color-cyan-700: color(display-p3 .164124 .451431 .570574);
       --color-sky-300: color(display-p3 .546356 .822561 .990576);
       --color-sky-400: color(display-p3 .305975 .725011 .980173);
       --color-sky-500: color(display-p3 .219113 .639027 .931479);
@@ -324,6 +328,8 @@
       --color-teal-300: lab(84.8977% -48.1516 -1.3321);
       --color-teal-500: lab(67.3859% -49.0983 -2.63511);
       --color-teal-600: lab(55.0223% -41.0774 -3.90277);
+      --color-cyan-600: lab(55.1767% -26.7496 -30.5139);
+      --color-cyan-700: lab(44.7267% -21.5987 -26.118);
       --color-sky-300: lab(80.3307% -20.2945 -31.385);
       --color-sky-400: lab(70.687% -23.6078 -45.9483);
       --color-sky-500: lab(63.3038% -18.433 -51.0407);
@@ -880,6 +886,10 @@
     margin-right: calc(var(--spacing) * 4);
   }
 
+  .mr-6 {
+    margin-right: calc(var(--spacing) * 6);
+  }
+
   .mb-1 {
     margin-bottom: calc(var(--spacing) * 1);
   }
@@ -942,6 +952,10 @@
 
   .grid {
     display: grid;
+  }
+
+  .hidden {
+    display: none;
   }
 
   .inline-block {
@@ -1030,10 +1044,6 @@
 
   .w-16 {
     width: calc(var(--spacing) * 16);
-  }
-
-  .w-24 {
-    width: calc(var(--spacing) * 24);
   }
 
   .w-32 {
@@ -1477,6 +1487,10 @@
     background-color: var(--color-blue-600);
   }
 
+  .bg-cyan-600 {
+    background-color: var(--color-cyan-600);
+  }
+
   .bg-gray-50 {
     background-color: var(--color-gray-50);
   }
@@ -1625,6 +1639,14 @@
   .to-transparent {
     --tw-gradient-to: transparent;
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+
+  .bg-cover {
+    background-size: cover;
+  }
+
+  .bg-center {
+    background-position: center;
   }
 
   .fill-current {
@@ -1882,6 +1904,10 @@
     color: var(--color-blue-800);
   }
 
+  .text-cyan-600 {
+    color: var(--color-cyan-600);
+  }
+
   .text-gray-300 {
     color: var(--color-gray-300);
   }
@@ -2008,6 +2034,10 @@
 
   .opacity-0 {
     opacity: 0;
+  }
+
+  .opacity-30 {
+    opacity: .3;
   }
 
   .opacity-60 {
@@ -2202,6 +2232,12 @@
   }
 
   @media (hover: hover) {
+    .hover\:bg-cyan-700:hover {
+      background-color: var(--color-cyan-700);
+    }
+  }
+
+  @media (hover: hover) {
     .hover\:bg-gray-100:hover {
       background-color: var(--color-gray-100);
     }
@@ -2246,6 +2282,12 @@
   @media (hover: hover) {
     .hover\:bg-red-50:hover {
       background-color: var(--color-red-50);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:bg-red-200:hover {
+      background-color: var(--color-red-200);
     }
   }
 
@@ -2450,6 +2492,12 @@
   }
 
   @media (min-width: 40rem) {
+    .sm\:block {
+      display: block;
+    }
+  }
+
+  @media (min-width: 40rem) {
     .sm\:w-auto {
       width: auto;
     }
@@ -2525,12 +2573,6 @@
   @media (min-width: 40rem) {
     .sm\:p-8 {
       padding: calc(var(--spacing) * 8);
-    }
-  }
-
-  @media (min-width: 40rem) {
-    .sm\:px-4 {
-      padding-inline: calc(var(--spacing) * 4);
     }
   }
 
@@ -2619,6 +2661,12 @@
   }
 
   @media (min-width: 48rem) {
+    .md\:p-12 {
+      padding: calc(var(--spacing) * 12);
+    }
+  }
+
+  @media (min-width: 48rem) {
     .md\:py-20 {
       padding-block: calc(var(--spacing) * 20);
     }
@@ -2681,6 +2729,12 @@
   @media (min-width: 64rem) {
     .lg\:col-span-2 {
       grid-column: span 2 / span 2;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .lg\:block {
+      display: block;
     }
   }
 

@@ -1,10 +1,3 @@
-// Historia de Usuario 1: Registro de Nuevo Usuario
-// Historia de Usuario 2: Inicio de Sesión de Usuario
-// Historia de Usuario 3: Inicio de Sesión con Google
-// Historia de Usuario 4: Recuperación de Contraseña
-// Historia de Usuario 5: Gestión de Roles de Usuario
-// Historia de Usuario 6: Completar Perfil de Usuario
-
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -22,42 +15,32 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { completarPerfil } from '@/app/actions';
+
+// SE ELIMINA LA IMPORTACIÓN DE LA SERVER ACTION
+// import { completarPerfil } from '@/app/actions';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+    // El nombre correcto de la propiedad es 'user', no 'currentUser'
     const [user, setUser] = useState(null);
-    const [userRole, setUserRole] = useState(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    /**
-     * @function loginWithGoogle
-     * @description Inicia sesión o registra a un usuario utilizando su cuenta de Google.
-     * Corresponde a la "Historia de Usuario 3: Inicio de Sesión con Google".
-     */
     const loginWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
         try {
-            const result = await signInWithPopup(auth, provider);
-            return result;
+            return await signInWithPopup(auth, provider);
         } catch (error) {
             console.error("Error durante el inicio de sesión con Google:", error);
         }
     };
 
-    /**
-     * @function loginWithEmail
-     * @description Autentica a un usuario registrado mediante su correo electrónico y contraseña.
-     * Corresponde a la "Historia de Usuario 2: Inicio de Sesión de Usuario".
-     */
     const loginWithEmail = async (email, password) => {
         try {
-            const result = await signInWithEmailAndPassword(auth, email, password);
-            return result;
+            return await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
             console.error("Error durante el inicio de sesión con email y contraseña:", error);
             throw error;
@@ -65,20 +48,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     /**
-     * @function registerWithEmailAndPassword
-     * @description Registra un nuevo usuario con correo y contraseña.
-     * Tras el registro, invoca la función para completar el perfil inicial.
-     * Corresponde a la "Historia de Usuario 1: Registro de Nuevo Usuario" y
-     * a la "Historia de Usuario 6: Completar Perfil de Usuario".
+     * Esta función AHORA solo se encarga de crear el usuario en Firebase Auth.
+     * Ya no necesita los datos del perfil.
      */
-    const registerWithEmailAndPassword = async (email, password, profileData) => {
+    const registerWithEmailAndPassword = async (email, password) => {
         try {
+            // Solo crea el usuario y devuelve el resultado.
             const result = await createUserWithEmailAndPassword(auth, email, password);
-            const user = result.user;
-            if (user) {
-                // Se llama a la server action para guardar los datos adicionales del perfil.
-                await completarPerfil(user.uid, profileData);
-            }
             return result;
         } catch (error) {
             console.error("Error durante el registro:", error);
@@ -86,11 +62,6 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    /**
-     * @function resetPassword
-     * @description Envía un correo electrónico al usuario para que pueda restablecer su contraseña.
-     * Corresponde a la "Historia de Usuario 4: Recuperación de Contraseña".
-     */
     const resetPassword = async (email) => {
         try {
             await sendPasswordResetEmail(auth, email);
@@ -107,19 +78,13 @@ export const AuthProvider = ({ children }) => {
             throw new Error("No hay un usuario autenticado para realizar esta operación.");
         }
 
-        // 1. Crear la credencial con el email del usuario y su contraseña actual
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
 
         try {
-            // 2. Re-autenticar al usuario. Esto verifica que conoce su contraseña actual.
             await reauthenticateWithCredential(user, credential);
-
-            // 3. Si la re-autenticación fue exitosa, actualizar la contraseña.
             await updatePassword(user, newPassword);
-
         } catch (error) {
             console.error("Error al cambiar la contraseña:", error);
-            // Lanzar el error para poder gestionarlo en el componente (ej. contraseña incorrecta)
             throw error;
         }
     };
@@ -128,51 +93,27 @@ export const AuthProvider = ({ children }) => {
         try {
             await signOut(auth);
             await fetch('/api/auth/session', { method: 'DELETE' });
-            router.push('/login');
+            // Redirigir a la raíz para un estado limpio.
+            window.location.href = '/';
         } catch (error) {
             console.error("Error durante el cierre de sesión:", error);
         }
     };
 
-    /**
-     * useEffect para observar cambios en el estado de autenticación.
-     * Cuando un usuario inicia o cierra sesión, este efecto se ejecuta.
-     * Obtiene el token de ID del usuario y extrae el "custom claim" del rol.
-     * Si no tiene un rol asignado, se le da el rol de 'dueño' por defecto.
-     * Corresponde a la "Historia de Usuario 5: Gestión de Roles de Usuario".
-     */
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setLoading(true);
             if (currentUser) {
-                try {
-                    const idToken = await currentUser.getIdToken();
-                    // Se envía el token al backend para crear una cookie de sesión.
-                    await fetch('/api/auth/session', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ idToken }),
-                    });
-
-                    // Se fuerza la actualización del token para obtener los claims más recientes.
-                    const idTokenResult = await currentUser.getIdTokenResult(true);
-                    // Se lee el rol desde los custom claims del token.
-                    const roleFromClaim = idTokenResult.claims.role;
-                    
-                    setUser(currentUser);
-                    // Se establece el rol del usuario en el contexto. Por defecto es 'dueño'.
-                    setUserRole(roleFromClaim || 'dueño');
-
-                } catch (error) {
-                    console.error("Error al gestionar la sesión del usuario:", error);
-                    // En caso de error, se mantiene al usuario pero con el rol base.
-                    setUser(currentUser);
-                    setUserRole('dueño');
-                }
+                const idToken = await currentUser.getIdToken();
+                await fetch('/api/auth/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idToken }),
+                });
+                setUser(currentUser);
             } else {
-                // Si no hay usuario, se limpia el estado.
+                await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
                 setUser(null);
-                setUserRole(null);
             }
             setLoading(false);
         });
@@ -181,14 +122,13 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const value = {
-        user,
-        userRole, 
+        user, // La propiedad se llama 'user'
         loading,
         loginWithGoogle,
         loginWithEmail,
         registerWithEmailAndPassword,
         resetPassword,
-        changePassword, // <-- Exportar la nueva función
+        changePassword,
         logout,
     };
 

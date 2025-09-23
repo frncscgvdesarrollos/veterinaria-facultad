@@ -171,12 +171,6 @@ var completarPerfil = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$proje
 "[project]/src/contexts/AuthContext.js [app-ssr] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
-// Historia de Usuario 1: Registro de Nuevo Usuario
-// Historia de Usuario 2: Inicio de Sesión de Usuario
-// Historia de Usuario 3: Inicio de Sesión con Google
-// Historia de Usuario 4: Recuperación de Contraseña
-// Historia de Usuario 5: Gestión de Roles de Usuario
-// Historia de Usuario 6: Completar Perfil de Usuario
 __turbopack_context__.s([
     "AuthProvider",
     ()=>AuthProvider,
@@ -204,11 +198,7 @@ const AuthProvider = ({ children })=>{
     const [userRole, setUserRole] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
-    /**
-     * @function loginWithGoogle
-     * @description Inicia sesión o registra a un usuario utilizando su cuenta de Google.
-     * Corresponde a la "Historia de Usuario 3: Inicio de Sesión con Google".
-     */ const loginWithGoogle = async ()=>{
+    const loginWithGoogle = async ()=>{
         const provider = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["GoogleAuthProvider"]();
         try {
             const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["signInWithPopup"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["auth"], provider);
@@ -217,11 +207,7 @@ const AuthProvider = ({ children })=>{
             console.error("Error durante el inicio de sesión con Google:", error);
         }
     };
-    /**
-     * @function loginWithEmail
-     * @description Autentica a un usuario registrado mediante su correo electrónico y contraseña.
-     * Corresponde a la "Historia de Usuario 2: Inicio de Sesión de Usuario".
-     */ const loginWithEmail = async (email, password)=>{
+    const loginWithEmail = async (email, password)=>{
         try {
             const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["signInWithEmailAndPassword"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["auth"], email, password);
             return result;
@@ -230,18 +216,11 @@ const AuthProvider = ({ children })=>{
             throw error;
         }
     };
-    /**
-     * @function registerWithEmailAndPassword
-     * @description Registra un nuevo usuario con correo y contraseña.
-     * Tras el registro, invoca la función para completar el perfil inicial.
-     * Corresponde a la "Historia de Usuario 1: Registro de Nuevo Usuario" y
-     * a la "Historia de Usuario 6: Completar Perfil de Usuario".
-     */ const registerWithEmailAndPassword = async (email, password, profileData)=>{
+    const registerWithEmailAndPassword = async (email, password, profileData)=>{
         try {
             const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createUserWithEmailAndPassword"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["auth"], email, password);
             const user = result.user;
             if (user) {
-                // Se llama a la server action para guardar los datos adicionales del perfil.
                 await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$a49213__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["completarPerfil"])(user.uid, profileData);
             }
             return result;
@@ -250,11 +229,7 @@ const AuthProvider = ({ children })=>{
             throw error;
         }
     };
-    /**
-     * @function resetPassword
-     * @description Envía un correo electrónico al usuario para que pueda restablecer su contraseña.
-     * Corresponde a la "Historia de Usuario 4: Recuperación de Contraseña".
-     */ const resetPassword = async (email)=>{
+    const resetPassword = async (email)=>{
         try {
             await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["sendPasswordResetEmail"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["auth"], email);
         } catch (error) {
@@ -267,16 +242,12 @@ const AuthProvider = ({ children })=>{
         if (!user || !user.email) {
             throw new Error("No hay un usuario autenticado para realizar esta operación.");
         }
-        // 1. Crear la credencial con el email del usuario y su contraseña actual
         const credential = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["EmailAuthProvider"].credential(user.email, currentPassword);
         try {
-            // 2. Re-autenticar al usuario. Esto verifica que conoce su contraseña actual.
             await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["reauthenticateWithCredential"])(user, credential);
-            // 3. Si la re-autenticación fue exitosa, actualizar la contraseña.
             await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["updatePassword"])(user, newPassword);
         } catch (error) {
             console.error("Error al cambiar la contraseña:", error);
-            // Lanzar el error para poder gestionarlo en el componente (ej. contraseña incorrecta)
             throw error;
         }
     };
@@ -291,19 +262,12 @@ const AuthProvider = ({ children })=>{
             console.error("Error durante el cierre de sesión:", error);
         }
     };
-    /**
-     * useEffect para observar cambios en el estado de autenticación.
-     * Cuando un usuario inicia o cierra sesión, este efecto se ejecuta.
-     * Obtiene el token de ID del usuario y extrae el "custom claim" del rol.
-     * Si no tiene un rol asignado, se le da el rol de 'dueño' por defecto.
-     * Corresponde a la "Historia de Usuario 5: Gestión de Roles de Usuario".
-     */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const unsubscribe = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["onAuthStateChanged"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["auth"], async (currentUser)=>{
             setLoading(true);
             if (currentUser) {
                 try {
                     const idToken = await currentUser.getIdToken();
-                    // Se envía el token al backend para crear una cookie de sesión.
                     await fetch('/api/auth/session', {
                         method: 'POST',
                         headers: {
@@ -313,21 +277,16 @@ const AuthProvider = ({ children })=>{
                             idToken
                         })
                     });
-                    // Se fuerza la actualización del token para obtener los claims más recientes.
                     const idTokenResult = await currentUser.getIdTokenResult(true);
-                    // Se lee el rol desde los custom claims del token.
                     const roleFromClaim = idTokenResult.claims.role;
                     setUser(currentUser);
-                    // Se establece el rol del usuario en el contexto. Por defecto es 'dueño'.
                     setUserRole(roleFromClaim || 'dueño');
                 } catch (error) {
                     console.error("Error al gestionar la sesión del usuario:", error);
-                    // En caso de error, se mantiene al usuario pero con el rol base.
                     setUser(currentUser);
                     setUserRole('dueño');
                 }
             } else {
-                // Si no hay usuario, se limpia el estado.
                 setUser(null);
                 setUserRole(null);
             }
@@ -351,7 +310,7 @@ const AuthProvider = ({ children })=>{
         children: children
     }, void 0, false, {
         fileName: "[project]/src/contexts/AuthContext.js",
-        lineNumber: 196,
+        lineNumber: 146,
         columnNumber: 9
     }, ("TURBOPACK compile-time value", void 0));
 };

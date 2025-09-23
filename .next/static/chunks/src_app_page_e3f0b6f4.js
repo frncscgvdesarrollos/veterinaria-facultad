@@ -1,8 +1,28 @@
 (globalThis.TURBOPACK_CHUNK_LISTS || (globalThis.TURBOPACK_CHUNK_LISTS = [])).push({
     script: typeof document === "object" ? document.currentScript : undefined,
     chunks: [
-  "static/chunks/node_modules_next_44842b69._.js",
-  "static/chunks/src_app_components_9ab01a00._.js"
+  "static/chunks/node_modules_next_dist_compiled_assert_assert_00e31b4e.js",
+  "static/chunks/node_modules_next_dist_compiled_stream-http_index_0a3b7c7d.js",
+  "static/chunks/node_modules_next_dist_compiled_crypto-browserify_index_44cf344e.js",
+  "static/chunks/node_modules_next_dist_compiled_browserify-zlib_index_676e1c9c.js",
+  "static/chunks/node_modules_next_dist_compiled_c263bae4._.js",
+  "static/chunks/node_modules_next_dist_5da1917e._.js",
+  "static/chunks/node_modules_next_image_2b5a49d3.js",
+  "static/chunks/node_modules_firebase-admin_033e32e1._.js",
+  "static/chunks/node_modules_google-auth-library_1f82c20f._.js",
+  "static/chunks/node_modules_node-forge_lib_578e0046._.js",
+  "static/chunks/node_modules_jose_dist_browser_bd690574._.js",
+  "static/chunks/node_modules_@firebase_database-compat_dist_index_standalone_502be260.js",
+  "static/chunks/node_modules_@google-cloud_storage_a237dabd._.js",
+  "static/chunks/node_modules_readable-stream_72498f88._.js",
+  "static/chunks/node_modules_@google-cloud_firestore_build_src_19d18029._.js",
+  "static/chunks/node_modules_@google-cloud_firestore_build_protos_705c0f72._.js",
+  "static/chunks/node_modules_@google-cloud_firestore_package_json_3baf4ebe._.js",
+  "static/chunks/node_modules_protobufjs_c9c84b0b._.js",
+  "static/chunks/node_modules_google-gax_d11d38f3._.js",
+  "static/chunks/node_modules_@opentelemetry_api_build_esm_173c2412._.js",
+  "static/chunks/node_modules_dbca67bc._.js",
+  "static/chunks/src_15d1b68a._.js"
 ],
     source: "dynamic"
 });

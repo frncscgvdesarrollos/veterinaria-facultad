@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef, memo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import Modal from '@/app/components/Modal'; // Ruta actualizada
+import Modal from '@/app/components/Modal';
+// SE IMPORTA LA SERVER ACTION DIRECTAMENTE AQUÍ
+import { completarPerfil } from '@/app/actions';
 
 const ReCAPTCHA = dynamic(() => import('react-google-recaptcha'), { ssr: false });
 
@@ -38,7 +40,8 @@ FormInput.displayName = 'FormInput';
 
 
 export default function LoginPage() {
-    const { currentUser, loginWithGoogle, loginWithEmail, registerWithEmailAndPassword, resetPassword } = useAuth();
+    // CORREGIDO: Usar 'user' en lugar de 'currentUser'
+    const { user, loginWithGoogle, loginWithEmail, registerWithEmailAndPassword, resetPassword } = useAuth();
     const router = useRouter();
     const recaptchaRef = useRef();
     
@@ -67,12 +70,12 @@ export default function LoginPage() {
         setIsClient(true);
     }, []);
 
-
+    // CORREGIDO: Este efecto ahora funciona correctamente
     useEffect(() => {
-        if (currentUser) {
+        if (user) {
             router.push('/');
         }
-    }, [currentUser, router]);
+    }, [user, router]);
 
     const handleLoginWithGoogle = async () => {
         try {
@@ -116,11 +119,25 @@ export default function LoginPage() {
         }
 
         try {
-            await registerWithEmailAndPassword(email, password, formData);
+            // 1. Crear el usuario en Firebase Auth (lado del cliente)
+            const result = await registerWithEmailAndPassword(email, password);
+            const user = result.user;
+
+            if (user) {
+                // 2. Si el usuario se crea, llamar a la Server Action para completar el perfil
+                const profileResult = await completarPerfil(user.uid, formData);
+                if (!profileResult.success) {
+                    // Si la acción del servidor falla, mostrar el error
+                    throw new Error(profileResult.error || 'Error al completar el perfil en el servidor.');
+                }
+            }
+
             setIsModalOpen(false);
+            // La redirección se manejará automáticamente por el useEffect que escucha los cambios en 'user'
+
         } catch (error) {
             console.error('Failed to register', error);
-            setError('No se pudo crear la cuenta. Es posible que el email ya esté en uso.');
+            setError(error.message || 'No se pudo crear la cuenta. Es posible que el email ya esté en uso.');
             if (recaptchaRef.current) {
                 recaptchaRef.current.reset();
             }
