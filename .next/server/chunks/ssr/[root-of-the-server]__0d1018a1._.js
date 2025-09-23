@@ -59,7 +59,9 @@ const __TURBOPACK__default__export__ = __TURBOPACK__imported__module__$5b$extern
 
 // Historia de Usuario 5: Gestión de Roles de Usuario
 // Historia de Usuario 6: Completar Perfil de Usuario
-/* __next_internal_action_entry_do_not_use__ [{"607e2e33671e9af3b7c889b8ece695a8d12ed1593e":"completarPerfil","60a8d1efab3c5d77cfe814777f59789d34f62988eb":"agregarMascota"},"",""] */ __turbopack_context__.s([
+/* __next_internal_action_entry_do_not_use__ [{"602121d6b39caf44eb239659236bbe4b3b42c2f773":"actualizarPerfil","607e2e33671e9af3b7c889b8ece695a8d12ed1593e":"completarPerfil","60a8d1efab3c5d77cfe814777f59789d34f62988eb":"agregarMascota"},"",""] */ __turbopack_context__.s([
+    "actualizarPerfil",
+    ()=>actualizarPerfil,
     "agregarMascota",
     ()=>agregarMascota,
     "completarPerfil",
@@ -74,42 +76,21 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 ;
 ;
 ;
-/**
- * @constant aplicationRoles
- * @description Define roles especiales asignados a usuarios específicos según su DNI.
- * Esto centraliza la lógica de asignación de roles de administrador o empleado.
- * Corresponde a la "Historia de Usuario 5: Gestión de Roles de Usuario".
- */ const aplicationRoles = {
-    '00000001': 'admin',
-    '00000002': 'peluquera',
-    '00000003': 'transporte'
-};
 async function completarPerfil(userId, userData) {
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
     const auth = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].auth();
-    const { nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, barrio, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
-    if (!userId || !nombre || !apellido || !dni || !telefonoPrincipal || !direccion || !barrio || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
-        console.error('Validation failed. Missing data:', {
-            userId,
-            ...userData
-        });
+    const { nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
+    if (!userId || !nombre || !apellido || !dni || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
         return {
             success: false,
             error: 'Faltan datos esenciales para completar el perfil.'
         };
     }
     try {
-        // 1. Asignación de Rol (HU 5)
-        // Se verifica si el DNI del usuario corresponde a un rol especial.
-        // Si no, se le asigna el rol 'dueño' por defecto.
         const userRole = aplicationRoles[dni] || 'dueño';
-        // Se establece el "custom claim" en Firebase Authentication. Este token de rol
-        // se usará en toda la app para controlar el acceso.
         await auth.setCustomUserClaims(userId, {
             role: userRole
         });
-        // 2. Guardar Datos del Perfil en Firestore (HU 6)
-        // Se almacenan los detalles del perfil en la colección 'users'.
         await firestore.collection('users').doc(userId).set({
             nombre,
             apellido,
@@ -117,7 +98,6 @@ async function completarPerfil(userId, userData) {
             telefonoPrincipal,
             telefonoSecundario: telefonoSecundario || '',
             direccion,
-            barrio,
             nombreContactoEmergencia,
             telefonoContactoEmergencia,
             role: userRole,
@@ -132,25 +112,23 @@ async function completarPerfil(userId, userData) {
             role: userRole
         };
     } catch (error) {
-        console.error('Error al completar el perfil en el servidor:', error);
+        console.error('Error al completar el perfil:', error);
         return {
             success: false,
-            error: 'Ocurrió un error en el servidor al procesar tu perfil.'
+            error: 'Ocurrió un error en el servidor.'
         };
     }
 }
 async function agregarMascota(userId, mascotaData) {
-    if (!userId) {
-        return {
-            success: false,
-            error: 'Usuario no autenticado.'
-        };
-    }
+    if (!userId) return {
+        success: false,
+        error: 'Usuario no autenticado.'
+    };
     const { nombre, especie, raza, fechaNacimiento, tamaño, enAdopcion } = mascotaData;
     if (!nombre || !especie || !raza || !fechaNacimiento || !tamaño) {
         return {
             success: false,
-            error: 'Todos los campos, incluyendo el tamaño, son obligatorios.'
+            error: 'Todos los campos son obligatorios.'
         };
     }
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
@@ -173,17 +151,56 @@ async function agregarMascota(userId, mascotaData) {
         console.error('Error al agregar la mascota:', error);
         return {
             success: false,
-            error: 'No se pudo registrar la mascota en la base de datos.'
+            error: 'No se pudo registrar la mascota.'
+        };
+    }
+}
+async function actualizarPerfil(userId, userData) {
+    const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
+    // Se extraen solo los campos que permitimos actualizar.
+    const { telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
+    // Se construye un objeto solo con los datos que se van a modificar.
+    const datosActualizables = {
+        telefonoPrincipal,
+        telefonoSecundario: telefonoSecundario || '',
+        direccion,
+        nombreContactoEmergencia,
+        telefonoContactoEmergencia,
+        updatedAt: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore.FieldValue.serverTimestamp()
+    };
+    if (!userId || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
+        return {
+            success: false,
+            error: 'Faltan datos esenciales para actualizar.'
+        };
+    }
+    try {
+        // Se actualiza el documento en Firestore solo con los campos permitidos.
+        await firestore.collection('users').doc(userId).update(datosActualizables);
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])('/mis-datos');
+        // Devolvemos los datos actualizados para refrescar la UI correctamente.
+        return {
+            success: true,
+            message: '¡Perfil actualizado con éxito!',
+            updatedData: datosActualizables
+        };
+    } catch (error) {
+        console.error('Error al actualizar el perfil en el servidor:', error);
+        return {
+            success: false,
+            error: 'Ocurrió un error en el servidor al actualizar tu perfil.'
         };
     }
 }
 ;
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["ensureServerEntryExports"])([
     completarPerfil,
-    agregarMascota
+    agregarMascota,
+    actualizarPerfil
 ]);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(completarPerfil, "607e2e33671e9af3b7c889b8ece695a8d12ed1593e", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(agregarMascota, "60a8d1efab3c5d77cfe814777f59789d34f62988eb", null);
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(actualizarPerfil, "602121d6b39caf44eb239659236bbe4b3b42c2f773", null);
 }),
 "[project]/.next-internal/server/app/login/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <locals>", ((__turbopack_context__) => {
 "use strict";

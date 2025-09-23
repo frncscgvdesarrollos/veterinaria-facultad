@@ -76,38 +76,21 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 ;
 ;
 ;
-/**
- * @constant aplicationRoles
- * @description Define roles especiales asignados a usuarios específicos según su DNI.
- * Esto centraliza la lógica de asignación de roles de administrador o empleado.
- * Corresponde a la "Historia de Usuario 5: Gestión de Roles de Usuario".
- */ const aplicationRoles = {
-    '00000001': 'admin',
-    '00000002': 'peluquera',
-    '00000003': 'transporte'
-};
 async function completarPerfil(userId, userData) {
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
     const auth = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].auth();
-    const { nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, // barrio, // El campo barrio se ha comentado
-    nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
+    const { nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
     if (!userId || !nombre || !apellido || !dni || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
-        console.error('Validation failed. Missing data:', {
-            userId,
-            ...userData
-        });
         return {
             success: false,
             error: 'Faltan datos esenciales para completar el perfil.'
         };
     }
     try {
-        // 1. Asignación de Rol (HU 5)
         const userRole = aplicationRoles[dni] || 'dueño';
         await auth.setCustomUserClaims(userId, {
             role: userRole
         });
-        // 2. Guardar Datos del Perfil en Firestore (HU 6)
         await firestore.collection('users').doc(userId).set({
             nombre,
             apellido,
@@ -115,7 +98,6 @@ async function completarPerfil(userId, userData) {
             telefonoPrincipal,
             telefonoSecundario: telefonoSecundario || '',
             direccion,
-            // barrio, // El campo barrio se ha comentado
             nombreContactoEmergencia,
             telefonoContactoEmergencia,
             role: userRole,
@@ -130,25 +112,23 @@ async function completarPerfil(userId, userData) {
             role: userRole
         };
     } catch (error) {
-        console.error('Error al completar el perfil en el servidor:', error);
+        console.error('Error al completar el perfil:', error);
         return {
             success: false,
-            error: 'Ocurrió un error en el servidor al procesar tu perfil.'
+            error: 'Ocurrió un error en el servidor.'
         };
     }
 }
 async function agregarMascota(userId, mascotaData) {
-    if (!userId) {
-        return {
-            success: false,
-            error: 'Usuario no autenticado.'
-        };
-    }
+    if (!userId) return {
+        success: false,
+        error: 'Usuario no autenticado.'
+    };
     const { nombre, especie, raza, fechaNacimiento, tamaño, enAdopcion } = mascotaData;
     if (!nombre || !especie || !raza || !fechaNacimiento || !tamaño) {
         return {
             success: false,
-            error: 'Todos los campos, incluyendo el tamaño, son obligatorios.'
+            error: 'Todos los campos son obligatorios.'
         };
     }
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
@@ -171,36 +151,38 @@ async function agregarMascota(userId, mascotaData) {
         console.error('Error al agregar la mascota:', error);
         return {
             success: false,
-            error: 'No se pudo registrar la mascota en la base de datos.'
+            error: 'No se pudo registrar la mascota.'
         };
     }
 }
 async function actualizarPerfil(userId, userData) {
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
-    const { nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
-    // No incluimos 'barrio' en la validación ni en la actualización
-    if (!userId || !nombre || !apellido || !dni || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
+    // Se extraen solo los campos que permitimos actualizar.
+    const { telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
+    // Se construye un objeto solo con los datos que se van a modificar.
+    const datosActualizables = {
+        telefonoPrincipal,
+        telefonoSecundario: telefonoSecundario || '',
+        direccion,
+        nombreContactoEmergencia,
+        telefonoContactoEmergencia,
+        updatedAt: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore.FieldValue.serverTimestamp()
+    };
+    if (!userId || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
         return {
             success: false,
-            error: 'Faltan datos esenciales para actualizar el perfil.'
+            error: 'Faltan datos esenciales para actualizar.'
         };
     }
     try {
-        await firestore.collection('users').doc(userId).update({
-            nombre,
-            apellido,
-            dni,
-            telefonoPrincipal,
-            telefonoSecundario: telefonoSecundario || '',
-            direccion,
-            nombreContactoEmergencia,
-            telefonoContactoEmergencia,
-            updatedAt: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore.FieldValue.serverTimestamp()
-        });
+        // Se actualiza el documento en Firestore solo con los campos permitidos.
+        await firestore.collection('users').doc(userId).update(datosActualizables);
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])('/mis-datos');
+        // Devolvemos los datos actualizados para refrescar la UI correctamente.
         return {
             success: true,
-            message: '¡Perfil actualizado con éxito!'
+            message: '¡Perfil actualizado con éxito!',
+            updatedData: datosActualizables
         };
     } catch (error) {
         console.error('Error al actualizar el perfil en el servidor:', error);
@@ -220,21 +202,21 @@ async function actualizarPerfil(userId, userData) {
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(agregarMascota, "60a8d1efab3c5d77cfe814777f59789d34f62988eb", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(actualizarPerfil, "602121d6b39caf44eb239659236bbe4b3b42c2f773", null);
 }),
-"[project]/.next-internal/server/app/mascotas/nueva/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <locals>", ((__turbopack_context__) => {
+"[project]/.next-internal/server/app/mis-datos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <locals>", ((__turbopack_context__) => {
 "use strict";
 
 __turbopack_context__.s([]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.js [app-rsc] (ecmascript)");
 ;
 }),
-"[project]/.next-internal/server/app/mascotas/nueva/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)", ((__turbopack_context__) => {
+"[project]/.next-internal/server/app/mis-datos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
 __turbopack_context__.s([
-    "60a8d1efab3c5d77cfe814777f59789d34f62988eb",
-    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["agregarMascota"]
+    "602121d6b39caf44eb239659236bbe4b3b42c2f773",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["actualizarPerfil"]
 ]);
-var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$mascotas$2f$nueva$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/mascotas/nueva/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.js [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');
+var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$mis$2d$datos$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/mis-datos/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.js [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.js [app-rsc] (ecmascript)");
 }),
 "[project]/src/app/favicon.ico.mjs { IMAGE => \"[project]/src/app/favicon.ico (static in ecmascript)\" } [app-rsc] (structured image object, ecmascript, Next.js Server Component)", ((__turbopack_context__) => {
@@ -253,7 +235,7 @@ __turbopack_context__.n(__turbopack_context__.i("[project]/src/app/error.js [app
 
 __turbopack_context__.n(__turbopack_context__.i("[project]/src/app/loading.js [app-rsc] (ecmascript)"));
 }),
-"[project]/src/app/components/FormularioNuevaMascota.jsx [app-rsc] (client reference proxy) <module evaluation>", ((__turbopack_context__) => {
+"[project]/src/app/mis-datos/page.js [app-rsc] (client reference proxy) <module evaluation>", ((__turbopack_context__) => {
 "use strict";
 
 // This file is generated by next-core EcmascriptClientReferenceModule.
@@ -264,10 +246,10 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react-server-dom-turbopack-server.js [app-rsc] (ecmascript)");
 ;
 const __TURBOPACK__default__export__ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerClientReference"])(function() {
-    throw new Error("Attempted to call the default export of [project]/src/app/components/FormularioNuevaMascota.jsx <module evaluation> from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
-}, "[project]/src/app/components/FormularioNuevaMascota.jsx <module evaluation>", "default");
+    throw new Error("Attempted to call the default export of [project]/src/app/mis-datos/page.js <module evaluation> from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
+}, "[project]/src/app/mis-datos/page.js <module evaluation>", "default");
 }),
-"[project]/src/app/components/FormularioNuevaMascota.jsx [app-rsc] (client reference proxy)", ((__turbopack_context__) => {
+"[project]/src/app/mis-datos/page.js [app-rsc] (client reference proxy)", ((__turbopack_context__) => {
 "use strict";
 
 // This file is generated by next-core EcmascriptClientReferenceModule.
@@ -278,87 +260,20 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react-server-dom-turbopack-server.js [app-rsc] (ecmascript)");
 ;
 const __TURBOPACK__default__export__ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerClientReference"])(function() {
-    throw new Error("Attempted to call the default export of [project]/src/app/components/FormularioNuevaMascota.jsx from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
-}, "[project]/src/app/components/FormularioNuevaMascota.jsx", "default");
+    throw new Error("Attempted to call the default export of [project]/src/app/mis-datos/page.js from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
+}, "[project]/src/app/mis-datos/page.js", "default");
 }),
-"[project]/src/app/components/FormularioNuevaMascota.jsx [app-rsc] (ecmascript)", ((__turbopack_context__) => {
+"[project]/src/app/mis-datos/page.js [app-rsc] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$FormularioNuevaMascota$2e$jsx__$5b$app$2d$rsc$5d$__$28$client__reference__proxy$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/src/app/components/FormularioNuevaMascota.jsx [app-rsc] (client reference proxy) <module evaluation>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$FormularioNuevaMascota$2e$jsx__$5b$app$2d$rsc$5d$__$28$client__reference__proxy$29$__ = __turbopack_context__.i("[project]/src/app/components/FormularioNuevaMascota.jsx [app-rsc] (client reference proxy)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$mis$2d$datos$2f$page$2e$js__$5b$app$2d$rsc$5d$__$28$client__reference__proxy$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/src/app/mis-datos/page.js [app-rsc] (client reference proxy) <module evaluation>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$mis$2d$datos$2f$page$2e$js__$5b$app$2d$rsc$5d$__$28$client__reference__proxy$29$__ = __turbopack_context__.i("[project]/src/app/mis-datos/page.js [app-rsc] (client reference proxy)");
 ;
-__turbopack_context__.n(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$FormularioNuevaMascota$2e$jsx__$5b$app$2d$rsc$5d$__$28$client__reference__proxy$29$__);
+__turbopack_context__.n(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$mis$2d$datos$2f$page$2e$js__$5b$app$2d$rsc$5d$__$28$client__reference__proxy$29$__);
 }),
-"[project]/src/app/mascotas/nueva/page.jsx [app-rsc] (ecmascript)", ((__turbopack_context__) => {
-"use strict";
+"[project]/src/app/mis-datos/page.js [app-rsc] (ecmascript, Next.js Server Component)", ((__turbopack_context__) => {
 
-__turbopack_context__.s([
-    "default",
-    ()=>NuevaMascotaPage
-]);
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react-jsx-dev-runtime.js [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$FormularioNuevaMascota$2e$jsx__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/components/FormularioNuevaMascota.jsx [app-rsc] (ecmascript)");
-;
-;
-function NuevaMascotaPage() {
-    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8",
-        children: [
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "sm:mx-auto sm:w-full sm:max-w-2xl",
-                children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                        className: "mt-6 text-center text-3xl font-extrabold text-gray-900",
-                        children: "Añade una nueva mascota"
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/mascotas/nueva/page.jsx",
-                        lineNumber: 8,
-                        columnNumber: 17
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        className: "mt-2 text-center text-sm text-gray-600",
-                        children: "Completa los datos para crear el perfil de tu compañero."
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/mascotas/nueva/page.jsx",
-                        lineNumber: 11,
-                        columnNumber: 17
-                    }, this)
-                ]
-            }, void 0, true, {
-                fileName: "[project]/src/app/mascotas/nueva/page.jsx",
-                lineNumber: 7,
-                columnNumber: 13
-            }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "mt-8 sm:mx-auto sm:w-full sm:max-w-2xl",
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "bg-white py-8 px-4 shadow-lg sm:rounded-2xl sm:px-10",
-                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$FormularioNuevaMascota$2e$jsx__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
-                        fileName: "[project]/src/app/mascotas/nueva/page.jsx",
-                        lineNumber: 18,
-                        columnNumber: 21
-                    }, this)
-                }, void 0, false, {
-                    fileName: "[project]/src/app/mascotas/nueva/page.jsx",
-                    lineNumber: 17,
-                    columnNumber: 17
-                }, this)
-            }, void 0, false, {
-                fileName: "[project]/src/app/mascotas/nueva/page.jsx",
-                lineNumber: 16,
-                columnNumber: 13
-            }, this)
-        ]
-    }, void 0, true, {
-        fileName: "[project]/src/app/mascotas/nueva/page.jsx",
-        lineNumber: 6,
-        columnNumber: 9
-    }, this);
-}
-}),
-"[project]/src/app/mascotas/nueva/page.jsx [app-rsc] (ecmascript, Next.js Server Component)", ((__turbopack_context__) => {
-
-__turbopack_context__.n(__turbopack_context__.i("[project]/src/app/mascotas/nueva/page.jsx [app-rsc] (ecmascript)"));
+__turbopack_context__.n(__turbopack_context__.i("[project]/src/app/mis-datos/page.js [app-rsc] (ecmascript)"));
 }),
 "[externals]/next/dist/shared/lib/no-fallback-error.external.js [external] (next/dist/shared/lib/no-fallback-error.external.js, cjs)", ((__turbopack_context__, module, exports) => {
 
@@ -368,4 +283,4 @@ module.exports = mod;
 }),
 ];
 
-//# sourceMappingURL=%5Broot-of-the-server%5D__e57099f9._.js.map
+//# sourceMappingURL=%5Broot-of-the-server%5D__59ff65df._.js.map

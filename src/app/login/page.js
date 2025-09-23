@@ -4,10 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef, memo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import Modal from '@/app/components/Modal';
 import { completarPerfil } from '@/app/actions';
+import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter'; // Importar el nuevo componente
 
-const ReCAPTCHA = dynamic(() => import('react-google-recaptcha'), { ssr: false });
 
 // --- Componentes de UI (sin cambios) ---
 const EyeIcon = () => (
@@ -40,7 +39,6 @@ FormInput.displayName = 'FormInput';
 export default function LoginPage() {
     const { user, loginWithGoogle, loginWithEmail, registerWithEmailAndPassword, resetPassword } = useAuth();
     const router = useRouter();
-    const recaptchaRef = useRef();
     
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -48,25 +46,16 @@ export default function LoginPage() {
     const [error, setError] = useState(null);
     const [isRegistering, setIsRegistering] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isClient, setIsClient] = useState(false);
 
     const [formData, setFormData] = useState({
         nombre: '', apellido: '', dni: '', telefonoPrincipal: '', telefonoSecundario: '', 
-        direccion: '', barrio: '', nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
+        direccion: '', /* barrio: '', */ nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
     });
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    // ELIMINADO: Se borró el useEffect que causaba la redirección prematura.
 
     const handleLoginWithGoogle = async () => {
         setError(null);
         try {
             await loginWithGoogle();
-            // Redirección explícita después del login exitoso
             router.push('/mascotas'); 
         } catch (error) {
             console.error('Fallo al iniciar sesión con Google', error);
@@ -81,45 +70,32 @@ export default function LoginPage() {
         if (isRegistering) {
             if (password !== confirmPassword) return setError("Las contraseñas no coinciden.");
             if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
-            setIsModalOpen(true);
+            
+            try {
+                const result = await registerWithEmailAndPassword(email, password);
+                if (result.user) {
+                    const profileResult = await completarPerfil(result.user.uid, formData);
+                    if (!profileResult.success) throw new Error(profileResult.error);
+    
+                    const idToken = await result.user.getIdToken();
+                    await fetch('/api/auth/session', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${idToken}` }
+                    });
+                    router.push('/mascotas');
+                }
+            } catch (error) {
+                console.error('Fallo al registrar', error);
+                setError(error.message || 'No se pudo crear la cuenta.');
+            }
         } else {
             try {
-                // Llamamos a la nueva función del context
                 await loginWithEmail(email, password);
-                // Si la promesa se resuelve, la cookie está creada. Ahora es seguro redirigir.
                 router.push('/mascotas');
             } catch (error) {
                 console.error('Fallo al iniciar sesión', error);
                 setError('Email o contraseña incorrectos.');
             }
-        }
-    };
-    
-    const handleFinalRegister = async () => {
-        const recaptchaToken = recaptchaRef.current?.getValue();
-        if (!recaptchaToken) {
-            return setError("Por favor, verifica que no eres un robot.");
-        }
-
-        try {
-            const result = await registerWithEmailAndPassword(email, password);
-            if (result.user) {
-                const profileResult = await completarPerfil(result.user.uid, formData);
-                if (!profileResult.success) throw new Error(profileResult.error);
-
-                // Tras un registro exitoso, también debemos crear la sesión y redirigir
-                const idToken = await result.user.getIdToken();
-                await fetch('/api/auth/session', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${idToken}` }
-                });
-                router.push('/mascotas');
-            }
-        } catch (error) {
-            console.error('Fallo al registrar', error);
-            setError(error.message || 'No se pudo crear la cuenta.');
-            recaptchaRef.current?.reset();
-            setIsModalOpen(false);
         }
     };
 
@@ -140,23 +116,8 @@ export default function LoginPage() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY";
-
     return (
         <>
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Verificación de Seguridad</h2>
-                    <p className="text-gray-600 mb-6">Por favor, completa el desafío para confirmar que eres humano.</p>
-                    <div className="flex justify-center mb-6 h-[78px]">
-                        {isClient && <ReCAPTCHA ref={recaptchaRef} sitekey={siteKey} />}
-                    </div>
-                    <button onClick={handleFinalRegister} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">
-                        Completar Registro
-                    </button>
-                </div>
-            </Modal>
-
             <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
                 <div className="w-full max-w-md">
                     <h1 className="text-4xl font-bold text-center mb-6 text-gray-800">{isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión'}</h1>
@@ -166,6 +127,7 @@ export default function LoginPage() {
                     <div className="bg-white shadow-xl rounded-2xl px-8 pt-6 pb-8 mb-4">
                         <form onSubmit={handleFormSubmit}>
                             <FormInput id="email" name="email" type="email" label="Email" placeholder="tu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            
                             <FormInput id="password" name="password" type={showPassword ? 'text' : 'password'} label="Contraseña" placeholder="••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required>
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500">
                                     {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
@@ -173,7 +135,10 @@ export default function LoginPage() {
                             </FormInput>
 
                             {isRegistering && (
-                                <FormInput id="confirmPassword" name="confirmPassword" type={showPassword ? 'text' : 'password'} label="Confirmar Contraseña" placeholder="••••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required/>
+                                <>
+                                    <PasswordStrengthMeter password={password} />
+                                    <FormInput id="confirmPassword" name="confirmPassword" type={showPassword ? 'text' : 'password'} label="Confirmar Contraseña" placeholder="••••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required/>
+                                </> 
                             )}
 
                             {isRegistering && (
@@ -185,7 +150,7 @@ export default function LoginPage() {
                                     </div>
                                     <FormInput id="dni" name="dni" type="tel" label="DNI" placeholder="Sin puntos" value={formData.dni} onChange={handleChange} required maxLength="8" />
                                     <FormInput id="direccion" name="direccion" type="text" label="Dirección" placeholder="Av. Siempreviva 742" value={formData.direccion} onChange={handleChange} required />
-                                    <FormInput id="barrio" name="barrio" type="text" label="Barrio" placeholder="Springfield" value={formData.barrio} onChange={handleChange} required />
+                                    {/* <FormInput id="barrio" name="barrio" type="text" label="Barrio" placeholder="Springfield" value={formData.barrio} onChange={handleChange} required /> */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormInput id="telefonoPrincipal" name="telefonoPrincipal" type="tel" label="Teléfono Principal" placeholder="1122334455" value={formData.telefonoPrincipal} onChange={handleChange} required />
                                         <FormInput id="telefonoSecundario" name="telefonoSecundario" type="tel" label="Teléfono Secundario" placeholder="(Opcional)" value={formData.telefonoSecundario} onChange={handleChange} />

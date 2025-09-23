@@ -1,4 +1,20 @@
 {
-  "node": {},
+  "node": {
+    "602121d6b39caf44eb239659236bbe4b3b42c2f773": {
+      "workers": {
+        "app/mis-datos/page": {
+          "moduleId": "[project]/.next-internal/server/app/mis-datos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "actualizarPerfil",
+          "filename": "src/app/actions.js"
+        }
+      },
+      "layer": {
+        "app/mis-datos/page": "action-browser"
+      },
+      "exportedName": "actualizarPerfil",
+      "filename": "src/app/actions.js"
+    }
+  },
   "edge": {}
 }
