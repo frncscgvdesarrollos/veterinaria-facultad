@@ -1,4 +1,4 @@
-'use client'; // Necesario porque AuthProvider usa hooks de cliente
+'use client';
 
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";

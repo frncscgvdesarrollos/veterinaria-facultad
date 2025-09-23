@@ -1,12 +1,5 @@
 {
-  "/api/auth/session/route": "app/api/auth/session/route.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/login/page": "app/login/page.js",
-  "/mascotas/nueva/page": "app/mascotas/nueva/page.js",
-  "/mascotas/page": "app/mascotas/page.js",
-  "/mis-datos/page": "app/mis-datos/page.js",
-  "/mis-turnos/page": "app/mis-turnos/page.js",
-  "/page": "app/page.js",
-  "/turnos/consulta/page": "app/turnos/consulta/page.js",
-  "/turnos/peluqueria/page": "app/turnos/peluqueria/page.js"
+  "/page": "app/page.js"
 }

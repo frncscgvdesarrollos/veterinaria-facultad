@@ -157,7 +157,6 @@ async function agregarMascota(userId, mascotaData) {
 }
 async function actualizarPerfil(userId, userData) {
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
-    // Se extraen solo los campos que permitimos actualizar.
     const { telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
     // Se construye un objeto solo con los datos que se van a modificar.
     const datosActualizables = {

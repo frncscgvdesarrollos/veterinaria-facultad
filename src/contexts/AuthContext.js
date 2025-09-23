@@ -13,8 +13,8 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase'; // Asegúrate de exportar `db` desde tu config de firebase
-import { doc, getDoc } from 'firebase/firestore'; // Importamos funciones de Firestore
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore'; 
 
 const AuthContext = createContext();
 

@@ -6,7 +6,6 @@
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
-// ... (otras funciones como completarPerfil y agregarMascota se mantienen igual)
 
 export async function completarPerfil(userId, userData) {
   const firestore = admin.firestore();
@@ -83,7 +82,7 @@ export async function agregarMascota(userId, mascotaData) {
 export async function actualizarPerfil(userId, userData) {
   const firestore = admin.firestore();
 
-  // Se extraen solo los campos que permitimos actualizar.
+
   const { 
     telefonoPrincipal, 
     telefonoSecundario, 

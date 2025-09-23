@@ -21,7 +21,6 @@ export default function HomePageClient({ serverComponents }) {
             <>
                 <SubHeader />
                 <Dashboard>
-                    {/* Renderizamos los componentes de servidor que recibimos como props */}
                     {serverComponents.galeria}
                     {serverComponents.tienda}
                 </Dashboard>
@@ -29,5 +28,6 @@ export default function HomePageClient({ serverComponents }) {
         );
     }
 
+    // Si el usuario no está autenticado, mostrar la página de inicio de sesión
     return <LandingPage />;
 }
