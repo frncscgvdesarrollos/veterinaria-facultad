@@ -1,38 +1,60 @@
 'use client';
 import Link from 'next/link';
-import { FiLogIn, FiUserPlus } from 'react-icons/fi';
+import Image from 'next/image';
 
 export default function LandingPage() {
   return (
+    // Main container with background image
     <div 
-      className="relative min-h-screen flex items-center justify-center bg-cover bg-center text-gray-800"
+      className="min-h-screen flex items-center justify-center bg-cover bg-center p-4"
       style={{ backgroundImage: "url('/patron1.jpg')" }}
     >
-      <div className="absolute inset-0 bg-black opacity-30"></div>
-      
-      {/* Hero Section */}
-      <section className="relative z-10 text-center max-w-4xl mx-auto px-4">
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 shadow-lg">
-          Cuidamos lo que más amas
-        </h1>
-        <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-200 mb-10">
-          La plataforma integral para gestionar la salud, el bienestar y la felicidad de tus mascotas. Turnos online, tienda de productos y un espacio para encontrar un nuevo amigo.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-          <Link href="/login">
-            <span className="w-full sm:w-auto flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 px-8 rounded-full text-lg transition-transform transform hover:scale-105 shadow-lg">
-              <FiLogIn />
-              Iniciar Sesión
-            </span>
-          </Link>
-          <Link href="/login"> 
-            <span className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-violet-600 font-bold py-4 px-8 rounded-full text-lg transition-transform transform hover:scale-105 shadow-lg border border-violet-200">
-              <FiUserPlus />
-              Crear Cuenta
-            </span>
-          </Link>
+      {/* The centered card with blur effect */}
+      <div className="relative w-full max-w-lg mx-auto p-8 rounded-2xl shadow-2xl bg-white/25 backdrop-blur-lg text-gray-800">
+        
+        {/* Faint logo in the background of the card */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+            <Image 
+                src="/LOGO.svg" 
+                alt="Logo background" 
+                width={400} 
+                height={200}
+            />
         </div>
-      </section>
+
+        {/* Content container to be above the background logo */}
+        <div className="relative z-10 flex flex-col items-center">
+            {/* Main Logo */}
+            <div className="mb-6">
+                <Image 
+                    src="/LOGO.svg" 
+                    alt="Magalí Martin Veterinaria" 
+                    width={220}
+                    height={110}
+                />
+            </div>
+            
+            {/* Welcome Title */}
+            <h1 className="text-3xl font-bold mb-4 text-center">
+              ¡Bienvenido a la <span className="font-extrabold text-teal-900">Veterinaria Online!</span>
+            </h1>
+            
+            {/* Description Text */}
+            <div className="my-6 text-base space-y-2 font-medium">
+              <p>Aquí puedes encontrar la mejor atención para tus mascotas.</p>
+              <p>Reservar turnos para la veterinaria y la peluquería de tus mascotas.</p>
+              <p>Realizar compras y ver mascotas en adopción.</p>
+            </div>
+            
+            {/* Login Button */}
+            <Link 
+              href="/login" 
+              className="mt-4 w-full max-w-xs text-center bg-violet-600 hover:bg-violet-900 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-lg"
+            >
+                Ingresar
+            </Link>
+        </div>
+      </div>
     </div>
   );
 }
