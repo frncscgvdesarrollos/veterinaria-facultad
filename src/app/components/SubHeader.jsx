@@ -1,48 +1,37 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 export default function SubHeader() {
-    const { user, loading } = useAuth();
     const pathname = usePathname();
 
-    if (loading || !user) {
-        return null;
-    }
-
-    // Estilo base para los enlaces
-    const baseStyle = "text-md font-semibold text-gray-600 hover:text-violet-800 transition-colors duration-200 pb-1";
-    // Estilo para el enlace activo, con un borde inferior
-    const activeStyle = "text-md font-semibold text-violet-800 border-b-2 border-violet-800 transition-colors duration-200 pb-1";
+    // Estilos para el enlace activo e inactivo
+    const baseStyle = "px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-100 transition-colors duration-200";
+    const activeStyle = `${baseStyle} bg-gray-200 text-gray-900 font-semibold`;
 
     return (
-        <nav className="bg-white shadow-md border-t border-gray-200 w-full sticky top-24 z-40">
-            <div className="max-w-screen-xl mx-auto px-6 lg:px-8">
-                <div className="flex items-center justify-center h-16 gap-x-8 md:gap-x-12">
-                    {/* 1. BOTÓN PARA VOLVER AL ORIGEN (INICIO/DASHBOARD) */}
-                    <Link href="/">
-                        <span className={pathname === '/' ? activeStyle : baseStyle}>
-                            Inicio
-                        </span>
-                    </Link>
-
-                    <Link href="/mis-datos">
-                        <span className={pathname === '/mis-datos' ? activeStyle : baseStyle}>
-                            Mis Datos
-                        </span>
-                    </Link>
-                    <Link href="/mascotas">
-                       <span className={pathname === '/mascotas' ? activeStyle : baseStyle}>
-                            Mis Mascotas
-                       </span>
-                    </Link>
-                    <Link href="/mis-turnos">
-                        <span className={pathname === '/mis-turnos' ? activeStyle : baseStyle}>
-                            Mis Turnos
-                        </span>
-                    </Link>
+        <nav className="bg-white shadow-sm w-full">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-center items-center h-16">
+                    <div className="flex space-x-4">
+                        {/* Se elimina el enlace a Inicio */}
+                        <Link href="/mis-datos">
+                            <span className={pathname === '/mis-datos' ? activeStyle : baseStyle}>
+                                Mis Datos
+                            </span>
+                        </Link>
+                        <Link href="/mascotas">
+                           <span className={pathname === '/mascotas' ? activeStyle : baseStyle}>
+                                Mis Mascotas
+                           </span>
+                        </Link>
+                        <Link href="/mis-turnos">
+                            <span className={pathname === '/mis-turnos' ? activeStyle : baseStyle}>
+                                Mis Turnos
+                            </span>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </nav>

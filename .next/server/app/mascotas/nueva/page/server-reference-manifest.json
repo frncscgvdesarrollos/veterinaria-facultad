@@ -1,24 +1,9 @@
 {
   "node": {
-    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e": {
-      "workers": {
-        "app/mascotas/nueva/page": {
-          "moduleId": "40474",
-          "async": false,
-          "exportedName": "completarPerfil",
-          "filename": "src/app/actions.js"
-        }
-      },
-      "layer": {
-        "app/mascotas/nueva/page": "action-browser"
-      },
-      "exportedName": "completarPerfil",
-      "filename": "src/app/actions.js"
-    },
     "60a8d1efab3c5d77cfe814777f59789d34f62988eb": {
       "workers": {
         "app/mascotas/nueva/page": {
-          "moduleId": "40474",
+          "moduleId": "[project]/.next-internal/server/app/mascotas/nueva/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "agregarMascota",
           "filename": "src/app/actions.js"

@@ -17,11 +17,22 @@ __turbopack_context__.s([
 ]);
 var __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__ = __turbopack_context__.i("[externals]/firebase-admin [external] (firebase-admin, cjs)");
 ;
-if (!__TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].apps.length) {
-    try {
-        __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].initializeApp();
-    } catch (error) {
-        console.error('Error en la inicialización de Firebase Admin SDK:', error);
+// Comprobación para asegurar que el código se ejecuta solo en el servidor.
+if ("TURBOPACK compile-time truthy", 1) {
+    if (!__TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].apps.length) {
+        try {
+            // Para que el Admin SDK funcione en Vercel, necesita las credenciales de la cuenta de servicio.
+            // Estas deben ser almacenadas como una variable de entorno en el proyecto de Vercel.
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+            __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].initializeApp({
+                credential: __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].credential.cert(serviceAccount)
+            });
+            console.log('Firebase Admin SDK inicializado correctamente.');
+        } catch (error) {
+            // Este error es común si la variable de entorno no está configurada en Vercel.
+            console.error('ERROR AL INICIALIZAR FIREBASE ADMIN SDK:', error);
+            console.error('Asegúrate de haber configurado la variable de entorno FIREBASE_SERVICE_ACCOUNT_KEY en Vercel con el JSON de tu cuenta de servicio.');
+        }
     }
 }
 async function getUserIdFromSession(sessionCookie) {
@@ -29,10 +40,15 @@ async function getUserIdFromSession(sessionCookie) {
         return null;
     }
     try {
-        const decodedClaims = await __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].auth().verifySessionCookie(sessionCookie, true);
+        const decodedClaims = await __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].auth().verifySessionCookie(sessionCookie, false);
         return decodedClaims.uid;
     } catch (error) {
-        console.error('Error al verificar la cookie de sesión:', error.code);
+        // Si el SDK no se inicializó, este error puede ocurrir.
+        if (error.code === 'auth/invalid-session-cookie') {
+            console.error("La cookie de sesión no es válida. Puede que haya expirado o el SDK de Admin no esté configurado correctamente.");
+        } else {
+            console.error('Error al verificar la cookie de sesión:', error.code);
+        }
         return null;
     }
 }

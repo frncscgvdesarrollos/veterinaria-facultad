@@ -62,8 +62,9 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/firebase/auth/dist/esm/index.esm.js [app-client] (ecmascript) <locals>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@firebase/auth/dist/esm/index.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/firebase.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/firebase.js [app-client] (ecmascript)"); // Asegúrate de exportar `db` desde tu config de firebase
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$firebase$2f$firestore$2f$dist$2f$esm$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/firebase/firestore/dist/esm/index.esm.js [app-client] (ecmascript) <locals>"); // Importamos funciones de Firestore
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@firebase/firestore/dist/index.esm.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.signature();
 'use client';
@@ -71,8 +72,6 @@ var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.sign
 ;
 ;
 ;
-// SE ELIMINA LA IMPORTACIÓN DE LA SERVER ACTION
-// import { completarPerfil } from '@/app/actions';
 const AuthContext = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContext"])();
 const useAuth = ()=>{
     _s();
@@ -82,97 +81,29 @@ _s(useAuth, "gDsCjeeItUuvgOWf1v4qoK9RF6k=");
 const AuthProvider = (param)=>{
     let { children } = param;
     _s1();
-    // El nombre correcto de la propiedad es 'user', no 'currentUser'
     const [user, setUser] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
-    const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
-    const loginWithGoogle = async ()=>{
-        const provider = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["GoogleAuthProvider"]();
-        try {
-            return await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["signInWithPopup"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], provider);
-        } catch (error) {
-            console.error("Error durante el inicio de sesión con Google:", error);
-        }
-    };
-    const loginWithEmail = async (email, password)=>{
-        try {
-            return await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["signInWithEmailAndPassword"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], email, password);
-        } catch (error) {
-            console.error("Error durante el inicio de sesión con email y contraseña:", error);
-            throw error;
-        }
-    };
-    /**
-     * Esta función AHORA solo se encarga de crear el usuario en Firebase Auth.
-     * Ya no necesita los datos del perfil.
-     */ const registerWithEmailAndPassword = async (email, password)=>{
-        try {
-            // Solo crea el usuario y devuelve el resultado.
-            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createUserWithEmailAndPassword"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], email, password);
-            return result;
-        } catch (error) {
-            console.error("Error durante el registro:", error);
-            throw error;
-        }
-    };
-    const resetPassword = async (email)=>{
-        try {
-            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["sendPasswordResetEmail"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], email);
-        } catch (error) {
-            console.error("Error al enviar el correo de restablecimiento de contraseña:", error);
-            throw error;
-        }
-    };
-    const changePassword = async (currentPassword, newPassword)=>{
-        const user = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"].currentUser;
-        if (!user || !user.email) {
-            throw new Error("No hay un usuario autenticado para realizar esta operación.");
-        }
-        const credential = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["EmailAuthProvider"].credential(user.email, currentPassword);
-        try {
-            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["reauthenticateWithCredential"])(user, credential);
-            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["updatePassword"])(user, newPassword);
-        } catch (error) {
-            console.error("Error al cambiar la contraseña:", error);
-            throw error;
-        }
-    };
-    const logout = async ()=>{
-        try {
-            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["signOut"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"]);
-            await fetch('/api/auth/session', {
-                method: 'DELETE'
-            });
-            // Redirigir a la raíz para un estado limpio.
-            window.location.href = '/';
-        } catch (error) {
-            console.error("Error durante el cierre de sesión:", error);
-        }
-    };
+    const [isLoggedIn, setIsLoggedIn] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "AuthProvider.useEffect": ()=>{
             const unsubscribe = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["onAuthStateChanged"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], {
-                "AuthProvider.useEffect.unsubscribe": async (currentUser)=>{
-                    setLoading(true);
-                    if (currentUser) {
-                        const idToken = await currentUser.getIdToken();
-                        await fetch('/api/auth/session', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                idToken
-                            })
-                        });
-                        setUser(currentUser);
+                "AuthProvider.useEffect.unsubscribe": async (userAuth)=>{
+                    if (userAuth) {
+                        const userDocRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["doc"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["db"], 'users', userAuth.uid);
+                        const userDocSnap = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getDoc"])(userDocRef);
+                        if (userDocSnap.exists()) {
+                            const userData = userDocSnap.data();
+                            setUser({
+                                ...userAuth,
+                                ...userData
+                            });
+                        } else {
+                            setUser(userAuth);
+                        }
+                        setIsLoggedIn(true);
                     } else {
-                        await fetch('/api/auth/session', {
-                            method: 'DELETE'
-                        }).catch({
-                            "AuthProvider.useEffect.unsubscribe": ()=>{}
-                        }["AuthProvider.useEffect.unsubscribe"]);
                         setUser(null);
+                        setIsLoggedIn(false);
                     }
                     setLoading(false);
                 }
@@ -182,30 +113,83 @@ const AuthProvider = (param)=>{
             })["AuthProvider.useEffect"];
         }
     }["AuthProvider.useEffect"], []);
+    const loginWithEmail = async (email, password)=>{
+        try {
+            const userCredential = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["signInWithEmailAndPassword"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], email, password);
+            const idToken = await userCredential.user.getIdToken();
+            await fetch('/api/auth/session', {
+                method: 'POST',
+                headers: {
+                    'Authorization': "Bearer ".concat(idToken)
+                }
+            });
+            return userCredential.user;
+        } catch (error) {
+            console.error("Error en loginWithEmail:", error);
+            throw error;
+        }
+    };
+    const loginWithGoogle = async ()=>{
+        const provider = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["GoogleAuthProvider"]();
+        try {
+            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["signInWithPopup"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], provider);
+            const idToken = await result.user.getIdToken();
+            await fetch('/api/auth/session', {
+                method: 'POST',
+                headers: {
+                    'Authorization': "Bearer ".concat(idToken)
+                }
+            });
+            return result.user;
+        } catch (error) {
+            console.error("Error en loginWithGoogle:", error);
+            throw error;
+        }
+    };
+    const signOut = async ()=>{
+        try {
+            await fetch('/api/auth/session', {
+                method: 'DELETE'
+            });
+            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["signOut"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"]);
+        } catch (error) {
+            console.error("Error en signOut:", error);
+            throw error;
+        }
+    };
+    const registerWithEmailAndPassword = async (email, password)=>{
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createUserWithEmailAndPassword"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], email, password);
+    };
+    const resetPassword = (email)=>{
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["sendPasswordResetEmail"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"], email);
+    };
+    const changePassword = async (currentPassword, newPassword)=>{
+        const credential = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["EmailAuthProvider"].credential(user.email, currentPassword);
+        await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["reauthenticateWithCredential"])(user, credential);
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["updatePassword"])(user, newPassword);
+    };
     const value = {
         user,
+        isLoggedIn,
         loading,
         loginWithGoogle,
         loginWithEmail,
         registerWithEmailAndPassword,
+        signOut,
         resetPassword,
         changePassword,
-        logout
+        logout: signOut
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(AuthContext.Provider, {
         value: value,
         children: children
     }, void 0, false, {
         fileName: "[project]/src/contexts/AuthContext.js",
-        lineNumber: 136,
+        lineNumber: 124,
         columnNumber: 9
     }, ("TURBOPACK compile-time value", void 0));
 };
-_s1(AuthProvider, "J17Kp8z+0ojgAqGoY5o3BCjwWms=", false, function() {
-    return [
-        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
-    ];
-});
+_s1(AuthProvider, "/n6jdiPL+Q/vDyWLYjIf4uIzpfE=");
 _c = AuthProvider;
 var _c;
 __turbopack_context__.k.register(_c, "AuthProvider");
@@ -239,9 +223,8 @@ const getInitials = (name)=>{
 };
 function Header() {
     _s();
-    const { user, logout, loading } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$contexts$2f$AuthContext$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"])();
-    // CORRECCIÓN: Usamos `displayName` del objeto de usuario de Firebase
-    const displayName = (user === null || user === void 0 ? void 0 : user.displayName) ? user.displayName.split(' ')[0] : 'Usuario';
+    const { user, isLoggedIn, logout } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$contexts$2f$AuthContext$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"])();
+    const displayName = (user === null || user === void 0 ? void 0 : user.name) ? user.name.split(' ')[0] : 'Usuario';
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("header", {
         className: "bg-white shadow-sm sticky top-0 z-50 w-full",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("nav", {
@@ -283,7 +266,7 @@ function Header() {
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex items-center gap-4 min-w-[250px] justify-end",
-                        children: !loading && (user ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        children: isLoggedIn ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "flex items-center gap-4",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -294,8 +277,8 @@ function Header() {
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/components/Header.jsx",
-                                    lineNumber: 43,
-                                    columnNumber: 37
+                                    lineNumber: 42,
+                                    columnNumber: 33
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden",
@@ -306,19 +289,19 @@ function Header() {
                                         height: 56
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/components/Header.jsx",
-                                        lineNumber: 47,
-                                        columnNumber: 45
-                                    }, this) : /* CORRECIÓN: Pasamos `displayName` para las iniciales */ /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                        children: getInitials(user.displayName)
+                                        lineNumber: 45,
+                                        columnNumber: 41
+                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        children: getInitials(user.name)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/components/Header.jsx",
-                                        lineNumber: 50,
-                                        columnNumber: 45
+                                        lineNumber: 47,
+                                        columnNumber: 41
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Header.jsx",
-                                    lineNumber: 44,
-                                    columnNumber: 37
+                                    lineNumber: 43,
+                                    columnNumber: 33
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                     onClick: logout,
@@ -326,14 +309,14 @@ function Header() {
                                     children: "Logout"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Header.jsx",
-                                    lineNumber: 53,
-                                    columnNumber: 37
+                                    lineNumber: 50,
+                                    columnNumber: 33
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/components/Header.jsx",
-                            lineNumber: 42,
-                            columnNumber: 33
+                            lineNumber: 41,
+                            columnNumber: 29
                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                             href: "/login",
                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -341,14 +324,14 @@ function Header() {
                                 children: "Iniciar Sesión"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/components/Header.jsx",
-                                lineNumber: 59,
-                                columnNumber: 37
+                                lineNumber: 56,
+                                columnNumber: 33
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/components/Header.jsx",
-                            lineNumber: 58,
-                            columnNumber: 33
-                        }, this))
+                            lineNumber: 55,
+                            columnNumber: 29
+                        }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Header.jsx",
                         lineNumber: 39,
@@ -371,7 +354,7 @@ function Header() {
         columnNumber: 9
     }, this);
 }
-_s(Header, "Wu+csSnf+1aKI+hP/dR6ZNNX/Cc=", false, function() {
+_s(Header, "FEqhLu0eO7cDXeALkuZ+m+lB0To=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$contexts$2f$AuthContext$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"]
     ];

@@ -1,24 +1,9 @@
 {
   "node": {
-    "607e2e33671e9af3b7c889b8ece695a8d12ed1593e": {
-      "workers": {
-        "app/turnos/peluqueria/page": {
-          "moduleId": "70284",
-          "async": false,
-          "exportedName": "completarPerfil",
-          "filename": "src/app/actions.js"
-        }
-      },
-      "layer": {
-        "app/turnos/peluqueria/page": "action-browser"
-      },
-      "exportedName": "completarPerfil",
-      "filename": "src/app/actions.js"
-    },
     "40f04a978b523f8db9a71e69d2ff55b681f0c487bd": {
       "workers": {
         "app/turnos/peluqueria/page": {
-          "moduleId": "70284",
+          "moduleId": "[project]/.next-internal/server/app/turnos/peluqueria/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "solicitarTurnoPeluqueria",
           "filename": "src/app/actions/turnosActions.js"

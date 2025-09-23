@@ -1,44 +1,13 @@
+'use client';
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import Link from 'next/link'; // Importar Link
-import admin from '@/lib/firebaseAdmin';
-import { getUserIdFromSession } from '@/lib/firebaseAdmin';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import PrivateRoute from '@/app/components/PrivateRoute';
-import Footer from '@/app/components/Footer';
 import AccionesTurnoUsuario from '@/app/components/AccionesTurnoUsuario';
 import { FiClock, FiCheckCircle, FiXCircle, FiCalendar, FiSun, FiMoon, FiScissors } from 'react-icons/fi';
-
-async function getUserTurnos(userId) {
-    if (!userId) return [];
-    const firestore = admin.firestore();
-    try {
-        const turnosSnap = await firestore.collection('turnos').where('clienteId', '==', userId).get();
-        if (turnosSnap.empty) return [];
-
-        const turnosData = turnosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        turnosData.sort((a, b) => (new Date(b.fecha)) - (new Date(a.fecha)));
-
-        const turnosEnriquecidos = await Promise.all(turnosData.map(async (turno) => {
-            let mascotaNombre = 'Mascota desconocida';
-            if (turno.mascotaId) {
-                const mascotaSnap = await firestore.collection('users').doc(turno.clienteId).collection('mascotas').doc(turno.mascotaId).get();
-                if (mascotaSnap.exists) {
-                    mascotaNombre = mascotaSnap.data().nombre;
-                }
-            }
-            return {
-                ...turno,
-                mascotaNombre,
-                fechaFormateada: new Date(turno.fecha + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
-            };
-        }));
-        return turnosEnriquecidos;
-    } catch (error) {
-        console.error("Error al obtener los turnos en el servidor:", error);
-        return [];
-    }
-}
 
 function EstadoBadge({ estado }) {
     const baseClasses = "px-3 py-1 text-sm font-semibold rounded-full inline-flex items-center shadow-sm";
@@ -58,23 +27,77 @@ function EstadoBadge({ estado }) {
     );
 }
 
-export default async function MisTurnosPage() {
-    const sessionCookie = cookies().get('__session')?.value || '';
-    const userId = await getUserIdFromSession(sessionCookie);
+const MisTurnosContent = () => {
+    const { user } = useAuth();
+    const [turnos, setTurnos] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    if (!userId) {
-        redirect('/login');
+    useEffect(() => {
+        if (!user) return;
+
+        const fetchTurnos = async () => {
+            try {
+                const turnosRef = collection(db, 'turnos');
+                const q = query(turnosRef, where('clienteId', '==', user.uid), orderBy('fecha', 'desc'));
+                const turnosSnap = await getDocs(q);
+                
+                const turnosData = await Promise.all(turnosSnap.docs.map(async (d) => {
+                    const turno = { id: d.id, ...d.data() };
+                    let mascotaNombre = 'Mascota desconocida';
+                    if (turno.mascotaId) {
+                        const mascotaRef = doc(db, 'users', user.uid, 'mascotas', turno.mascotaId);
+                        const mascotaSnap = await getDoc(mascotaRef);
+                        if (mascotaSnap.exists()) {
+                            mascotaNombre = mascotaSnap.data().nombre;
+                        }
+                    }
+                    return {
+                        ...turno,
+                        mascotaNombre,
+                        fechaFormateada: new Date(turno.fecha + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+                    };
+                }));
+
+                setTurnos(turnosData);
+            } catch (error) {
+                console.error("Error al obtener los turnos:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTurnos();
+    }, [user]);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen bg-gray-50">
+                 <div className="loader"></div>
+                 <style jsx>{`
+                    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                `}</style>
+            </div>
+        );
     }
 
-    const turnos = await getUserTurnos(userId);
-
     return (
-        <PrivateRoute>
-            <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-                <div className="container mx-auto px-4 py-12">
-                    <h1 className="text-4xl font-extrabold text-center mb-12 text-gray-800">Mis Turnos</h1>
+        <div className="bg-gray-50 p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
+                     <div className="flex items-center mb-8">
+                        <Link href="/" legacyBehavior>
+                            <a className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mr-6">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                <span className="ml-1 font-medium">Volver</span>
+                            </a>
+                        </Link>
+                        <h1 className="text-2xl font-bold text-gray-800 whitespace-nowrap">Mis Turnos</h1>
+                        <div className="w-full ml-6 border-b-2 border-dotted border-gray-300"></div>
+                    </div>
+
                     {turnos.length === 0 ? (
-                        <div className="text-center bg-white p-12 rounded-2xl shadow-lg border border-gray-100">
+                        <div className="text-center py-12">
                             <FiCalendar className="mx-auto text-6xl text-violet-300 mb-4"/>
                             <h2 className="text-2xl font-semibold text-gray-700 mb-2">Sin Turnos Solicitados</h2>
                             <p className="text-gray-500 mb-6">Parece que tus mascotas aún no tienen citas. ¡Vamos a solucionarlo!</p>
@@ -94,16 +117,8 @@ export default async function MisTurnosPage() {
                                             </div>
                                             <div className="text-sm text-gray-600 space-y-2 pl-1">
                                                 <p className="flex items-center"><FiCalendar className="mr-3 text-violet-500" /> {turno.fechaFormateada}</p>
-                                                <p className="flex items-center capitalize">
-                                                    {turno.turno === 'manana' ? <FiSun className="mr-3 text-yellow-500"/> : <FiMoon className="mr-3 text-blue-500"/>} 
-                                                    Turno {turno.turno}
-                                                </p>
-                                                {turno.servicios && turno.servicios.length > 0 && (
-                                                    <p className="flex items-center capitalize">
-                                                        <FiScissors className="mr-3 text-gray-500"/> 
-                                                        Servicios: {turno.servicios.join(', ')}
-                                                    </p>
-                                                )}
+                                                <p className="flex items-center capitalize"><FiSun className="mr-3 text-yellow-500"/> Turno {turno.turno}</p>
+                                                {turno.servicios && <p className="flex items-center capitalize"><FiScissors className="mr-3 text-gray-500"/> Servicios: {turno.servicios.join(', ')}</p>}
                                             </div>
                                         </div>
                                         <AccionesTurnoUsuario turno={turno} />
@@ -113,8 +128,15 @@ export default async function MisTurnosPage() {
                         </div>
                     )}
                 </div>
-            </main>
-            <Footer />
+            </div>
+        </div>
+    );
+}
+
+export default function MisTurnosPage() {
+    return (
+        <PrivateRoute>
+            <MisTurnosContent />
         </PrivateRoute>
     );
 }

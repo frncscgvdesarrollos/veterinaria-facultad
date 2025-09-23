@@ -7,8 +7,8 @@ import { useEffect, useState } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import Link from 'next/link';
 
-// Componente reutilizable para los campos del formulario
 const FormInput = ({ id, name, type, placeholder, value, onChange, required = true, label }) => (
     <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={id}>{label}</label>
@@ -21,17 +21,12 @@ const FormInput = ({ id, name, type, placeholder, value, onChange, required = tr
 );
 
 export default function MisDatosPage() {
-    const { user, loading, changePassword } = useAuth(); // Importamos changePassword
+    const { user, loading, changePassword } = useAuth();
     const router = useRouter();
     const [profileData, setProfileData] = useState(null);
     const [profileLoading, setProfileLoading] = useState(true);
 
-    // Estado para el formulario de cambio de contraseña
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
+    const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
     useEffect(() => {
         if (loading) return;
@@ -60,31 +55,22 @@ export default function MisDatosPage() {
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         const { currentPassword, newPassword, confirmPassword } = passwordData;
-
         if (newPassword !== confirmPassword) {
             toast.error('La nueva contraseña y su confirmación no coinciden.');
             return;
         }
-
         if (newPassword.length < 6) {
             toast.error('La nueva contraseña debe tener al menos 6 caracteres.');
             return;
         }
-
         const toastId = toast.loading('Cambiando contraseña...');
-
         try {
             await changePassword(currentPassword, newPassword);
             toast.success('¡Contraseña actualizada con éxito!', { id: toastId });
-            // Limpiar los campos por seguridad
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         } catch (error) {
             console.error(error);
-            if (error.code === 'auth/wrong-password') {
-                toast.error('La contraseña actual es incorrecta.', { id: toastId });
-            } else {
-                toast.error('Hubo un error al cambiar la contraseña.', { id: toastId });
-            }
+            toast.error(error.code === 'auth/wrong-password' ? 'La contraseña actual es incorrecta.' : 'Hubo un error al cambiar la contraseña.', { id: toastId });
         }
     };
 
@@ -93,18 +79,8 @@ export default function MisDatosPage() {
             <div className="flex justify-center items-center h-screen bg-gray-50">
                  <div className="loader"></div>
                  <style jsx>{`
-                    .loader {
-                        border: 4px solid #f3f3f3;
-                        border-top: 4px solid #3498db;
-                        border-radius: 50%;
-                        width: 40px;
-                        height: 40px;
-                        animation: spin 1s linear infinite;
-                    }
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
+                    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 `}</style>
             </div>
         );
@@ -114,8 +90,18 @@ export default function MisDatosPage() {
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
             <Toaster position="bottom-center" />
             <div className="max-w-4xl mx-auto">
-                <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4">Mis Datos</h1>
+                 <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
+                    {/* Cabecera con navegación y título */}
+                    <div className="flex items-center mb-8">
+                        <Link href="/" legacyBehavior>
+                            <a className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mr-6">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                <span className="ml-1 font-medium">Volver</span>
+                            </a>
+                        </Link>
+                        <h1 className="text-2xl font-bold text-gray-800 whitespace-nowrap">Mis Datos</h1>
+                        <div className="w-full ml-6 border-b-2 border-dotted border-gray-300"></div>
+                    </div>
                     
                     {profileData ? (
                         <div className="space-y-4 text-gray-700 mb-10">

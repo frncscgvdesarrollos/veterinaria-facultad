@@ -1,4 +1,4 @@
-'use client'; // Convertimos este componente a Cliente para usar hooks y PrivateRoute
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -8,7 +8,6 @@ import { db } from '@/lib/firebase';
 import PrivateRoute from '@/app/components/PrivateRoute';
 import { FaPlusCircle, FaHeart } from 'react-icons/fa';
 
-// El componente MascotaCard no necesita cambios, pero debe permanecer aquí.
 const MascotaCard = ({ mascota }) => {
     const fechaNac = new Date(mascota.fechaNacimiento).toLocaleDateString('es-AR');
     return (
@@ -35,7 +34,6 @@ const MascotaCard = ({ mascota }) => {
     );
 };
 
-// El contenido real de la página, ahora separado.
 const MisMascotasContent = () => {
     const { user } = useAuth();
     const [mascotas, setMascotas] = useState([]);
@@ -62,47 +60,56 @@ const MisMascotasContent = () => {
     }, [user]);
 
     if (loading) {
-        return <div>Cargando tus mascotas...</div>; 
+        return <div className="flex justify-center items-center h-screen"><div className="loader"></div></div>; 
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="bg-gray-50 p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-center mb-10">
-                    <h1 className="text-4xl font-extrabold text-gray-900">Mis Mascotas</h1>
-                    <Link href="/mascotas/nueva">
-                        <span className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-5 rounded-full transition-transform duration-300 transform hover:scale-105 shadow-lg">
-                            <FaPlusCircle />
-                            Añadir Mascota
-                        </span>
-                    </Link>
-                </div>
+                 <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
+                    {/* Cabecera con navegación y título */}
+                    <div className="flex items-center mb-8">
+                        <Link href="/" legacyBehavior>
+                            <a className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mr-6">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                <span className="ml-1 font-medium">Volver</span>
+                            </a>
+                        </Link>
+                        <h1 className="text-2xl font-bold text-gray-800 whitespace-nowrap">Mis Mascotas</h1>
+                        <div className="w-full ml-6 border-b-2 border-dotted border-gray-300"></div>
+                        <Link href="/mascotas/nueva" legacyBehavior>
+                            <a className="ml-6 flex-shrink-0 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-full transition-transform duration-300 transform hover:scale-105 shadow-lg">
+                                <FaPlusCircle />
+                                Añadir
+                            </a>
+                        </Link>
+                    </div>
 
-                {mascotas.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {mascotas.map(mascota => (
-                            <MascotaCard key={mascota.id} mascota={mascota} />
-                        ))}
-                    </div>
-                ) : (
-                     <div className="text-center bg-white p-12 rounded-2xl shadow-md">
-                        <h3 className="text-2xl font-semibold text-gray-800">Aún no tienes mascotas registradas</h3>
-                        <p className="mt-4 text-gray-600">¡No esperes más! Añade a tu primer compañero.</p>
-                        <div className="mt-8">
-                            <Link href="/mascotas/nueva">
-                                <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-full transition-transform duration-300 transform hover:scale-105 shadow-lg">
-                                    Registrar mi Primera Mascota
-                                </span>
-                            </Link>
+                    {mascotas.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {mascotas.map(mascota => (
+                                <MascotaCard key={mascota.id} mascota={mascota} />
+                            ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                         <div className="text-center py-12">
+                            <h3 className="text-2xl font-semibold text-gray-800">Aún no tienes mascotas registradas</h3>
+                            <p className="mt-4 text-gray-600">¡No esperes más! Añade a tu primer compañero.</p>
+                            <div className="mt-8">
+                                <Link href="/mascotas/nueva" legacyBehavior>
+                                    <a className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-full transition-transform duration-300 transform hover:scale-105 shadow-lg">
+                                        Registrar mi Primera Mascota
+                                    </a>
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
-// La página ahora solo envuelve el contenido con PrivateRoute
 export default function MisMascotasPage() {
     return (
         <PrivateRoute>
