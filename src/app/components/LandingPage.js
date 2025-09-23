@@ -9,7 +9,7 @@ export default function LandingPage() {
       className="min-h-screen flex items-center justify-center bg-cover bg-center p-4"
       style={{ backgroundImage: "url('/patron1.jpg')" }}
     >
-      {/* The centered card with blur effect */}
+      {/* Main centered card with blur effect */}
       <div className="relative w-full max-w-lg mx-auto p-8 rounded-2xl shadow-2xl bg-white/25 backdrop-blur-lg text-gray-800">
         
         {/* Faint logo in the background of the card */}
