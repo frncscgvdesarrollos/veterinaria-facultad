@@ -13,7 +13,7 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase'; // AsegÃºrate de exportar `db` desde tu config de firebase
+import { auth, db } from '@/lib/firebase'; // Asegúrate de exportar `db` desde tu config de firebase
 import { doc, getDoc } from 'firebase/firestore'; // Importamos funciones de Firestore
 
 const AuthContext = createContext();
@@ -23,31 +23,25 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    // AÃ±adimos un estado para saber si el usuario estÃ¡ logueado
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
             if (userAuth) {
-                // --- MEJORA: BUSCAMOS DATOS ADICIONALES EN FIRESTORE ---
                 const userDocRef = doc(db, 'users', userAuth.uid);
                 const userDocSnap = await getDoc(userDocRef);
 
                 if (userDocSnap.exists()) {
-                    // Si el documento existe, fusionamos los datos de auth y de la DB
                     const userData = userDocSnap.data();
                     setUser({ 
                         ...userAuth, 
-                        ...userData // Esto aÃ±adirÃ¡ campos como `name`, `role`, etc.
+                        ...userData
                     });
                 } else {
-                    // Si no hay documento, usamos solo los datos de auth.
-                    // PodrÃ­amos crear un documento aquÃ­ si fuera necesario al registrarse.
                     setUser(userAuth);
                 }
                 setIsLoggedIn(true);
             } else {
-                // Si no hay usuario de Firebase Auth, reseteamos el estado
                 setUser(null);
                 setIsLoggedIn(false);
             }
@@ -65,7 +59,6 @@ export const AuthProvider = ({ children }) => {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${idToken}` },
             });
-            // El useEffect se encargarÃ¡ de actualizar el estado del usuario
             return userCredential.user;
         } catch (error) {
             console.error("Error en loginWithEmail:", error);
@@ -94,7 +87,6 @@ export const AuthProvider = ({ children }) => {
         try {
             await fetch('/api/auth/session', { method: 'DELETE' });
             await firebaseSignOut(auth);
-            // El useEffect se encargarÃ¡ de limpiar el estado
         } catch (error) {
             console.error("Error en signOut:", error);
             throw error;
@@ -117,15 +109,15 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
-        isLoggedIn, // Exponemos el booleano para mayor comodidad
+        isLoggedIn,
         loading,
         loginWithGoogle,
         loginWithEmail,
         registerWithEmailAndPassword,
-        signOut, // Cambiado el nombre a `signOut` para consistencia
+        signOut,
         resetPassword,
         changePassword,
-        logout: signOut // Exportamos `logout` como un alias de `signOut` para que el Header no se rompa
+        logout: signOut
     };
 
     return (

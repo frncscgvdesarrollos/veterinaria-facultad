@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// FunciÃ³n para obtener iniciales para el avatar de fallback
+// Función para obtener iniciales para el avatar de fallback
 const getInitials = (name) => {
   if (!name) return '?';
   const names = name.split(' ');
@@ -13,10 +13,8 @@ const getInitials = (name) => {
 };
 
 export default function Header() {
-    // CORRECCIÃ“N: Obtenemos el estado completo (isLoggedIn, user, logout) del contexto.
     const { user, isLoggedIn, logout } = useAuth(); 
     
-    // La lÃ³gica ahora se basa en el `user` del contexto.
     const displayName = user?.name ? user.name.split(' ')[0] : 'Usuario';
 
     return (
@@ -39,12 +37,10 @@ export default function Header() {
                     <div className="flex-grow"></div>
 
                     <div className="flex items-center gap-4 min-w-[250px] justify-end">
-                        {/* CORRECCIÃ“N: La lÃ³gica se basa en `isLoggedIn` del contexto */}
                         {isLoggedIn ? (
                             <div className="flex items-center gap-4">
                                 <span className="hidden lg:inline text-md font-medium text-gray-700">Hola, {displayName}</span>
                                 <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
-                                    {/* CORRECCIÃ“N: Se usan los datos del `user` del contexto */}
                                     {user.photoURL ? (
                                         <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
                                     ) : (
@@ -57,7 +53,7 @@ export default function Header() {
                             </div>
                         ) : (
                             <Link href="/login">
-                                <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar SesiÃ³n</span>
+                                <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
                             </Link>
                         )}
                     </div>

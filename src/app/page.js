@@ -1,4 +1,4 @@
-'use client'; // Convertimos la pÃ¡gina en un Componente de Cliente
+'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
 import Dashboard from '@/app/components/Dashboard';
@@ -7,10 +7,8 @@ import SubHeader from './components/SubHeader';
 import { useEffect } from 'react';
 
 export default function HomePage() {
-    const { isLoggedIn, loading, user } = useAuth(); // Usamos el hook para obtener el estado de auth
+    const { isLoggedIn, loading, user } = useAuth();
 
-    // Mientras se estÃ¡ verificando el estado de autenticaciÃ³n, podemos mostrar un loader
-    // para evitar un parpadeo entre la landing y el dashboard.
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -19,7 +17,6 @@ export default function HomePage() {
         );
     }
 
-    // Si el usuario estÃ¡ logueado, mostramos SubHeader y Dashboard.
     if (isLoggedIn) {
         return (
             <>
@@ -29,6 +26,5 @@ export default function HomePage() {
         );
     }
 
-    // Si no estÃ¡ logueado, mostramos la Landing Page.
     return <LandingPage />;
 }
