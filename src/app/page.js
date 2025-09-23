@@ -1,30 +1,16 @@
-'use client';
+// Este es ahora un Componente de Servidor. No necesita 'use client'.
 
-import { useAuth } from '@/contexts/AuthContext';
-import Dashboard from '@/app/components/Dashboard';
-import LandingPage from '@/app/components/LandingPage';
-import SubHeader from './components/SubHeader';
-import { useEffect } from 'react';
+import HomePageClient from './components/HomePageClient';
+import GaleriaAdopciones from './components/GaleriaAdopciones'; // Componente de Servidor
+import VistaTienda from './components/VistaTienda'; // Componente de Cliente (pero lo tratamos aquí)
 
 export default function HomePage() {
-    const { isLoggedIn, loading, user } = useAuth();
+  // Creamos un objeto con los componentes que queremos pasar al cliente
+  const serverComponents = {
+    galeria: <GaleriaAdopciones />,
+    tienda: <VistaTienda />,
+  };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <p className="text-xl font-semibold text-gray-700">Cargando...</p>
-            </div>
-        );
-    }
-
-    if (isLoggedIn) {
-        return (
-            <>
-                <SubHeader />
-                <Dashboard />
-            </>
-        );
-    }
-
-    return <LandingPage />;
+  // Renderizamos el componente de cliente y le pasamos los componentes de servidor como props
+  return <HomePageClient serverComponents={serverComponents} />;
 }

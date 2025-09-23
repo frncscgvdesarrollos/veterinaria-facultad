@@ -1,8 +1,6 @@
 import Link from 'next/link';
-import GaleriaAdopciones from './GaleriaAdopciones';
-import VistaTienda from './VistaTienda';
 
-export default function Dashboard() {
+export default function Dashboard({ children }) {
   return (
     <main 
       className="flex-grow bg-cover bg-center"
@@ -28,12 +26,9 @@ export default function Dashboard() {
               </div>
           </section>
 
-          {/* ========= SECCIÓN DE ADOPCIONES (SERVIDOR) ========= */}
-          {/* @ts-ignore -> https://github.com/vercel/next.js/issues/42292 */}
-          <GaleriaAdopciones />
+          {/* Aquí se renderizarán los componentes de servidor (como GaleriaAdopciones) */}
+          {children}
 
-          {/* ========= SECCIÓN DE TIENDA (CLIENTE) ========= */}
-          <VistaTienda />
         </div>
       </div>
     </main>
