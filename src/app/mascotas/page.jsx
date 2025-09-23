@@ -85,7 +85,8 @@ export default async function MisMascotasPage() {
 
     let uid;
     try {
-        const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie.value, true);
+        // CAMBIO DE DIAGNÓSTICO: Se cambia a 'false' para desactivar la comprobación de revocación.
+        const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie.value, false);
         uid = decodedClaims.uid;
     } catch (error) {
         console.error("Error de autenticación de sesión:", error);
