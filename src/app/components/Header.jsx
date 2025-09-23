@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// Función para obtener iniciales para el avatar de fallback
+// FunciÃ³n para obtener iniciales para el avatar de fallback
 const getInitials = (name) => {
   if (!name) return '?';
   const names = name.split(' ');
@@ -12,13 +12,12 @@ const getInitials = (name) => {
   return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
 };
 
-// 1. EL COMPONENTE AHORA RECIBE `userData` COMO PROP
-export default function Header({ userData }) {
-    // 2. USAMOS `useAuth` ÚNICAMENTE PARA LA FUNCIÓN DE LOGOUT
-    const { logout } = useAuth(); 
+export default function Header() {
+    // CORRECCIÃ“N: Obtenemos el estado completo (isLoggedIn, user, logout) del contexto.
+    const { user, isLoggedIn, logout } = useAuth(); 
     
-    // El nombre de usuario se extrae de las props
-    const displayName = userData?.name ? userData.name.split(' ')[0] : 'Usuario';
+    // La lÃ³gica ahora se basa en el `user` del contexto.
+    const displayName = user?.name ? user.name.split(' ')[0] : 'Usuario';
 
     return (
         <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
@@ -40,16 +39,16 @@ export default function Header({ userData }) {
                     <div className="flex-grow"></div>
 
                     <div className="flex items-center gap-4 min-w-[250px] justify-end">
-                        {/* 3. LA LÓGICA SE BASA EN `userData.isLoggedIn` */}
-                        {userData.isLoggedIn ? (
+                        {/* CORRECCIÃ“N: La lÃ³gica se basa en `isLoggedIn` del contexto */}
+                        {isLoggedIn ? (
                             <div className="flex items-center gap-4">
                                 <span className="hidden lg:inline text-md font-medium text-gray-700">Hola, {displayName}</span>
                                 <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
-                                    {/* 4. SE USA `userData.photoURL` Y `userData.name` */}
-                                    {userData.photoURL ? (
-                                        <Image src={userData.photoURL} alt="Avatar del usuario" width={56} height={56} />
+                                    {/* CORRECCIÃ“N: Se usan los datos del `user` del contexto */}
+                                    {user.photoURL ? (
+                                        <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
                                     ) : (
-                                        <span>{getInitials(userData.name)}</span>
+                                        <span>{getInitials(user.name)}</span>
                                     )}
                                 </div>
                                 <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
@@ -58,7 +57,7 @@ export default function Header({ userData }) {
                             </div>
                         ) : (
                             <Link href="/login">
-                                <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
+                                <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar SesiÃ³n</span>
                             </Link>
                         )}
                     </div>

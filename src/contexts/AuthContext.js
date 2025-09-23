@@ -13,7 +13,8 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase'; // AsegÃºrate de exportar `db` desde tu config de firebase
+import { doc, getDoc } from 'firebase/firestore'; // Importamos funciones de Firestore
 
 const AuthContext = createContext();
 
@@ -22,40 +23,53 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    // AÃ±adimos un estado para saber si el usuario estÃ¡ logueado
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    // useEffect ahora solo se encarga de sincronizar el estado del usuario con React.
-    // Ya no maneja la creación/eliminación de cookies.
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
+            if (userAuth) {
+                // --- MEJORA: BUSCAMOS DATOS ADICIONALES EN FIRESTORE ---
+                const userDocRef = doc(db, 'users', userAuth.uid);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists()) {
+                    // Si el documento existe, fusionamos los datos de auth y de la DB
+                    const userData = userDocSnap.data();
+                    setUser({ 
+                        ...userAuth, 
+                        ...userData // Esto aÃ±adirÃ¡ campos como `name`, `role`, etc.
+                    });
+                } else {
+                    // Si no hay documento, usamos solo los datos de auth.
+                    // PodrÃ­amos crear un documento aquÃ­ si fuera necesario al registrarse.
+                    setUser(userAuth);
+                }
+                setIsLoggedIn(true);
+            } else {
+                // Si no hay usuario de Firebase Auth, reseteamos el estado
+                setUser(null);
+                setIsLoggedIn(false);
+            }
             setLoading(false);
         });
         return () => unsubscribe();
     }, []);
 
-    // --- FUNCIONES DE LOGIN --- //
     const loginWithEmail = async (email, password) => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const idToken = await userCredential.user.getIdToken();
 
-            // Creamos la cookie de sesión ANTES de que la función termine.
-            const response = await fetch('/api/auth/session', {
+            await fetch('/api/auth/session', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${idToken}`,
-                },
+                headers: { 'Authorization': `Bearer ${idToken}` },
             });
-
-            if (!response.ok) {
-                throw new Error('No se pudo crear la sesión en el servidor.');
-            }
-
+            // El useEffect se encargarÃ¡ de actualizar el estado del usuario
             return userCredential.user;
-
         } catch (error) {
             console.error("Error en loginWithEmail:", error);
-            throw error; // Relanzamos el error para que el componente de login lo maneje
+            throw error;
         }
     };
 
@@ -65,15 +79,10 @@ export const AuthProvider = ({ children }) => {
             const result = await signInWithPopup(auth, provider);
             const idToken = await result.user.getIdToken();
 
-            const response = await fetch('/api/auth/session', {
+            await fetch('/api/auth/session', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${idToken}` },
             });
-
-            if (!response.ok) {
-                throw new Error('No se pudo crear la sesión con Google en el servidor.');
-            }
-            // La redirección y el manejo del usuario se harán en la página de login
             return result.user;
         } catch (error) {
             console.error("Error en loginWithGoogle:", error);
@@ -81,22 +90,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // --- FUNCIÓN DE LOGOUT --- //
     const signOut = async () => {
         try {
-            // Primero, eliminamos la cookie de sesión del servidor.
             await fetch('/api/auth/session', { method: 'DELETE' });
-            // Luego, cerramos la sesión de Firebase.
             await firebaseSignOut(auth);
+            // El useEffect se encargarÃ¡ de limpiar el estado
         } catch (error) {
             console.error("Error en signOut:", error);
             throw error;
         }
     };
-    
-    // --- OTRAS FUNCIONES (sin cambios mayores) --- //
+
     const registerWithEmailAndPassword = async (email, password) => {
-        // La creación de la sesión post-registro se manejará por separado
         return createUserWithEmailAndPassword(auth, email, password);
     };
 
@@ -112,18 +117,20 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        isLoggedIn, // Exponemos el booleano para mayor comodidad
         loading,
         loginWithGoogle,
         loginWithEmail,
         registerWithEmailAndPassword,
-        signOut,
+        signOut, // Cambiado el nombre a `signOut` para consistencia
         resetPassword,
         changePassword,
+        logout: signOut // Exportamos `logout` como un alias de `signOut` para que el Header no se rompa
     };
 
     return (
         <AuthContext.Provider value={value}>
-            {children} 
+            {children}
         </AuthContext.Provider>
     );
 };
