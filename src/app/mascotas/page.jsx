@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers';
 import admin from '@/lib/firebaseAdmin';
 import Link from 'next/link';
+import { getUserIdFromSession } from '@/lib/firebaseAdmin'; // Importamos la función centralizada
 import { FaPlusCircle, FaHeart, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 
 async function getUserMascotas(uid) {
@@ -72,28 +73,15 @@ const UnauthorizedView = () => (
 );
 
 
-
-
 export default async function MisMascotasPage() {
-    const cookieStore = cookies();
+    const sessionCookie = cookies().get('__session')?.value || '';
+    const uid = await getUserIdFromSession(sessionCookie); // Usamos la función centralizada
 
-    const sessionCookie = cookieStore.get('__session');
-
-    if (!sessionCookie) {
+    if (!uid) {
         return <UnauthorizedView />;
     }
 
-    let uid;
-    try {
-        // CAMBIO DE DIAGNÓSTICO: Se cambia a 'false' para desactivar la comprobación de revocación.
-        const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie.value, false);
-        uid = decodedClaims.uid;
-    } catch (error) {
-        console.error("Error de autenticación de sesión:", error);
-        return <UnauthorizedView />;
-    }
-
-    const mascotas = uid ? await getUserMascotas(uid) : [];
+    const mascotas = await getUserMascotas(uid);
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

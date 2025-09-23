@@ -21,7 +21,8 @@ export async function getUserIdFromSession(sessionCookie) {
     return null;
   }
   try {
-    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    // CAMBIO DE DIAGNÓSTICO: Se cambia a 'false' para desactivar la comprobación de revocación.
+    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, false);
     return decodedClaims.uid;
   } catch (error) {
     console.error('Error al verificar la cookie de sesión:', error.code);
