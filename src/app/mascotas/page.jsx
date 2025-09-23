@@ -1,27 +1,16 @@
+'use client'; // Convertimos este componente a Cliente para usar hooks y PrivateRoute
 
-import { cookies } from 'next/headers';
-import admin from '@/lib/firebaseAdmin';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getUserIdFromSession } from '@/lib/firebaseAdmin'; // Importamos la función centralizada
-import { FaPlusCircle, FaHeart, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase'; 
+import PrivateRoute from '@/app/components/PrivateRoute';
+import { FaPlusCircle, FaHeart } from 'react-icons/fa';
 
-async function getUserMascotas(uid) {
-    const firestore = admin.firestore();
-    try {
-        const mascotasSnap = await firestore.collection('users').doc(uid).collection('mascotas').orderBy('createdAt', 'desc').get();
-        if (mascotasSnap.empty) {
-            return [];
-        }
-        return mascotasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-        console.error("Error al obtener las mascotas:", error);
-        return []; 
-    }
-}
-
+// El componente MascotaCard no necesita cambios, pero debe permanecer aquí.
 const MascotaCard = ({ mascota }) => {
     const fechaNac = new Date(mascota.fechaNacimiento).toLocaleDateString('es-AR');
-
     return (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 relative">
             {mascota.enAdopcion && (
@@ -37,7 +26,7 @@ const MascotaCard = ({ mascota }) => {
                 <p className="text-md text-gray-600"><span className="font-semibold">Nacimiento:</span> {fechaNac}</p>
             </div>
             <div className="bg-gray-50 p-4 flex justify-around">
-                 <Link href={`/mascotas/${mascota.id}/carnet`}>
+                <Link href={`/mascotas/${mascota.id}/carnet`}>
                     <span className="text-sm font-medium text-violet-600 hover:text-violet-800 transition-colors">Ver Carnet</span>
                 </Link>
                 <button className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">Editar</button>
@@ -46,42 +35,35 @@ const MascotaCard = ({ mascota }) => {
     );
 };
 
-// Componente para usuarios no autenticados
-const UnauthorizedView = () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-lg w-full text-center bg-white p-12 rounded-2xl shadow-xl border border-gray-100">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Acceso Restringido</h2>
-            <p className="mt-4 text-lg text-gray-600">
-                Por favor, inicia sesión para poder ver y gestionar tus mascotas.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row sm:justify-center gap-4">
-                <Link href="/login">
-                    <span className="w-full inline-flex justify-center items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-5 rounded-full transition-transform duration-300 transform hover:scale-105 shadow-lg">
-                        <FaSignInAlt />
-                        Iniciar Sesión
-                    </span>
-                </Link>
-                <Link href="/registro">
-                     <span className="w-full inline-flex justify-center items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-5 rounded-full transition-transform duration-300 transform hover:scale-105">
-                        <FaUserPlus />
-                        Crear Cuenta
-                    </span>
-                </Link>
-            </div>
-        </div>
-    </div>
-);
+// El contenido real de la página, ahora separado.
+const MisMascotasContent = () => {
+    const { user } = useAuth();
+    const [mascotas, setMascotas] = useState([]);
+    const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        if (!user) return;
 
-export default async function MisMascotasPage() {
-    const sessionCookie = cookies().get('__session')?.value || '';
-    const uid = await getUserIdFromSession(sessionCookie); // Usamos la función centralizada
+        const fetchMascotas = async () => {
+            try {
+                const mascotasRef = collection(db, 'users', user.uid, 'mascotas');
+                const q = query(mascotasRef, orderBy('createdAt', 'desc'));
+                const snapshot = await getDocs(q);
+                const mascotasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setMascotas(mascotasData);
+            } catch (error) {
+                console.error("Error al obtener las mascotas:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    if (!uid) {
-        return <UnauthorizedView />;
+        fetchMascotas();
+    }, [user]);
+
+    if (loading) {
+        return <div>Cargando tus mascotas...</div>; 
     }
-
-    const mascotas = await getUserMascotas(uid);
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -103,9 +85,9 @@ export default async function MisMascotasPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center bg-white p-12 rounded-2xl shadow-md">
+                     <div className="text-center bg-white p-12 rounded-2xl shadow-md">
                         <h3 className="text-2xl font-semibold text-gray-800">Aún no tienes mascotas registradas</h3>
-                        <p className="mt-4 text-gray-600">¡No esperes más! Añade a tu primer compañero para llevar un registro de su salud y turnos.</p>
+                        <p className="mt-4 text-gray-600">¡No esperes más! Añade a tu primer compañero.</p>
                         <div className="mt-8">
                             <Link href="/mascotas/nueva">
                                 <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-full transition-transform duration-300 transform hover:scale-105 shadow-lg">
@@ -117,5 +99,14 @@ export default async function MisMascotasPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+// La página ahora solo envuelve el contenido con PrivateRoute
+export default function MisMascotasPage() {
+    return (
+        <PrivateRoute>
+            <MisMascotasContent />
+        </PrivateRoute>
     );
 }

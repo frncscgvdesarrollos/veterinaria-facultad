@@ -8,21 +8,19 @@ import admin from './firebaseAdmin';
  * @returns {Promise<import('firebase-admin/auth').DecodedIdToken | null>} El token decodificado del usuario o null si no hay sesión.
  */
 export async function getCurrentUser() {
-  // CORREGIDO: Se usa await y se busca la cookie '__session'
-  const sessionCookie = (await cookies().get('__session'))?.value || '';
+  // CORREGIDO: Usando '__session' y sin await en cookies()
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('__session')?.value || '';
 
-  // Si no hay cookie, no hay usuario.
   if (!sessionCookie) {
     return null;
   }
 
   try {
-    // Se verifica la cookie de sesión con Firebase Admin.
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
     return decodedClaims;
   } catch (error) {
-    // La cookie no es válida (expiró, fue revocada, etc.)
-    console.error('Error verifying session cookie:', error);
+    // Este error es esperado si la cookie es inválida o ha expirado.
     return null;
   }
 }

@@ -2,7 +2,7 @@ import { getCurrentUser } from '@/lib/session';
 import Dashboard from '@/app/components/Dashboard';
 import Link from 'next/link';
 import Image from 'next/image';
-// ELIMINADA LA IMPORTACIÓN DE SUBHEADER
+
 
 export default async function HomePage() {
     const user = await getCurrentUser();

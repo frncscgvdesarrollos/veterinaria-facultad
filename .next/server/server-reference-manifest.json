@@ -14,21 +14,6 @@
       },
       "filename": "src/app/actions.js",
       "exportedName": "completarPerfil"
-    },
-    "4023f484cfc7978ffe72ebc27cb3ef35fdf337c6d4": {
-      "workers": {
-        "app/mis-turnos/page": {
-          "moduleId": "[project]/.next-internal/server/app/mis-turnos/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions/turnosActions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "exportedName": "cancelarTurnoUsuario",
-          "filename": "src/app/actions/turnosActions.js"
-        }
-      },
-      "layer": {
-        "app/mis-turnos/page": "action-browser"
-      },
-      "filename": "src/app/actions/turnosActions.js",
-      "exportedName": "cancelarTurnoUsuario"
     }
   },
   "edge": {},
