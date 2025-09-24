@@ -56,6 +56,9 @@ export default function MisDatosPage() {
     const [formData, setFormData] = useState({});
     const [notification, setNotification] = useState({ message: '', type: '' });
 
+    // Determina el proveedor de autenticación
+    const isPasswordProvider = user?.providerData[0]?.providerId === 'password';
+
     useEffect(() => {
         if (user) {
             const fetchUserData = async () => {
@@ -90,7 +93,6 @@ export default function MisDatosPage() {
         setNotification({ message: '', type: '' });
         const result = await actualizarPerfil(user.uid, formData);
         if (result.success) {
-            // Actualizamos la vista solo con los datos que pueden cambiar
             const updatedViewData = { ...userData, ...result.updatedData };
             setUserData(updatedViewData);
             setFormData(updatedViewData);
@@ -173,18 +175,20 @@ export default function MisDatosPage() {
                     </div>
                 </form>
 
-                <div className="bg-white shadow-xl rounded-2xl p-6 mt-8">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Seguridad de la Cuenta</h2>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-4 rounded-lg">
-                        <div className="mb-4 sm:mb-0">
-                            <p className="text-lg text-gray-800 font-medium">Cambiar Contraseña</p>
-                            <p className="text-sm text-gray-500 max-w-prose">Te enviaremos un enlace seguro a tu correo para que puedas establecer una nueva contraseña.</p>
+                {isPasswordProvider && (
+                    <div className="bg-white shadow-xl rounded-2xl p-6 mt-8">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Seguridad de la Cuenta</h2>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-4 rounded-lg">
+                            <div className="mb-4 sm:mb-0">
+                                <p className="text-lg text-gray-800 font-medium">Cambiar Contraseña</p>
+                                <p className="text-sm text-gray-500 max-w-prose">Te enviaremos un enlace seguro a tu correo para que puedas establecer una nueva contraseña.</p>
+                            </div>
+                            <button onClick={handlePasswordReset} className={`flex items-center text-white py-2 px-4 rounded-lg transition whitespace-nowrap ${isEditing ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`} disabled={isEditing}>
+                                <FaKey className="mr-2" /> Enviar enlace
+                            </button>
                         </div>
-                        <button onClick={handlePasswordReset} className={`flex items-center text-white py-2 px-4 rounded-lg transition whitespace-nowrap ${isEditing ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`} disabled={isEditing}>
-                            <FaKey className="mr-2" /> Enviar enlace
-                        </button>
                     </div>
-                </div>
+                )}
             </main>
         </>
     );
