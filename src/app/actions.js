@@ -6,8 +6,19 @@
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
+// Mapa de roles de la aplicación. Mueve esto a un archivo de configuración si se vuelve más complejo.
+const aplicationRoles = {
+    '12345678': 'admin',
+    '87654321': 'veterinario',
+};
 
 export async function completarPerfil(userId, userData) {
+  // Verificación Crítica: ¿Está Firebase Admin inicializado?
+  if (!admin.apps.length) {
+    console.error('ERROR CRÍTICO: Firebase Admin SDK no está inicializado. Revisa las variables de entorno del servidor (e.g., en Vercel).');
+    return { success: false, error: 'Error de configuración del servidor. No se pudo conectar a la base de datos.' };
+  }
+
   const firestore = admin.firestore();
   const auth = admin.auth();
   const { 
@@ -48,11 +59,16 @@ export async function completarPerfil(userId, userData) {
 
   } catch (error) {
     console.error('Error al completar el perfil:', error);
-    return { success: false, error: 'Ocurrió un error en el servidor.' };
+    // Ahora este error es más probable que sea un problema de lógica o permisos, no de conexión.
+    return { success: false, error: 'Ocurrió un error al guardar los datos en el servidor.' };
   }
 }
 
 export async function agregarMascota(userId, mascotaData) {
+    if (!admin.apps.length) {
+        console.error('ERROR CRÍTICO: Firebase Admin SDK no está inicializado.');
+        return { success: false, error: 'Error de configuración del servidor.' };
+    }
     if (!userId) return { success: false, error: 'Usuario no autenticado.' };
     const { nombre, especie, raza, fechaNacimiento, tamaño, enAdopcion } = mascotaData;
     if (!nombre || !especie || !raza || !fechaNacimiento || !tamaño) {
@@ -73,16 +89,13 @@ export async function agregarMascota(userId, mascotaData) {
     }
 }
 
-/**
- * @function actualizarPerfil
- * @description Server Action para que un usuario actualice sus datos de perfil (con campos restringidos).
- * @param {string} userId - El ID del usuario.
- * @param {object} userData - Los datos del formulario.
- */
 export async function actualizarPerfil(userId, userData) {
+  if (!admin.apps.length) {
+    console.error('ERROR CRÍTICO: Firebase Admin SDK no está inicializado.');
+    return { success: false, error: 'Error de configuración del servidor.' };
+  }
+
   const firestore = admin.firestore();
-
-
   const { 
     telefonoPrincipal, 
     telefonoSecundario, 
@@ -91,7 +104,6 @@ export async function actualizarPerfil(userId, userData) {
     telefonoContactoEmergencia 
   } = userData;
   
-  // Se construye un objeto solo con los datos que se van a modificar.
   const datosActualizables = {
     telefonoPrincipal,
     telefonoSecundario: telefonoSecundario || '',
@@ -106,12 +118,8 @@ export async function actualizarPerfil(userId, userData) {
   }
 
   try {
-    // Se actualiza el documento en Firestore solo con los campos permitidos.
     await firestore.collection('users').doc(userId).update(datosActualizables);
-
     revalidatePath('/mis-datos');
-    
-    // Devolvemos los datos actualizados para refrescar la UI correctamente.
     return { success: true, message: '¡Perfil actualizado con éxito!', updatedData: datosActualizables };
 
   } catch (error) {
