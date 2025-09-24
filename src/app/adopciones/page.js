@@ -2,13 +2,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-// Cambio clave: Importar collectionGroup para la consulta global
 import { collectionGroup, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { HeartIcon, EnvelopeIcon, UserIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 
-// --- Componente AdopcionCard (sin cambios) ---
 function AdopcionCard({ mascota }) {
     const imageUrl = `https://placedog.net/500/500?random&r=${mascota.id}`;
 
@@ -32,7 +30,6 @@ function AdopcionCard({ mascota }) {
                     <p className="text-sm text-gray-600 font-bold">Contacto del Dueño:</p>
                     <div className="flex items-center gap-3 mt-2">
                         <UserIcon className="h-5 w-5 text-gray-400" />
-                        {/* Asumimos que la info del dueño ahora viene en la mascota */}
                         <span className="text-gray-700">{mascota.ownerName || 'Dueño no disponible'}</span>
                     </div>
                     <div className="flex items-center gap-3 mt-1">
@@ -50,26 +47,20 @@ export default function AdopcionesPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // --- LA MAGIA ESTÁ AQUÍ ---
-        // 1. Apuntamos a todas las colecciones llamadas 'mascotas' en la base de datos.
         const mascotasRef = collectionGroup(db, 'mascotas');
         
-        // 2. Creamos una consulta para traer solo las que tienen 'enAdopcion' como 'true'
+        // ¡CONSULTA SIN LÍMITE!
         const q = query(mascotasRef, where('enAdopcion', '==', true), orderBy('createdAt', 'desc'));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const mascotasData = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-                // NOTA: Para mostrar nombre y email del dueño, estos datos deben estar en el documento de la mascota.
-                // Esto lo solucionaremos en el siguiente paso, al guardar la mascota.
             }));
             setMascotas(mascotasData);
             setLoading(false);
         }, (error) => {
             console.error("Error al obtener las mascotas en adopción:", error);
-            // ¡Importante! Firestore puede requerir un índice para esta consulta. 
-            // El error en la consola te dará un enlace directo para crearlo con un solo clic.
             if (error.code === 'failed-precondition') {
                 alert('La base de datos necesita una configuración inicial. Revisa la consola (F12) para crear el índice necesario.');
             }
