@@ -17,33 +17,39 @@ export async function registrarMascota(user, mascotaData) {
   }
 
   try {
+    // 1. OBTENER DATOS DEL DUEÑO DESDE FIRESTORE (Más robusto)
+    const userDocRef = firestore.collection('users').doc(user.uid);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+        return { success: false, error: 'El perfil del usuario no existe.' };
+    }
+    const userData = userDoc.data();
+    const ownerName = `${userData.nombre} ${userData.apellido}`;
+    const ownerEmail = user.email; // El email viene del objeto de autenticación
+
+    // 2. CONSTRUIR EL OBJETO DE LA MASCOTA (con los datos del dueño)
     const mascotasCollection = firestore.collection('users').doc(user.uid).collection('mascotas');
     
     const nuevaMascota = {
       ...mascotaData,
       enAdopcion: enAdopcion || false,
       fechaNacimiento: new Date(fechaNacimiento),
-      fechaRegistro: admin.firestore.FieldValue.serverTimestamp(),
-      ownerId: user.uid, // Guardamos referencia al dueño
+      // Usar 'createdAt' para coincidir con la consulta del cliente
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      ownerId: user.uid,
+      // Añadir la información del dueño directamente en el documento de la mascota
+      ownerName: ownerName,
+      ownerEmail: ownerEmail,
     };
 
-    // Guardamos la mascota en la subcolección del usuario
-    const mascotaRef = await mascotasCollection.add(nuevaMascota);
+    // 3. GUARDAR LA MASCOTA (Solo en la subcolección del usuario)
+    await mascotasCollection.add(nuevaMascota);
 
-    // --- Estrategia de Desnormalización ---
-    if (nuevaMascota.enAdopcion) {
-      // Si está en adopción, creamos una copia en la colección principal `adopciones`
-      const adopcionDoc = {
-        ...nuevaMascota,
-        mascotaId: mascotaRef.id, // Guardamos el ID original para referencia
-        ownerName: user.displayName || 'Anónimo',
-        ownerEmail: user.email,
-      };
-      // Usamos el mismo ID para facilitar la sincronización y eliminación
-      await firestore.collection('adopciones').doc(mascotaRef.id).set(adopcionDoc);
-    }
+    // 4. ELIMINADA LA LÓGICA DE DENORMALIZACIÓN
+    // Ya no se necesita una copia en la colección 'adopciones'.
 
-    // Revalidamos las páginas para que los cambios se reflejen
+    // 5. REVALIDAR PATHS
     revalidatePath('/mascotas');
     if (enAdopcion) {
         revalidatePath('/adopciones');

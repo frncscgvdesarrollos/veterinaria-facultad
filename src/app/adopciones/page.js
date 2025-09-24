@@ -2,13 +2,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+// Cambio clave: Importar collectionGroup para la consulta global
+import { collectionGroup, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-// Corregido: Se elimina PawPrintIcon y se añade ArrowPathIcon
 import { HeartIcon, EnvelopeIcon, UserIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 
-// Componente para la tarjeta de una mascota en adopción
+// --- Componente AdopcionCard (sin cambios) ---
 function AdopcionCard({ mascota }) {
     const imageUrl = `https://placedog.net/500/500?random&r=${mascota.id}`;
 
@@ -32,11 +32,12 @@ function AdopcionCard({ mascota }) {
                     <p className="text-sm text-gray-600 font-bold">Contacto del Dueño:</p>
                     <div className="flex items-center gap-3 mt-2">
                         <UserIcon className="h-5 w-5 text-gray-400" />
-                        <span className="text-gray-700">{mascota.ownerName}</span>
+                        {/* Asumimos que la info del dueño ahora viene en la mascota */}
+                        <span className="text-gray-700">{mascota.ownerName || 'Dueño no disponible'}</span>
                     </div>
                     <div className="flex items-center gap-3 mt-1">
                         <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                        <a href={`mailto:${mascota.ownerEmail}`} className="text-blue-600 hover:underline">{mascota.ownerEmail}</a>
+                        <a href={`mailto:${mascota.ownerEmail || '#'}`} className="text-blue-600 hover:underline">{mascota.ownerEmail || 'Email no disponible'}</a>
                     </div>
                 </div>
             </div>
@@ -49,15 +50,29 @@ export default function AdopcionesPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const adopcionesRef = collection(db, 'adopciones');
-        const q = query(adopcionesRef, orderBy('fechaRegistro', 'desc'));
+        // --- LA MAGIA ESTÁ AQUÍ ---
+        // 1. Apuntamos a todas las colecciones llamadas 'mascotas' en la base de datos.
+        const mascotasRef = collectionGroup(db, 'mascotas');
+        
+        // 2. Creamos una consulta para traer solo las que tienen 'enAdopcion' como 'true'
+        const q = query(mascotasRef, where('enAdopcion', '==', true), orderBy('createdAt', 'desc'));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const mascotasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const mascotasData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+                // NOTA: Para mostrar nombre y email del dueño, estos datos deben estar en el documento de la mascota.
+                // Esto lo solucionaremos en el siguiente paso, al guardar la mascota.
+            }));
             setMascotas(mascotasData);
             setLoading(false);
         }, (error) => {
             console.error("Error al obtener las mascotas en adopción:", error);
+            // ¡Importante! Firestore puede requerir un índice para esta consulta. 
+            // El error en la consola te dará un enlace directo para crearlo con un solo clic.
+            if (error.code === 'failed-precondition') {
+                alert('La base de datos necesita una configuración inicial. Revisa la consola (F12) para crear el índice necesario.');
+            }
             setLoading(false);
         });
 
@@ -68,7 +83,6 @@ export default function AdopcionesPage() {
         return (
              <div className="flex justify-center items-center h-screen bg-violet-100">
                 <div className="text-center">
-                    {/* Corregido: Se reemplaza PawPrintIcon por ArrowPathIcon para la carga */}
                     <ArrowPathIcon className="animate-spin h-12 w-12 text-violet-600 mx-auto" />
                     <p className="text-violet-800 font-semibold mt-2">Buscando nuevos hogares...</p>
                 </div>
@@ -85,12 +99,11 @@ export default function AdopcionesPage() {
                     <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600">Estas mascotas buscan un hogar lleno de amor. Contacta directamente a sus dueños para darles una nueva oportunidad.</p>
                 </div>
 
-                {mascotas.length === 0 ? (
+                {mascotas.length === 0 && !loading ? (
                     <div className="text-center bg-white/60 backdrop-blur-sm p-12 rounded-2xl shadow-lg">
-                        {/* Corregido: Se reemplaza PawPrintIcon por un HeartIcon temático */}
                         <HeartIcon className="mx-auto h-16 w-16 text-violet-400" />
                         <h2 className="mt-6 text-2xl font-bold text-gray-800">¡Qué bien!</h2>
-                        <p className="text-gray-600 mt-2 max-w-prose mx-auto">Actualmente, todas nuestras mascotas tienen un hogar. ¡Vuelve pronto para ver si hay nuevos amigos buscando familia!</p>
+                        <p className="text-gray-600 mt-2 max-w-prose mx-auto">Actualmente, ninguna mascota está en adopción. ¡Vuelve pronto para ver si hay nuevos amigos buscando familia!</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
