@@ -621,3 +621,55 @@
 [error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
 [debug] [2025-09-23T13:24:32.349Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
 [debug] [2025-09-23T13:24:32.350Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-24T21:23:40.710Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.717Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.732Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.741Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.746Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.757Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.767Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.774Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.782Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.783Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.799Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.803Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.808Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.812Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.821Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.825Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.832Z] No OAuth tokens found
+[debug] [2025-09-24T21:23:40.833Z] No OAuth tokens found
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-24T21:23:42.104Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-24T21:24:23.873Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.877Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.881Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.881Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.884Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.885Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.888Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.889Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.892Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.892Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.893Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.896Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.899Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.902Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.903Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.908Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.909Z] No OAuth tokens found
+[debug] [2025-09-24T21:24:23.912Z] No OAuth tokens found
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-24T21:24:24.303Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-24T21:24:24.475Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-24T21:24:24.475Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]

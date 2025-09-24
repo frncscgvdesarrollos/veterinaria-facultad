@@ -54,8 +54,12 @@ export default function LoginPage() {
     const handleLoginWithGoogle = async () => {
         setError(null);
         try {
-            await loginWithGoogle();
-            router.push('/mascotas'); 
+            const { isNewUser } = await loginWithGoogle();
+            if (isNewUser) {
+                router.push('/completar-perfil');
+            } else {
+                router.push('/');
+            }
         } catch (error) {
             console.error('Fallo al iniciar sesión con Google', error);
             setError('Fallo al iniciar sesión con Google. Por favor, intenta de nuevo.');
@@ -81,7 +85,7 @@ export default function LoginPage() {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${idToken}` }
                     });
-                    router.push('/mascotas');
+                    router.push('/');
                 }
             } catch (error) {
                 console.error('Fallo al registrar', error);
@@ -90,7 +94,7 @@ export default function LoginPage() {
         } else {
             try {
                 await loginWithEmail(email, password);
-                router.push('/mascotas');
+                router.push('/');
             } catch (error) {
                 console.error('Fallo al iniciar sesión', error);
                 setError('Email o contraseña incorrectos.');

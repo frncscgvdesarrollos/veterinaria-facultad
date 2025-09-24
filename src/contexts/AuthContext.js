@@ -11,7 +11,8 @@ import {
     sendPasswordResetEmail,
     updatePassword,
     EmailAuthProvider,
-    reauthenticateWithCredential
+    reauthenticateWithCredential,
+    getAdditionalUserInfo
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore'; 
@@ -70,13 +71,18 @@ export const AuthProvider = ({ children }) => {
         const provider = new GoogleAuthProvider();
         try {
             const result = await signInWithPopup(auth, provider);
+            const additionalUserInfo = getAdditionalUserInfo(result);
             const idToken = await result.user.getIdToken();
 
             await fetch('/api/auth/session', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${idToken}` },
             });
-            return result.user;
+            
+            return { 
+                user: result.user, 
+                isNewUser: additionalUserInfo.isNewUser 
+            };
         } catch (error) {
             console.error("Error en loginWithGoogle:", error);
             throw error;

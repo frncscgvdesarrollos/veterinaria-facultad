@@ -1,14 +1,12 @@
-// src/app/api/auth/session/route.js
-
 import { NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth'; // Importación corregida
+import { getAuth } from 'firebase-admin/auth'; 
 import { cookies } from 'next/headers';
-import { initializeApp, getApps, cert } from 'firebase-admin/app'; // Necesario para inicializar
+import { initializeApp, getApps, cert } from 'firebase-admin/app'; 
 
-// Duración de la cookie de sesión (5 días en segundos)
+
 const expiresIn = 60 * 60 * 24 * 5;
 
-// Inicialización del SDK de Admin (solo se ejecuta una vez)
+
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
 
 if (!getApps().length) {
@@ -29,7 +27,6 @@ export async function POST(request) {
   const idToken = authorization.split('Bearer ')[1];
 
   try {
-    // Usar getAuth() para acceder a los métodos de autenticación de admin
     const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn: expiresIn * 1000 });
 
     // Establecer la cookie de forma segura
@@ -49,9 +46,7 @@ export async function POST(request) {
   }
 }
 
-/**
- * Maneja la eliminación de la cookie de sesión (Logout)
- */
+
 export async function DELETE(request) {
   // Borrar la cookie
   cookies().set('__session', '', {

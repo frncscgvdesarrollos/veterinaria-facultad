@@ -4,8 +4,7 @@ import admin from './firebaseAdmin';
 /**
  * @name getCurrentUser
  * @description Obtiene el usuario actual desde la cookie de sesión en el servidor.
- * Esta función solo debe ser usada en Componentes de Servidor o Rutas de API.
- * @returns {Promise<import('firebase-admin/auth').DecodedIdToken | null>} El token decodificado del usuario o null si no hay sesión.
+ * @returns {Promise<import('firebase-admin/auth').DecodedIdToken | null>} 
  */
 export async function getCurrentUser() {
 
