@@ -17,19 +17,15 @@ __turbopack_context__.s([
 ]);
 var __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__ = __turbopack_context__.i("[externals]/firebase-admin [external] (firebase-admin, cjs)");
 ;
-// Comprobación para asegurar que el código se ejecuta solo en el servidor.
 if ("TURBOPACK compile-time truthy", 1) {
     if (!__TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].apps.length) {
         try {
-            // Para que el Admin SDK funcione en Vercel, necesita las credenciales de la cuenta de servicio.
-            // Estas deben ser almacenadas como una variable de entorno en el proyecto de Vercel.
             const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
             __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].initializeApp({
                 credential: __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].credential.cert(serviceAccount)
             });
             console.log('Firebase Admin SDK inicializado correctamente.');
         } catch (error) {
-            // Este error es común si la variable de entorno no está configurada en Vercel.
             console.error('ERROR AL INICIALIZAR FIREBASE ADMIN SDK:', error);
             console.error('Asegúrate de haber configurado la variable de entorno FIREBASE_SERVICE_ACCOUNT_KEY en Vercel con el JSON de tu cuenta de servicio.');
         }
@@ -76,7 +72,20 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 ;
 ;
 ;
+// Mapa de roles de la aplicación. Mueve esto a un archivo de configuración si se vuelve más complejo.
+const aplicationRoles = {
+    '12345678': 'admin',
+    '87654321': 'veterinario'
+};
 async function completarPerfil(userId, userData) {
+    // Verificación Crítica: ¿Está Firebase Admin inicializado?
+    if (!__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].apps.length) {
+        console.error('ERROR CRÍTICO: Firebase Admin SDK no está inicializado. Revisa las variables de entorno del servidor (e.g., en Vercel).');
+        return {
+            success: false,
+            error: 'Error de configuración del servidor. No se pudo conectar a la base de datos.'
+        };
+    }
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
     const auth = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].auth();
     const { nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
@@ -113,13 +122,21 @@ async function completarPerfil(userId, userData) {
         };
     } catch (error) {
         console.error('Error al completar el perfil:', error);
+        // Ahora este error es más probable que sea un problema de lógica o permisos, no de conexión.
         return {
             success: false,
-            error: 'Ocurrió un error en el servidor.'
+            error: 'Ocurrió un error al guardar los datos en el servidor.'
         };
     }
 }
 async function agregarMascota(userId, mascotaData) {
+    if (!__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].apps.length) {
+        console.error('ERROR CRÍTICO: Firebase Admin SDK no está inicializado.');
+        return {
+            success: false,
+            error: 'Error de configuración del servidor.'
+        };
+    }
     if (!userId) return {
         success: false,
         error: 'Usuario no autenticado.'
@@ -156,9 +173,15 @@ async function agregarMascota(userId, mascotaData) {
     }
 }
 async function actualizarPerfil(userId, userData) {
+    if (!__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].apps.length) {
+        console.error('ERROR CRÍTICO: Firebase Admin SDK no está inicializado.');
+        return {
+            success: false,
+            error: 'Error de configuración del servidor.'
+        };
+    }
     const firestore = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebaseAdmin$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"].firestore();
     const { telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
-    // Se construye un objeto solo con los datos que se van a modificar.
     const datosActualizables = {
         telefonoPrincipal,
         telefonoSecundario: telefonoSecundario || '',
@@ -174,10 +197,8 @@ async function actualizarPerfil(userId, userData) {
         };
     }
     try {
-        // Se actualiza el documento en Firestore solo con los campos permitidos.
         await firestore.collection('users').doc(userId).update(datosActualizables);
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])('/mis-datos');
-        // Devolvemos los datos actualizados para refrescar la UI correctamente.
         return {
             success: true,
             message: '¡Perfil actualizado con éxito!',
