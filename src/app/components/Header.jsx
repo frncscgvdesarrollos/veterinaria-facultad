@@ -5,17 +5,22 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 // Función para obtener iniciales para el avatar de fallback
-const getInitials = (name) => {
-  if (!name) return '?';
-  const names = name.split(' ');
-  if (names.length === 1) return names[0].charAt(0).toUpperCase();
-  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+const getInitials = (firstName, lastName) => {
+  if (firstName && lastName) {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  }
+  if (firstName) {
+    return firstName.charAt(0).toUpperCase();
+  }
+  return '?'; // Caso por defecto
 };
 
 export default function Header() {
     const { user, isLoggedIn, logout } = useAuth(); 
     
-    const displayName = user?.name ? user.name.split(' ')[0] : 'Usuario';
+    // Lógica mejorada para obtener el nombre
+    // Usamos `user.nombre` de Firestore como fuente principal.
+    const displayName = user?.nombre ? user.nombre : (user?.displayName ? user.displayName.split(' ')[0] : 'Usuario');
 
     return (
         <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
@@ -37,16 +42,21 @@ export default function Header() {
                     <div className="flex-grow"></div>
 
                     <div className="flex items-center gap-4 min-w-[250px] justify-end">
-                        {isLoggedIn ? (
+                        {isLoggedIn && user ? (
                             <div className="flex items-center gap-4">
                                 <span className="hidden lg:inline text-md font-medium text-gray-700">Hola, {displayName}</span>
+                                
+                                {/* Lógica de Avatar Mejorada */}
                                 <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
                                     {user.photoURL ? (
+                                        // 1. Si hay foto de Google, se usa.
                                         <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
                                     ) : (
-                                        <span>{getInitials(user.name)}</span>
+                                        // 2. Si no, se generan iniciales desde Firestore.
+                                        <span>{getInitials(user.nombre, user.apellido)}</span>
                                     )}
                                 </div>
+
                                 <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
                                     Logout
                                 </button>
