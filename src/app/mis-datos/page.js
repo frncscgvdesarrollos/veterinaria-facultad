@@ -28,7 +28,7 @@ const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable =
                         maxLength={name === 'dni' ? 8 : undefined}
                     />
                 ) : (
-                    <p className={`text-lg ${isEditable ? 'text-gray-800' : 'text-gray-500'}`}>{value || (isEditable ? 'No especificado' : 'No modificable')}</p>
+                    <p className={`text-lg ${isEditable ? 'text-gray-800' : 'text-gray-500'}`}>{value || 'No especificado'}</p>
                 )}
             </div>
         </div>
