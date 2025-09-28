@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FaGoogle, FaEye, FaEyeSlash, FaUser, FaLock, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { Toaster, toast } from 'react-hot-toast';
 import { completarPerfil } from '@/app/actions';
-import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
+import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 
 export default function LoginPage() {
     const { user, loginWithGoogle, loginWithEmail, registerWithEmailAndPassword, resetPassword } = useAuth();
