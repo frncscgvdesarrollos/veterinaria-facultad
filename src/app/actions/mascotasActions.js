@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -11,48 +10,59 @@ export async function registrarMascota(user, mascotaData) {
     return { success: false, error: 'Usuario no autenticado.' };
   }
 
-  const { nombre, especie, fechaNacimiento, sexo, enAdopcion } = mascotaData;
-  if (!nombre || !especie || !fechaNacimiento || !sexo) {
+  // Destructuramos los datos, incluyendo los nuevos campos del formulario mejorado
+  const { nombre, especie, fechaNacimiento, sexo, tamaño, raza, enAdopcion } = mascotaData;
+
+  // Validamos los campos más importantes que ahora vendrán de selects
+  if (!nombre || !especie || !fechaNacimiento || !sexo || !tamaño || !raza) {
     return { success: false, error: 'Faltan datos obligatorios de la mascota.' };
   }
 
   try {
-    const mascotasCollection = firestore.collection('users').doc(user.uid).collection('mascotas');
-    
-    const nuevaMascota = {
+    const userMascotasCollection = firestore.collection('users').doc(user.uid).collection('mascotas');
+
+    const nuevaMascotaData = {
       ...mascotaData,
-      enAdopcion: enAdopcion || false,
+      ownerId: user.uid,
       fechaNacimiento: new Date(fechaNacimiento),
       fechaRegistro: admin.firestore.FieldValue.serverTimestamp(),
-      ownerId: user.uid, // Guardamos referencia al dueño
+      // Nos aseguramos de que enAdopcion sea un booleano
+      enAdopcion: enAdopcion || false,
     };
 
-    // Guardamos la mascota en la subcolección del usuario
-    const mascotaRef = await mascotasCollection.add(nuevaMascota);
+    // 1. Guardamos la nueva mascota en la subcolección del usuario
+    const mascotaRef = await userMascotasCollection.add(nuevaMascotaData);
 
-    // --- Estrategia de Desnormalización ---
-    if (nuevaMascota.enAdopcion) {
-      // Si está en adopción, creamos una copia en la colección principal `adopciones`
-      const adopcionDoc = {
-        ...nuevaMascota,
-        mascotaId: mascotaRef.id, // Guardamos el ID original para referencia
+    // 2. Creamos la subcolección 'carnetSanitario' para esta mascota
+    const carnetSanitarioRef = mascotaRef.collection('carnetSanitario').doc('registro_inicial');
+    await carnetSanitarioRef.set({
+      vacunasAlDia: false, // Valor por defecto
+      // Aquí se podrían añadir más campos iniciales en el futuro
+      fechaCreacion: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 3. Desnormalización: si la mascota está en adopción, la copiamos a una colección principal
+    if (nuevaMascotaData.enAdopcion) {
+      const adopcionDocData = {
+        ...nuevaMascotaData,
+        mascotaId: mascotaRef.id, // ID del documento original en la subcolección del usuario
         ownerName: user.displayName || 'Anónimo',
         ownerEmail: user.email,
+        // Usamos el mismo ID para facilitar la gestión
       };
-      // Usamos el mismo ID para facilitar la sincronización y eliminación
-      await firestore.collection('adopciones').doc(mascotaRef.id).set(adopcionDoc);
+      await firestore.collection('adopciones').doc(mascotaRef.id).set(adopcionDocData);
     }
-
-    // Revalidamos las páginas para que los cambios se reflejen
+    
+    // 4. Revalidamos las rutas para que los cambios se reflejen inmediatamente
     revalidatePath('/mascotas');
     if (enAdopcion) {
-        revalidatePath('/adopciones');
+      revalidatePath('/adopciones');
     }
 
-    return { success: true };
+    return { success: true, message: 'Mascota registrada exitosamente.' };
 
   } catch (error) {
     console.error('Error al registrar la mascota:', error);
-    return { success: false, error: 'Ocurrió un error en el servidor al registrar la mascota.' };
+    return { success: false, error: 'Ocurrió un error en el servidor. Por favor, intenta de nuevo.' };
   }
 }
