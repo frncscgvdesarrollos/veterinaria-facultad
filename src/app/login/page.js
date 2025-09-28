@@ -55,7 +55,7 @@ export default function LoginPage() {
         setError(null);
         try {
             await loginWithGoogle();
-            router.push('/mascotas'); 
+            router.push('/completar-perfil'); 
         } catch (error) {
             console.error('Fallo al iniciar sesión con Google', error);
             setError('Fallo al iniciar sesión con Google. Por favor, intenta de nuevo.');

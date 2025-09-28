@@ -6,6 +6,10 @@
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
+// Definición de roles de la aplicación para evitar errores de referencia.
+const aplicationRoles = {
+  // Ejemplo: '12345678': 'admin'
+};
 
 export async function completarPerfil(userId, userData) {
   const firestore = admin.firestore();
