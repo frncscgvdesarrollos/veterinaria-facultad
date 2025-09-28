@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { FaGoogle, FaEye, FaEyeSlash, FaUser, FaLock, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Toaster, toast } from 'react-hot-toast';
 import { completarPerfil } from '@/app/actions';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
@@ -63,7 +63,6 @@ export default function LoginPage() {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${idToken}` }
                     });
-                    // Redirección directa a la página principal/admin después de completar el perfil
                     router.push(profileResult.role === 'admin' ? '/admin' : '/');
                 }
             } catch (error) {
@@ -95,85 +94,100 @@ export default function LoginPage() {
         const { name, value } = e.target;
         if ((name === 'dni' || name.includes('telefono')) && value && !/^[0-9]+$/.test(value)) return;
         setFormData(prev => ({ ...prev, [name]: value }));
-      };
+    };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-             <Toaster position="bottom-center" />
-            <div className="max-w-md w-full bg-white shadow-xl rounded-2xl p-8">
-                <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">{
-                    isRegistering ? 'Crea tu Cuenta' : 'Bienvenido de Vuelta'
+        <div className="min-h-screen bg-white flex flex-col justify-center items-center p-4">
+            <Toaster position="bottom-center" />
+            <div className="w-full max-w-sm mx-auto">
+                <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">{
+                    isRegistering ? 'Crear una Cuenta' : 'Iniciar Sesión'
                 }</h1>
-                <p className="text-center text-gray-500 mb-8">{
-                    isRegistering ? 'Completa tus datos para empezar.' : 'Inicia sesión para continuar.'
-                }</p>
 
-                {error && <p className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-center">{error}</p>}
+                <div className="bg-white p-8 rounded-2xl shadow-lg w-full">
+                    {error && <p className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-center text-sm">{error}</p>}
 
-                <form onSubmit={handleFormSubmit}>
-                    <div className="space-y-4">
-                        <div className="flex items-center bg-gray-50 p-3 rounded-lg border-2 border-transparent focus-within:border-blue-500">
-                            <FaUser className="text-gray-400 mr-3"/>
-                            <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="flex-grow bg-transparent focus:outline-none"/>
+                    <form onSubmit={handleFormSubmit} className="space-y-5">
+                        <div>
+                            <label className="text-xs font-semibold text-gray-600">Email</label>
+                            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required 
+                                className="mt-1 w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
                         </div>
-                        <div className="flex items-center bg-gray-50 p-3 rounded-lg border-2 border-transparent focus-within:border-blue-500">
-                            <FaLock className="text-gray-400 mr-3"/>
-                            <input type={showPassword ? "text" : "password"} placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} required className="flex-grow bg-transparent focus:outline-none"/>
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-500">
-                                {showPassword ? <FaEyeSlash /> : <FaEye />}
-                            </button>
+
+                        <div>
+                            <div className="flex justify-between items-baseline">
+                                <label className="text-xs font-semibold text-gray-600">Contraseña</label>
+                                {!isRegistering && (
+                                    <button type="button" onClick={handlePasswordReset} className="text-xs text-blue-500 hover:underline font-semibold">
+                                        ¿Olvidaste tu contraseña?
+                                    </button>
+                                )}
+                            </div>
+                            <div className="relative mt-1">
+                                <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required 
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-500">
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
                         </div>
+                        
                         {isRegistering && (
                             <>
                                 <PasswordStrengthMeter password={password} />
-                                <div className="flex items-center bg-gray-50 p-3 rounded-lg border-2 border-transparent focus-within:border-blue-500">
-                                    <FaLock className="text-gray-400 mr-3"/>
-                                    <input type={showPassword ? "text" : "password"} placeholder="Confirmar Contraseña" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="flex-grow bg-transparent focus:outline-none"/>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600">Confirmar Contraseña</label>
+                                    <div className="relative mt-1">
+                                        <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required
+                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
+                                    </div>
                                 </div>
                                 
-                                <h2 className="text-xl font-semibold text-gray-700 pt-4 border-t mt-6">Tu Información</h2>
+                                <hr className="my-4"/>
+
+                                <h2 className="text-center text-base font-semibold text-gray-700">Tu Información</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <input name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 rounded-lg"/>
-                                    <input name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 rounded-lg"/>
+                                    <input name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                    <input name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                 </div>
-                                <input name="dni" placeholder="DNI (sin puntos)" value={formData.dni} onChange={handleInputChange} required maxLength="8" className="w-full p-3 bg-gray-50 rounded-lg"/>
-                                <input name="direccion" placeholder="Dirección" value={formData.direccion} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 rounded-lg"/>
-                                <input name="telefonoPrincipal" placeholder="Teléfono Principal" value={formData.telefonoPrincipal} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 rounded-lg"/>
-                                <h2 className="text-xl font-semibold text-gray-700 pt-4 border-t mt-6">Contacto de Emergencia</h2>
-                                <input name="nombreContactoEmergencia" placeholder="Nombre" value={formData.nombreContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 rounded-lg"/>
-                                <input name="telefonoContactoEmergencia" placeholder="Teléfono" value={formData.telefonoContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 rounded-lg"/>
+                                <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleInputChange} required maxLength="8" className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="direccion" placeholder="Dirección" value={formData.direccion} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="telefonoPrincipal" placeholder="Teléfono" value={formData.telefonoPrincipal} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                
+                                <h2 className="text-center text-base font-semibold text-gray-700">Contacto de Emergencia</h2>
+                                <input name="nombreContactoEmergencia" placeholder="Nombre" value={formData.nombreContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="telefonoContactoEmergencia" placeholder="Teléfono" value={formData.telefonoContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                             </>
                         )}
-                    </div>
-                    <button type="submit" className="w-full mt-6 bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                        {isRegistering ? 'Registrarse' : 'Iniciar Sesión'}
-                    </button>
-                </form>
 
-                {!isRegistering && (
-                    <div className="text-center mt-4">
-                        <button onClick={handlePasswordReset} className="text-sm text-blue-500 hover:underline">¿Olvidaste tu contraseña?</button>
-                    </div>
-                )}
-
-                <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">O continúa con</span>
+                        <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
+                            {isRegistering ? 'Registrarse' : 'Entrar'}
+                        </button>
+                    </form>
+                    
+                    <div className="text-center mt-6">
+                        <p className="text-sm text-gray-600">¿{isRegistering ? 'Ya tienes' : 'No tienes'} una cuenta? 
+                            <button onClick={() => { setIsRegistering(!isRegistering); setError(null); }} className="font-semibold text-blue-500 hover:underline ml-1">
+                                {isRegistering ? 'Inicia Sesión' : 'Regístrate'}
+                            </button>
+                        </p>
                     </div>
                 </div>
 
-                <button onClick={handleLoginWithGoogle} className="w-full flex items-center justify-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    <FaGoogle className="mr-2 text-red-500"/> Google
+                <div className="text-center my-6 text-gray-400 text-xs tracking-wider">o</div>
+
+                <button onClick={handleLoginWithGoogle} 
+                    className="w-full flex items-center justify-center py-3 px-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-md">
+                    <span className="text-sm font-semibold text-gray-700 mr-2">Continuar con</span>
+                    <span className="text-sm font-bold">
+                        <span style={{ color: '#4285F4' }}>G</span>
+                        <span style={{ color: '#EA4335' }}>o</span>
+                        <span style={{ color: '#FBBC05' }}>o</span>
+                        <span style={{ color: '#4285F4' }}>g</span>
+                        <span style={{ color: '#34A853' }}>l</span>
+                        <span style={{ color: '#EA4335' }}>e</span>
+                    </span>
                 </button>
-
-                <div className="text-center mt-8">
-                    <button onClick={() => { setIsRegistering(!isRegistering); setError(null); }} className="text-sm text-blue-500 hover:underline">
-                        {isRegistering ? '¿Ya tienes una cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate'}
-                    </button>
-                </div>
             </div>
         </div>
     );
