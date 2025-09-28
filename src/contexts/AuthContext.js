@@ -14,7 +14,8 @@ import {
     reauthenticateWithCredential
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore'; 
+// Importamos setDoc y doc para escribir en la base de datos
+import { doc, getDoc, setDoc } from 'firebase/firestore'; 
 
 const AuthContext = createContext();
 
@@ -32,13 +33,28 @@ export const AuthProvider = ({ children }) => {
                 const userDocSnap = await getDoc(userDocRef);
 
                 if (userDocSnap.exists()) {
+                    // El usuario ya existe, combinamos los datos de auth y de firestore
                     const userData = userDocSnap.data();
                     setUser({ 
                         ...userAuth, 
                         ...userData
                     });
                 } else {
-                    setUser(userAuth);
+                    // Es un usuario nuevo, lo creamos en Firestore
+                    const newUser = {
+                        uid: userAuth.uid,
+                        email: userAuth.email,
+                        displayName: userAuth.displayName || 'Sin Nombre',
+                        photoURL: userAuth.photoURL || null,
+                        role: 'dueño', // Rol por defecto
+                        createdAt: new Date(),
+                    };
+                    await setDoc(userDocRef, newUser);
+                    // Establecemos el estado del usuario con la información completa
+                    setUser({ 
+                        ...userAuth, 
+                        ...newUser
+                    });
                 }
                 setIsLoggedIn(true);
             } else {
@@ -49,6 +65,8 @@ export const AuthProvider = ({ children }) => {
         });
         return () => unsubscribe();
     }, []);
+
+    // Las demás funciones (login, logout, etc.) no necesitan cambios
 
     const loginWithEmail = async (email, password) => {
         try {
