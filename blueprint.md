@@ -52,3 +52,5 @@ El proceso de registro se ha diseñado para ser seguro y amigable para el usuari
 3.  **Integrar el Modal en la Página de Login:** Se ha añadido el componente `Modal` a `src/app/login/page.js`, conteniendo el reCAPTCHA y el botón de confirmación final.
 4.  **Carga Dinámica de reCAPTCHA:** Se ha utilizado `next/dynamic` para asegurar que el componente reCAPTCHA solo se cargue en el cliente, solucionando el error de renderizado del servidor.
 5.  **Actualizar `blueprint.md`:** La documentación ha sido actualizada para reflejar la nueva arquitectura del flujo de registro.
+
+<!-- Trigger Vercel deploy -->
