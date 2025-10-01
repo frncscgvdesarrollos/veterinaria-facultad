@@ -2,40 +2,46 @@
 import admin from 'firebase-admin';
 import { cookies } from 'next/headers';
 
-// Función para inicializar Firebase Admin SDK de forma segura
-const initializeFirebaseAdmin = () => {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+// --- INICIALIZACIÓN DEL SDK DE ADMIN ---
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+
+if (!admin.apps.length) {
+  try {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log('Firebase Admin SDK inicializado correctamente desde variable de entorno.');
-  } else {
-    console.error(
-      'Error Crítico: La variable de entorno FIREBASE_SERVICE_ACCOUNT_KEY no está definida. La autenticación de servidor no funcionará.'
-    );
+    console.log('Firebase Admin SDK inicializado correctamente.');
+  } catch (error) {
+    console.error('Error al inicializar Firebase Admin SDK:', error);
   }
-};
-
-// Evita reinicializaciones en entornos de desarrollo con hot-reloading.
-if (!admin.apps.length) {
-  initializeFirebaseAdmin();
+} else {
+  // console.log('Firebase Admin SDK ya estaba inicializado.');
 }
 
+// --- FUNCIÓN CENTRALIZADA DE VERIFICACIÓN DE SESIÓN ---
+
 /**
- * Verifica la cookie de sesión de Firebase del usuario.
- * @returns {Promise<string|null>} El UID del usuario si la sesión es válida, de lo contrario null.
+ * Verifica la cookie de sesión del usuario en el lado del servidor.
+ * @returns {Promise<string|null>} El UID del usuario si la sesión es válida, o null en caso contrario.
  */
 export const getUserIdFromSession = async () => {
   try {
-    const sessionCookie = cookies().get('session')?.value;
+    // CORRECCIÓN CRÍTICA: La cookie se llama '__session', no 'session'.
+    const sessionCookie = cookies().get('__session')?.value;
+
     if (!sessionCookie) {
+      // Esto es esperado si el usuario no ha iniciado sesión.
+      console.log('No se encontró la cookie de sesión.');
       return null;
     }
-    const decodedToken = await admin.auth().verifySessionCookie(sessionCookie, true);
-    return decodedToken.uid;
+
+    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    // console.log('Cookie de sesión verificada con éxito para UID:', decodedClaims.uid);
+    return decodedClaims.uid;
+
   } catch (error) {
-    // La cookie es inválida o ha expirado.
+    // Esto es esperado si la cookie es inválida, ha expirado, o durante el build estático.
     console.log('No se pudo verificar la cookie de sesión:', error.message);
     return null;
   }

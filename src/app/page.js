@@ -1,18 +1,19 @@
 
 import { getUserIdFromSession } from '@/lib/firebaseAdmin';
 
-// Importamos todos los componentes que podríamos necesitar
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import SubHeader from './components/SubHeader';
 import GaleriaAdopciones from './components/GaleriaAdopciones';
 import VistaTienda from './components/VistaTienda';
 
+
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // 1. Verificamos la sesión del usuario en el servidor.
   const userId = await getUserIdFromSession();
 
-  // 2. Si el usuario ha iniciado sesión, mostramos el Dashboard.
   if (userId) {
     return (
       <>
@@ -40,6 +41,5 @@ export default async function HomePage() {
     );
   }
 
-  // 3. Si el usuario NO ha iniciado sesión, mostramos la LandingPage.
   return <LandingPage />;
 }

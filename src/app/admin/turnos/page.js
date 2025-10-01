@@ -1,4 +1,7 @@
 
+// Le decimos a Next.js que esta página siempre es dinámica.
+export const dynamic = 'force-dynamic';
+
 import { getUserIdFromSession } from '@/lib/firebaseAdmin';
 import admin from '@/lib/firebaseAdmin'; // Aseguramos importación por defecto
 import { redirect } from 'next/navigation';
