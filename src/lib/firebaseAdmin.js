@@ -2,9 +2,12 @@
 import admin from 'firebase-admin';
 import { cookies } from 'next/headers';
 
-// --- INICIALIZACIÓN DEL SDK DE ADMIN (MÉTODO ROBUSTO Y CENTRALIZADO) ---
+// --- DIAGNÓSTICO DE INICIALIZACIÓN DE FIREBASE ADMIN ---
+console.log('--- Firebase Admin Initialization --- ');
+console.log('Verificando variables de entorno durante el build...');
+console.log('FIREBASE_PROJECT_ID existe:', !!process.env.FIREBASE_PROJECT_ID);
+console.log('FIREBASE_PRIVATE_KEY existe:', !!process.env.FIREBASE_PRIVATE_KEY);
 
-// Construir el objeto de la cuenta de servicio a partir de variables de entorno individuales.
 const serviceAccount = {
   type: "service_account",
   project_id: process.env.FIREBASE_PROJECT_ID,
@@ -21,40 +24,40 @@ const serviceAccount = {
   universe_domain: "googleapis.com"
 };
 
-// Inicializar la app de Firebase Admin SÓLO UNA VEZ
 if (!admin.apps.length) {
-  if (serviceAccount.private_key && serviceAccount.project_id) {
+  console.log('No hay apps de Firebase. Intentando inicializar...');
+  if (serviceAccount.project_id && serviceAccount.private_key) {
     try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
+      console.log('ÉXITO: Firebase Admin SDK inicializado correctamente.');
     } catch (error) {
-      console.error('Error al inicializar Firebase Admin SDK:', error.message);
+      console.error('ERROR: Fallo durante admin.initializeApp:', error.message);
     }
+  } else {
+    console.error('ERROR: No se inicializó. Faltan FIREBASE_PROJECT_ID o FIREBASE_PRIVATE_KEY.');
   }
+} else {
+  console.log('Firebase Admin SDK ya estaba inicializado.');
 }
 
-/**
- * Verifica la cookie de sesión del usuario en el lado del servidor.
- * @returns {Promise<string|null>} El UID del usuario si la sesión es válida, o null en caso contrario.
- */
+console.log('--- Fin de la inicialización de Firebase Admin ---');
+
 export const getUserIdFromSession = async () => {
+  if (!admin.apps.length) {
+    console.log('getUserIdFromSession: App no inicializada, devolviendo null.');
+    return null;
+  }
   try {
     const sessionCookie = cookies().get('__session')?.value;
-
     if (!sessionCookie) {
       return null;
     }
-
-    // Si no hay apps de admin inicializadas, no podemos verificar la cookie.
-    if (!admin.apps.length) {
-        return null;
-    }
-
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
     return decodedClaims.uid;
-
   } catch (error) {
+    console.error('Error en getUserIdFromSession:', error.code);
     return null;
   }
 };
