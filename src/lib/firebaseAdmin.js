@@ -34,4 +34,29 @@ if (!admin.apps.length) {
   }
 }
 
+/**
+ * Verifica la cookie de sesión del usuario en el lado del servidor.
+ * @returns {Promise<string|null>} El UID del usuario si la sesión es válida, o null en caso contrario.
+ */
+export const getUserIdFromSession = async () => {
+  try {
+    const sessionCookie = cookies().get('__session')?.value;
+
+    if (!sessionCookie) {
+      return null;
+    }
+
+    // Si no hay apps de admin inicializadas, no podemos verificar la cookie.
+    if (!admin.apps.length) {
+        return null;
+    }
+
+    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    return decodedClaims.uid;
+
+  } catch (error) {
+    return null;
+  }
+};
+
 export default admin;
