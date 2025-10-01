@@ -1,11 +1,8 @@
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import admin from '@/lib/firebaseAdmin';
 import { getUserIdFromSession } from '@/lib/firebaseAdmin';
-
+import admin from '@/lib/firebaseAdmin';
+import { redirect } from 'next/navigation';
 import FormularioTurnoConsulta from '@/app/components/FormularioTurnoConsulta.jsx';
-import PrivateRoute from '@/app/components/PrivateRoute';
 import Footer from '@/app/components/Footer';
 
 // Función para sanear los datos: convierte Timestamps a strings.
@@ -37,18 +34,20 @@ async function getUserMascotas(userId) {
 }
 
 export default async function ConsultaPage() {
-    const sessionCookie = cookies().get('__session')?.value || '';
-    const userId = await getUserIdFromSession(sessionCookie);
+    // 1. Verificar la sesión del usuario directamente.
+    const userId = await getUserIdFromSession();
 
+    // 2. Si no hay userId, redirigir a login, guardando la página actual para volver.
     if (!userId) {
-        redirect('/login');
+        redirect('/login?redirect=/turnos/consulta');
     }
 
+    // El resto de la lógica de la página permanece, pero sin el componente PrivateRoute.
     const mascotas = await getUserMascotas(userId);
 
     if (mascotas.length === 0) {
         return (
-            <PrivateRoute>
+            <>
                 <main className="container mx-auto px-4 py-12 bg-gray-50 text-center">
                     <div className="max-w-xl mx-auto">
                         <h1 className="text-3xl font-bold text-gray-800 mb-4">Primero registra a tu mascota</h1>
@@ -61,12 +60,12 @@ export default async function ConsultaPage() {
                     </div>
                 </main>
                 <Footer />
-            </PrivateRoute>
+            </>
         );
     }
 
     return (
-        <PrivateRoute>
+        <>
             <main className="container mx-auto px-4 py-12 bg-gray-50">
                 <div className="max-w-4xl mx-auto">
                     <h1 className="text-4xl font-extrabold text-center mb-2 text-gray-800">Portal de Turnos</h1>
@@ -76,6 +75,6 @@ export default async function ConsultaPage() {
                 </div>
             </main>
             <Footer />
-        </PrivateRoute>
+        </>
     );
 }

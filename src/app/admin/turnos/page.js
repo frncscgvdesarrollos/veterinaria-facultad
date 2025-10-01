@@ -1,10 +1,10 @@
 
-import { cookies } from 'next/headers';
+import { getUserIdFromSession } from '@/lib/firebaseAdmin';
+import admin from '@/lib/firebaseAdmin'; // Aseguramos importación por defecto
 import { redirect } from 'next/navigation';
-import admin, { getUserIdFromSession } from '@/lib/firebaseAdmin';
 import Link from 'next/link';
 import { FiClock, FiCheckCircle, FiXCircle } from 'react-icons/fi';
-import TurnoActions from '@/app/admin/TurnoActions'; // Importamos el nuevo componente de cliente
+import TurnoActions from '@/app/admin/TurnoActions';
 
 // --- Funciones y Componentes del Servidor ---
 
@@ -13,7 +13,6 @@ const sanitizeData = (docData) => {
   const data = { ...docData };
   for (const key in data) {
     if (data[key] && typeof data[key].toDate === 'function') {
-      // Convertir Timestamp a string ISO. El componente que lo use lo puede formatear.
       data[key] = data[key].toDate().toISOString();
     }
   }
@@ -62,29 +61,32 @@ const TurnoCard = ({ turno }) => {
                 <p className="text-sm text-gray-600">Fecha: <span className="font-medium">{new Date(turno.fecha).toLocaleDateString()}</span></p>
                 {turno.turno && <p className="text-sm text-gray-600">Horario: <span className="font-medium">{turno.turno}</span></p>}
             </div>
-            {/* Solo mostramos las acciones si el turno está pendiente */}
             {turno.estado === 'pendiente' && <TurnoActions turnoId={turno.id} />}
         </div>
     );
 };
 
 export default async function AdminTurnosPage() {
-    const sessionCookie = cookies().get('__session')?.value || '';
-    const userId = await getUserIdFromSession(sessionCookie);
+    // 1. Verificar la sesión del usuario directamente con la nueva función.
+    const userId = await getUserIdFromSession();
 
-    if (!userId) redirect('/login');
+    // 2. Si no hay userId, redirigir a login.
+    if (!userId) {
+        redirect('/login?redirect=/admin/turnos'); // Opcional: redirigir de vuelta aquí después de login
+    }
 
+    // 3. Verificar si el usuario es administrador.
     const firestore = admin.firestore();
     const userDocSnap = await firestore.collection('users').doc(userId).get();
     const userRole = userDocSnap.data()?.role;
 
-    if (userRole !== 'admin') redirect('/');
+    if (userRole !== 'admin') {
+        redirect('/'); // Si no es admin, redirigir a la página principal.
+    }
 
+    // El resto de la lógica de la página permanece igual...
     const turnosSnap = await firestore.collection('turnos').orderBy('createdAt', 'desc').get();
-    
-    // Mapeamos y SANEAMOS los datos aquí, en el Server Component.
     const turnosList = turnosSnap.docs.map(doc => ({ id: doc.id, ...sanitizeData(doc.data()) }));
-
     const turnosConDetalles = await Promise.all(turnosList.map(getTurnoDetails));
 
     const turnosPendientes = turnosConDetalles.filter(t => t.estado === 'pendiente');
