@@ -51,7 +51,7 @@ export default function FormularioTurnoConsulta({ mascotas = [] }) {
             
             {/* Método de Pago */}
             <div>
-                <label htmlFor="metodoPago" className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</pre-visto</label>
+                <label htmlFor="metodoPago" className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
                 <select id="metodoPago" name="metodoPago" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
                     <option value="Efectivo">Efectivo</option>
                     <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
