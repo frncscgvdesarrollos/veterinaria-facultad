@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
-import PrivateRoute from '@/app/components/PrivateRoute';
 import AccionesTurnoUsuario from '@/app/components/AccionesTurnoUsuario';
 import { FiClock, FiCheckCircle, FiXCircle, FiCalendar, FiSun, FiMoon, FiScissors } from 'react-icons/fi';
 
@@ -135,8 +134,6 @@ const MisTurnosContent = () => {
 
 export default function MisTurnosPage() {
     return (
-        <PrivateRoute>
             <MisTurnosContent />
-        </PrivateRoute>
     );
 }
