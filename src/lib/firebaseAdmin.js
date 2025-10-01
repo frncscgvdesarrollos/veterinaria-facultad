@@ -2,62 +2,36 @@
 import admin from 'firebase-admin';
 import { cookies } from 'next/headers';
 
-// --- INICIALIZACIÓN DEL SDK DE ADMIN ---
+// --- INICIALIZACIÓN DEL SDK DE ADMIN (MÉTODO ROBUSTO Y CENTRALIZADO) ---
 
-// 1. Decodificar la clave de servicio desde Base64.
-// Esto evita problemas de formato con los saltos de línea en las variables de entorno.
-const serviceAccountB64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
-let serviceAccount;
+// Construir el objeto de la cuenta de servicio a partir de variables de entorno individuales.
+const serviceAccount = {
+  type: "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY
+    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    : undefined,
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+  universe_domain: "googleapis.com"
+};
 
-if (serviceAccountB64) {
-  try {
-    const serviceAccountJson = Buffer.from(serviceAccountB64, 'base64').toString('utf-8');
-    serviceAccount = JSON.parse(serviceAccountJson);
-  } catch (error) {
-    console.error('Error al decodificar o parsear la clave de servicio de Firebase desde Base64:', error);
-  }
-} else {
-  console.error('La variable de entorno FIREBASE_SERVICE_ACCOUNT_BASE64 no está definida.');
-}
-
-// 2. Inicializar la app de Firebase Admin
+// Inicializar la app de Firebase Admin SÓLO UNA VEZ
 if (!admin.apps.length) {
-  if (serviceAccount) {
+  if (serviceAccount.private_key && serviceAccount.project_id) {
     try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
-      console.log('Firebase Admin SDK inicializado correctamente.');
     } catch (error) {
-      console.error('Error al inicializar Firebase Admin SDK:', error);
+      console.error('Error al inicializar Firebase Admin SDK:', error.message);
     }
-  } else {
-    console.error('No se pudo inicializar Firebase Admin SDK porque la clave de servicio no es válida.');
   }
 }
-
-// --- FUNCIÓN CENTRALIZADA DE VERIFICACIÓN DE SESIÓN ---
-
-/**
- * Verifica la cookie de sesión del usuario en el lado del servidor.
- * @returns {Promise<string|null>} El UID del usuario si la sesión es válida, o null en caso contrario.
- */
-export const getUserIdFromSession = async () => {
-  try {
-    const sessionCookie = cookies().get('__session')?.value;
-
-    if (!sessionCookie) {
-      // console.log('No se encontró la cookie de sesión.');
-      return null;
-    }
-
-    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
-    return decodedClaims.uid;
-
-  } catch (error) {
-    // console.log('No se pudo verificar la cookie de sesión:', error.message);
-    return null;
-  }
-};
 
 export default admin;
