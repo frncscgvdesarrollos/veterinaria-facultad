@@ -4,22 +4,19 @@ import admin from 'firebase-admin';
 
 // Comprobación para asegurar que el código se ejecuta solo en el servidor.
 if (typeof window === 'undefined') {
+  // Solo inicializar si no hay ya una app configurada
   if (!admin.apps.length) {
     try {
-      // Para que el Admin SDK funcione en Vercel, necesita las credenciales de la cuenta de servicio.
-      // Estas deben ser almacenadas como una variable de entorno en el proyecto de Vercel.
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      });
-
-      console.log('Firebase Admin SDK inicializado correctamente.');
+      // En un entorno de Google Cloud (como Firebase Studio o Vercel),
+      // llamar a initializeApp() sin argumentos usará las Credenciales
+      // Predeterminadas de la Aplicación (Application Default Credentials).
+      // Esto es más seguro y no requiere gestionar claves manualmente.
+      admin.initializeApp();
+      console.log('Firebase Admin SDK inicializado correctamente con credenciales del entorno.');
 
     } catch (error) {
-      // Este error es común si la variable de entorno no está configurada en Vercel.
-      console.error('ERROR AL INICIALIZAR FIREBASE ADMIN SDK:', error);
-      console.error('Asegúrate de haber configurado la variable de entorno FIREBASE_SERVICE_ACCOUNT_KEY en Vercel con el JSON de tu cuenta de servicio.');
+      console.error('ERROR AL INICIALIZAR FIREBASE ADMIN SDK:', error.message);
+      console.error('Asegúrate de que el entorno de ejecución tiene acceso a las credenciales de Google Cloud.');
     }
   }
 }
@@ -37,15 +34,13 @@ export async function getUserIdFromSession(sessionCookie) {
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, false);
     return decodedClaims.uid;
   } catch (error) {
-    // Si el SDK no se inicializó, este error puede ocurrir.
-    if (error.code === 'auth/invalid-session-cookie') {
-         console.error("La cookie de sesión no es válida. Puede que haya expirado o el SDK de Admin no esté configurado correctamente.")
+    if (error.code === 'auth/invalid-session-cookie' || error.code === 'app/no-app') {
+         console.error("La cookie de sesión no es válida o el SDK de Admin no está configurado correctamente.")
     } else {
         console.error('Error al verificar la cookie de sesión:', error.code);
     }
     return null;
   }
 }
-
 
 export default admin;

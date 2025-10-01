@@ -1,4 +1,5 @@
-// Este es ahora un Componente de Servidor. No necesita 'use client'.
+
+
 
 import HomePageClient from './components/HomePageClient';
 import GaleriaAdopciones from './components/GaleriaAdopciones'; // Componente de Servidor

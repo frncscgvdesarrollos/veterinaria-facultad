@@ -1,42 +1,39 @@
+'use server';
 
-'use client';
-
-import { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-// Corregido: Se elimina PawPrintIcon y se añade ArrowPathIcon
-import { HeartIcon, EnvelopeIcon, UserIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
+import { getMascotasEnAdopcion } from '@/app/actions/adopcionesActions';
+import SubHeader from '@/app/components/SubHeader';
 import Image from 'next/image';
+import { HeartIcon, UserIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
 
-// Componente para la tarjeta de una mascota en adopción
-function AdopcionCard({ mascota }) {
-    const imageUrl = `https://placedog.net/500/500?random&r=${mascota.id}`;
+function MascotaCard({ mascota }) {
+    const imageUrl = mascota.fotos && mascota.fotos.length > 0 ? mascota.fotos[0] : '/img/placeholder-dog.jpg';
 
     return (
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
-            <div className="relative h-56 w-full">
-                <Image 
-                    className="object-cover"
-                    src={imageUrl} 
-                    alt={`Foto de ${mascota.nombre}`} 
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col">
+            <div className="relative h-64 w-full">
+                <Image
+                    src={imageUrl}
+                    alt={`Foto de ${mascota.nombre}`}
                     fill
+                    style={{ objectFit: 'cover' }}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-                <div className="absolute top-0 right-0 bg-violet-600 text-white text-xs font-bold px-3 py-1 m-3 rounded-full">ADOPCIÓN</div>
+                <div className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md">
+                    <HeartIcon className="h-6 w-6 text-red-400" />
+                </div>
             </div>
-            <div className="p-5">
-                <h3 className="text-3xl font-extrabold text-gray-900">{mascota.nombre}</h3>
-                <p className="text-md font-semibold text-violet-700 capitalize">{mascota.especie} - {mascota.raza || 'Mestizo'}</p>
+            <div className="p-5 flex flex-col flex-grow">
+                <h3 className="text-2xl font-bold text-gray-900">{mascota.nombre}</h3>
+                <p className="text-gray-600 mb-4">{mascota.raza}</p>
                 
-                <div className="mt-4 border-t border-gray-200 pt-4">
-                    <p className="text-sm text-gray-600 font-bold">Contacto del Dueño:</p>
-                    <div className="flex items-center gap-3 mt-2">
-                        <UserIcon className="h-5 w-5 text-gray-400" />
-                        <span className="text-gray-700">{mascota.ownerName}</span>
+                <div className="mt-auto border-t pt-4 space-y-2">
+                    <div className="flex items-center gap-3">
+                        <UserIcon className="h-5 w-5 text-gray-500" />
+                        <span className="text-gray-700 font-medium">{mascota.ownerName || 'No disponible'}</span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1">
-                        <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                        <a href={`mailto:${mascota.ownerEmail}`} className="text-blue-600 hover:underline">{mascota.ownerEmail}</a>
+                    <div className="flex items-center gap-3">
+                        <EnvelopeIcon className="h-5 w-5 text-gray-500" />
+                        <a href={`mailto:${mascota.ownerEmail}`} className="text-blue-600 hover:underline break-all">{mascota.ownerEmail}</a>
                     </div>
                 </div>
             </div>
@@ -44,62 +41,49 @@ function AdopcionCard({ mascota }) {
     );
 }
 
-export default function AdopcionesPage() {
-    const [mascotas, setMascotas] = useState([]);
-    const [loading, setLoading] = useState(true);
+export default async function AdopcionesPage() {
+    let mascotas = [];
+    let error = null;
 
-    useEffect(() => {
-        const adopcionesRef = collection(db, 'adopciones');
-        const q = query(adopcionesRef, orderBy('fechaRegistro', 'desc'));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const mascotasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setMascotas(mascotasData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error al obtener las mascotas en adopción:", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    if (loading) {
-        return (
-             <div className="flex justify-center items-center h-screen bg-violet-100">
-                <div className="text-center">
-                    {/* Corregido: Se reemplaza PawPrintIcon por ArrowPathIcon para la carga */}
-                    <ArrowPathIcon className="animate-spin h-12 w-12 text-violet-600 mx-auto" />
-                    <p className="text-violet-800 font-semibold mt-2">Buscando nuevos hogares...</p>
-                </div>
-            </div>
-        );
+    try {
+        mascotas = await getMascotasEnAdopcion();
+    } catch (e) {
+        console.error(e);
+        // Si el error es FAILED_PRECONDITION, podemos dar un mensaje más específico.
+        if (e.code === 'FAILED_PRECONDITION') {
+            error = "La base de datos requiere un índice para esta consulta. Por favor, crea el índice en Firestore y vuelve a intentarlo.";
+        } else {
+            error = "Ocurrió un error al cargar las mascotas.";
+        }
     }
 
     return (
-        <div className="min-h-screen bg-violet-200 font-sans">
-            <main className="container mx-auto px-4 py-12">
-                <div className="text-center mb-12">
-                    <HeartIcon className="mx-auto h-16 w-16 text-rose-500"/>
-                    <h1 className="text-5xl font-extrabold text-gray-900 mt-4">Encuentra a tu Nuevo Mejor Amigo</h1>
-                    <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600">Estas mascotas buscan un hogar lleno de amor. Contacta directamente a sus dueños para darles una nueva oportunidad.</p>
-                </div>
-
-                {mascotas.length === 0 ? (
-                    <div className="text-center bg-white/60 backdrop-blur-sm p-12 rounded-2xl shadow-lg">
-                        {/* Corregido: Se reemplaza PawPrintIcon por un HeartIcon temático */}
-                        <HeartIcon className="mx-auto h-16 w-16 text-violet-400" />
-                        <h2 className="mt-6 text-2xl font-bold text-gray-800">¡Qué bien!</h2>
-                        <p className="text-gray-600 mt-2 max-w-prose mx-auto">Actualmente, todas nuestras mascotas tienen un hogar. ¡Vuelve pronto para ver si hay nuevos amigos buscando familia!</p>
+        <>
+            <SubHeader title="Adopta un Amigo" />
+            <main className="max-w-7xl mx-auto p-4 md:p-8">
+                {error && (
+                    <div className="text-center py-20 bg-red-50 text-red-700 rounded-lg">
+                        <h2 className="text-2xl font-semibold">Error de Configuración</h2>
+                        <p className="mt-2 max-w-2xl mx-auto">{error}</p>
+                        <p className="mt-4 text-sm text-red-600">ID del Índice requerido: CICAgOjXh4EK</p>
                     </div>
-                ) : (
+                )}
+
+                {!error && mascotas.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {mascotas.map(mascota => (
-                            <AdopcionCard key={mascota.id} mascota={mascota} />
+                        {mascotas.map((mascota) => (
+                            <MascotaCard key={mascota.id} mascota={mascota} />
                         ))}
                     </div>
                 )}
+
+                {!error && mascotas.length === 0 && (
+                    <div className="text-center py-20">
+                        <h2 className="text-2xl font-semibold text-gray-700">No hay mascotas para adoptar</h2>
+                        <p className="mt-2 text-gray-500">¡Vuelve a consultar pronto o sé el primero en poner una mascota en adopción!</p>
+                    </div>
+                )}
             </main>
-        </div>
+        </>
     );
 }

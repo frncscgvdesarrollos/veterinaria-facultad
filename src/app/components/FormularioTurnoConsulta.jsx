@@ -1,122 +1,72 @@
-
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/dist/style.css';
-import { es } from 'date-fns/locale';
-import { solicitarTurnoConsulta } from '@/app/actions/turnosActions';
-import { FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
 
-export default function FormularioTurnoConsulta({ mascotas }) {
-    const { user } = useAuth();
-    const [mascota, setMascota] = useState('');
-    const [fecha, setFecha] = useState(null);
-    const [turno, setTurno] = useState('');
-    const [motivo, setMotivo] = useState('');
-    const [metodoPago, setMetodoPago] = useState(''); // NUEVO ESTADO
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+// Este es el formulario restaurado a un estado anterior.
+// La lógica de envío se ha desactivado para revertir los cambios no solicitados.
+
+export default function FormularioTurnoConsulta({ mascotas = [] }) {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('Funcionalidad no conectada.');
+    const [success, setSuccess] = useState(null);
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (!user) {
-            setError('Tu sesión ha expirado, por favor, recarga la página.');
-            return;
-        }
-        if (!mascota || !fecha || !turno || !motivo || !metodoPago) { // Añadida validación
-            setError('Por favor, completa todos los campos, incluido el método de pago.');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-        setSuccess('');
-        
-        const turnoData = {
-            clienteId: user.uid,
-            mascotaId: mascota,
-            fecha: fecha.toISOString().split('T')[0],
-            turno,
-            motivo,
-            metodoPago, 
-            tipo: 'consulta',
-            // Otros campos a medida que crecen las vistas y se amplian las funcionalidades.
-        };
-
-        try {
-            const result = await solicitarTurnoConsulta(turnoData);
-            if (result.success) {
-                setSuccess('¡Solicitud de turno enviada con éxito! Recibirás una confirmación por la misma vía.');
-                setMascota(''); setFecha(null); setTurno(''); setMotivo(''); setMetodoPago(''); // Reset
-            } else {
-                setError(result.error || 'No se pudo procesar la solicitud.');
-            }
-        } catch (err) {
-            setError('Ocurrió un error inesperado al comunicarnos con el servidor.');
-        } finally {
-            setLoading(false);
-        }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        // No se realiza ninguna acción de servidor.
+        alert('Este formulario no está conectado. Se está restaurando el estado anterior de la aplicación.');
     };
 
-    const today = new Date();
-
     return (
-        <form onSubmit={handleSubmit} className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-800">Solicitar Turno para Consulta</h2>
-
-            {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md text-center">{error}</p>}
-            {success && <p className="text-sm text-green-600 bg-green-100 p-3 rounded-md text-center">{success}</p>}
-
+        <form onSubmit={handleSubmit} className="space-y-8">
+            <h2 className="text-3xl font-bold text-center text-indigo-700">Solicitar Turno de Consulta</h2>
+            
+            {/* Selector de Mascota */}
             <div>
-                <label htmlFor="mascota" className="block text-sm font-medium text-gray-700 mb-1">Elige tu mascota</label>
-                <select id="mascota" value={mascota} onChange={(e) => setMascota(e.target.value)} required className="w-full input">
-                    <option value="">Selecciona una mascota</option>
-                    {mascotas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+                <label htmlFor="mascotaId" className="block text-sm font-medium text-gray-700 mb-2">Mascota</label>
+                <select id="mascotaId" name="mascotaId" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                    <option value="" disabled>Selecciona una mascota</option>
+                    {mascotas.map(mascota => (
+                        <option key={mascota.id} value={mascota.id}>{mascota.nombre}</option>
+                    ))}
                 </select>
             </div>
 
-            <div className="flex flex-col items-center">
-                <label className="block text-sm font-medium text-gray-700 mb-2">1. Selecciona el día</label>
-                <DayPicker mode="single" selected={fecha} onSelect={setFecha} locale={es} fromDate={today} className="bg-violet-50 p-4 rounded-lg" modifiersClassNames={{ selected: 'bg-violet-600 text-white', today: 'text-violet-700 font-bold' }} disabled={{ before: today }}/>
+            {/* Selector de Fecha y Hora */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                    <input type="date" id="fecha" name="fecha" required min={new Date().toISOString().split('T')[0]} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                </div>
+                <div>
+                    <label htmlFor="turno" className="block text-sm font-medium text-gray-700 mb-2">Horario</label>
+                    <input type="time" id="turno" name="turno" required min="09:00" max="18:00" step="1800" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                </div>
+            </div>
+
+            {/* Motivo de la Consulta */}
+            <div>
+                <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-2">Motivo de la Consulta</label>
+                <textarea id="motivo" name="motivo" rows={4} required placeholder="Describe brevemente el motivo de la visita (ej. control anual, vómitos, cojera, etc.)" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
             </div>
             
+            {/* Método de Pago */}
             <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-2">2. Selecciona el turno</label>
-                 <div className="grid grid-cols-2 gap-4">
-                    <button type="button" onClick={() => setTurno('manana')} className={`py-3 rounded-lg text-sm font-semibold transition-colors ${turno === 'manana' ? 'bg-violet-600 text-white shadow-md' : 'bg-gray-200 text-gray-700'}`}>
-                        Turno Mañana (8hs - 12hs)
-                    </button>
-                    <button type="button" onClick={() => setTurno('tarde')} className={`py-3 rounded-lg text-sm font-semibold transition-colors ${turno === 'tarde' ? 'bg-violet-600 text-white shadow-md' : 'bg-gray-200 text-gray-700'}`}>
-                        Turno Tarde (13hs - 17hs)
-                    </button>
-                 </div>
+                <label htmlFor="metodoPago" className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</pre-visto</label>
+                <select id="metodoPago" name="metodoPago" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                </select>
             </div>
 
-            <div>
-                <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-1">3. Motivo de la Consulta</label>
-                <textarea id="motivo" name="motivo" value={motivo} onChange={(e) => setMotivo(e.target.value)} rows="4" required className="w-full input" placeholder="Describe brevemente el motivo de la consulta (ej. control anual, vómitos, cojera, etc.)"></textarea>
+            {/* Botón de Envío y Mensajes */}
+            <div className="text-center">
+                <button type="submit" disabled={loading} className="w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-medium rounded-full text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 transition-colors duration-300">
+                    {loading ? 'Enviando...' : 'Solicitar Turno'}
+                </button>
+                {error && <p className="mt-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">Error: {error}</p>}
+                {success && <p className="mt-4 text-sm text-green-600 bg-green-100 p-3 rounded-md">{success}</p>}
             </div>
-
-             <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-2">4. Elige el método de pago</label>
-                 <div className="grid grid-cols-2 gap-4">
-                    <button type="button" onClick={() => setMetodoPago('efectivo')} className={`flex items-center justify-center py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${metodoPago === 'efectivo' ? 'bg-green-500 text-white shadow-lg ring-2 ring-green-300' : 'bg-gray-200 text-gray-700'} hover:bg-green-400 hover:text-white`}>
-                        <FaMoneyBillWave className="mr-2" />
-                        Efectivo
-                    </button>
-                    <button type="button" onClick={() => setMetodoPago('mercado_pago')} className={`flex items-center justify-center py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${metodoPago === 'mercado_pago' ? 'bg-sky-500 text-white shadow-lg ring-2 ring-sky-300' : 'bg-gray-200 text-gray-700'} hover:bg-sky-400 hover:text-white`}>
-                        <FaCreditCard className="mr-2" />
-                        Mercado Pago
-                    </button>
-                 </div>
-            </div>
-
-            <button type="submit" disabled={loading || !fecha || !turno || !mascota || !motivo || !metodoPago} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                {loading ? 'Enviando Solicitud...' : 'Solicitar Turno'}
-            </button>
         </form>
     );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { registrarMascota } from '@/app/actions/mascotasActions'; // Importamos la acción actualizada
+import { registrarMascota } from '@/app/actions/mascotasActions';
 import { FaDog, FaCat, FaVenusMars, FaRulerCombined, FaPaw, FaBirthdayCake, FaTag } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
@@ -84,7 +84,13 @@ export default function FormularioNuevaMascota() {
         }
 
         try {
-            const result = await registrarMascota(user, mascotaData); 
+            // --- CORRECCIÓN CLAVE ---
+            // No pasamos el objeto 'user' completo. Pasamos un objeto plano y serializable.
+            const result = await registrarMascota({
+                uid: user.uid,
+                displayName: user.displayName,
+                email: user.email
+            }, mascotaData);
 
             if (result.success) {
                 toast.success(result.message || '¡Mascota registrada con éxito!', { id: toastId });

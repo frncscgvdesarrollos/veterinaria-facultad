@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,10 +5,10 @@ import Image from 'next/image';
 import Carrito from './Carrito';
 
 const productosDeMuestra = [
-    { id: 1, nombre: 'Alimento Premium', descripcion: 'Bolsa de 15kg para perros', precio: 55000.00, imagen: 'dog food' },
-    { id: 2, nombre: 'Juguete Hueso de Goma', descripcion: 'Resistente y seguro para la mordida', precio: 7500.00, imagen: 'dog toy' },
-    { id: 3, nombre: 'Collar de Cuero Ajustable', descripcion: 'Elegante y duradero para paseos', precio: 12000.00, imagen: 'dog collar' },
-    { id: 4, nombre: 'Shampoo Hipoalergénico', descripcion: 'Cuidado suave para pieles sensibles', precio: 9800.00, imagen: 'pet shampoo' },
+    { id: 1, nombre: 'Alimento Premium', descripcion: 'Bolsa de 15kg para perros', precio: 55000.00, imagen: 'dog,food' },
+    { id: 2, nombre: 'Juguete Hueso de Goma', descripcion: 'Resistente y seguro para la mordida', precio: 7500.00, imagen: 'dog,toy' },
+    { id: 3, nombre: 'Collar de Cuero Ajustable', descripcion: 'Elegante y duradero para paseos', precio: 12000.00, imagen: 'dog,collar' },
+    { id: 4, nombre: 'Shampoo Hipoalergénico', descripcion: 'Cuidado suave para pieles sensibles', precio: 9800.00, imagen: 'pet,shampoo' },
 ];
 
 function ProductoCard({ producto, onAgregarAlCarrito }) {
@@ -17,11 +16,12 @@ function ProductoCard({ producto, onAgregarAlCarrito }) {
         <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden flex flex-col justify-between transform hover:-translate-y-1 transition-all duration-300 ease-out">
             <div className="relative w-full h-48">
                 <Image 
-                    src={`https://loremflickr.com/320/320/${producto.imagen}?lock=${producto.id}`}
+                    src={`https://source.unsplash.com/500x500/?${producto.imagen}`}
                     alt={`Imagen de ${producto.nombre}`}
                     fill
                     style={{ objectFit: 'cover' }}
                     className="transition-transform duration-300 group-hover:scale-110"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
             </div>
             <div className="p-5 flex-grow">
@@ -59,17 +59,13 @@ export default function VistaTienda() {
 
     return (
         <section>
-             <div className="text-center mb-12">
-                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800">Nuestra Tienda</h2>
-                <p className="text-lg text-gray-500 mt-2 max-w-2xl mx-auto">Todo lo que necesitas para el cuidado y la felicidad de tu compañero.</p>
-            </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
                     {productosDeMuestra.map(producto => (
                         <ProductoCard key={producto.id} producto={producto} onAgregarAlCarrito={handleAgregarAlCarrito} />
                     ))}
                 </div>
-                <div className="lg:col-span-1 sticky top-28"> {/* Aumentado el top para que no choque con el header */}
+                <div className="lg:col-span-1 sticky top-28"> 
                     <Carrito items={carrito} onEliminarItem={handleEliminarDelCarrito} />
                 </div>
             </div>

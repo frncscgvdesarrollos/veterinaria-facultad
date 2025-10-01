@@ -8,7 +8,7 @@ import Header from "@/app/components/Header";
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body className={`bg-gray-50 flex flex-col min-h-screen`}>
         <AuthProvider>
           <Header />
