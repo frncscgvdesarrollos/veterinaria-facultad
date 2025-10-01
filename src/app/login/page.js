@@ -5,11 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Toaster, toast } from 'react-hot-toast';
-import { completarPerfil } from '@/app/actions';
+import { registerWithEmail } from '@/app/actions'; // FIX: Usar la nueva server action para el registro
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 
 export default function LoginPage() {
-    const { user, loginWithGoogle, loginWithEmail, registerWithEmailAndPassword, resetPassword } = useAuth();
+    // FIX: Se añade signInWithToken para manejar el login con el token personalizado
+    const { user, loginWithGoogle, loginWithEmail, signInWithToken, resetPassword } = useAuth();
     const router = useRouter();
     
     const [email, setEmail] = useState('');
@@ -26,6 +27,7 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (user) {
+            // La lógica de redirección ahora funciona correctamente porque el perfil está completo.
             if (user.profileCompleted) {
                 router.push(user.role === 'admin' ? '/admin' : '/');
             } else {
@@ -53,17 +55,16 @@ export default function LoginPage() {
             if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
             
             try {
-                const result = await registerWithEmailAndPassword(email, password);
-                if (result.user) {
-                    const profileResult = await completarPerfil(result.user.uid, formData);
-                    if (!profileResult.success) throw new Error(profileResult.error);
-    
-                    const idToken = await result.user.getIdToken();
-                    await fetch('/api/auth/session', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${idToken}` }
-                    });
-                    router.push(profileResult.role === 'admin' ? '/admin' : '/');
+                // FIX: Lógica de registro unificada
+                const newUserData = { email, password, ...formData };
+                const result = await registerWithEmail(newUserData);
+
+                if (result.success && result.token) {
+                    // Iniciar sesión en el cliente con el token personalizado del servidor
+                    await signInWithToken(result.token);
+                    // El useEffect se encargará de la redirección a partir de aquí
+                } else {
+                    setError(result.error);
                 }
             } catch (error) {
                 console.error('Fallo al registrar', error);
