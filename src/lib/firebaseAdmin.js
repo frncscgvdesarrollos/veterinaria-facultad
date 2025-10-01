@@ -1,46 +1,32 @@
-// Historia de Usuario 5: Gestión de Roles de Usuario
-
 import admin from 'firebase-admin';
 
-// Comprobación para asegurar que el código se ejecuta solo en el servidor.
-if (typeof window === 'undefined') {
-  // Solo inicializar si no hay ya una app configurada
-  if (!admin.apps.length) {
-    try {
-      // En un entorno de Google Cloud (como Firebase Studio o Vercel),
-      // llamar a initializeApp() sin argumentos usará las Credenciales
-      // Predeterminadas de la Aplicación (Application Default Credentials).
-      // Esto es más seguro y no requiere gestionar claves manualmente.
-      admin.initializeApp();
-      console.log('Firebase Admin SDK inicializado correctamente con credenciales del entorno.');
-
-    } catch (error) {
-      console.error('ERROR AL INICIALIZAR FIREBASE ADMIN SDK:', error.message);
-      console.error('Asegúrate de que el entorno de ejecución tiene acceso a las credenciales de Google Cloud.');
-    }
-  }
-}
-
-/**
- * Verifica la cookie de sesión de Firebase y devuelve el UID del usuario.
- * @param {string} sessionCookie La cadena de la cookie de sesión.
- * @returns {Promise<string|null>} El UID del usuario o null si la cookie no es válida.
- */
-export async function getUserIdFromSession(sessionCookie) {
-  if (!sessionCookie) {
-    return null;
-  }
+// Evita reinicializaciones que pueden ocurrir en entornos de desarrollo con hot-reloading.
+if (!admin.apps.length) {
   try {
-    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, false);
-    return decodedClaims.uid;
-  } catch (error) {
-    if (error.code === 'auth/invalid-session-cookie' || error.code === 'app/no-app') {
-         console.error("La cookie de sesión no es válida o el SDK de Admin no está configurado correctamente.")
+    // MÉTODO 1: Variable de Entorno Única (Recomendado para Producción/Vercel)
+    // Lee la variable que contiene el JSON completo de la clave de servicio.
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      // Parsea el contenido de la variable de entorno, que es un string JSON.
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      console.log('Firebase Admin SDK inicializado correctamente desde la variable de entorno (PRODUCCIÓN).');
     } else {
-        console.error('Error al verificar la cookie de sesión:', error.code);
+      // MÉTODO 2: Archivo de Cuentas de Servicio (Fallback para Desarrollo Local)
+      // Si la variable de entorno no está, se recurre al archivo JSON local.
+      const serviceAccount = require('../../firebase-admin-sdk.json');
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      console.log('Firebase Admin SDK inicializado desde archivo local (DESARROLLO).');
     }
-    return null;
+  } catch (error) {
+    // Si ninguno de los dos métodos funciona, es un error crítico.
+    console.error('Error FATAL: No se pudo inicializar Firebase Admin SDK. Verifique la variable de entorno FIREBASE_SERVICE_ACCOUNT_KEY o el archivo firebase-admin-sdk.json.', error);
   }
 }
 
+// Exporta la instancia de admin para ser usada en todas las Server Actions.
 export default admin;
