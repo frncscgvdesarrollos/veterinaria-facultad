@@ -8,20 +8,37 @@ import { db } from '@/lib/firebase';
 import SubHeader from '@/app/components/SubHeader';
 import { FaPlus, FaCat, FaDog } from 'react-icons/fa';
 
-// Función para formatear fechas de Firestore de forma segura
-const formatDate = (timestamp) => {
-    if (!timestamp) return 'No especificada';
+// --- FUNCIÓN DE FORMATEO MEJORADA ---
+const formatDate = (dateInput) => {
+    if (!dateInput) return 'No especificada';
+
     try {
-        // El objeto timestamp de Firestore tiene un método toDate()
-        const date = timestamp.toDate();
+        let date;
+        // Caso 1: Es un objeto Timestamp de Firestore (datos nuevos)
+        if (typeof dateInput.toDate === 'function') {
+            date = dateInput.toDate();
+        } 
+        // Caso 2: Es un string de fecha como "YYYY-MM-DD" (datos antiguos)
+        else if (typeof dateInput === 'string') {
+            // Añadimos T00:00:00 para asegurar que la fecha se interprete en la zona horaria local
+            // y no se desfase un día por UTC.
+            date = new Date(`${dateInput}T00:00:00`);
+        }
+        // Caso 3: Ya es un objeto Date de JavaScript
+        else if (dateInput instanceof Date) {
+            date = dateInput;
+        } else {
+            throw new Error('Formato de fecha no reconocido');
+        }
+
         return new Intl.DateTimeFormat('es-ES', {
-            day: 'numeric',
-            month: 'long',
+            day: '2-digit',
+            month: '2-digit',
             year: 'numeric'
         }).format(date);
+
     } catch (error) {
-        // Si ya es un string o un formato inválido, lo devolvemos tal cual o un mensaje de error
-        console.error("Error al formatear la fecha:", error);
+        console.error("Error al formatear la fecha:", dateInput, error);
         return 'Fecha inválida';
     }
 };
@@ -38,7 +55,7 @@ const MascotaCard = ({ mascota }) => {
                 </div>
                 <p className="text-gray-600 capitalize"><span className="font-semibold">Especie:</span> {mascota.especie}</p>
                 <p className="text-gray-600 capitalize"><span className="font-semibold">Raza:</span> {mascota.raza}</p>
-                {/* APLICAMOS LA FUNCIÓN DE FORMATEO AQUÍ */}
+                {/* APLICAMOS LA FUNCIÓN DE FORMATEO MEJORADA AQUÍ */}
                 <p className="text-gray-600"><span className="font-semibold">Fecha de Nacimiento:</span> {formatDate(mascota.fechaNacimiento)}</p>
             </div>
              <Link href={`/mascotas/${mascota.id}/carnet`} className="mt-4 text-center bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition">
@@ -58,10 +75,8 @@ export default function MisMascotasPage() {
         if (user) {
             const fetchMascotas = async () => {
                 try {
-                    // --- CONSULTA CORREGIDA ---
-                    // Apuntamos directamente a la subcolección 'mascotas' del usuario logueado.
                     const mascotasRef = collection(db, 'users', user.uid, 'mascotas');
-                    const q = query(mascotasRef, orderBy('nombre', 'asc')); // Ordenamos por nombre
+                    const q = query(mascotasRef, orderBy('nombre', 'asc'));
                     
                     const querySnapshot = await getDocs(q);
                     const mascotasData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

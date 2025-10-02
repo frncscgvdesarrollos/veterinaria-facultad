@@ -5,7 +5,7 @@ import admin from '@/lib/firebaseAdmin';
 
 /**
  * @function registrarMascota
- * @description Registra una nueva mascota en la subcolección de un usuario y maneja la carga de imágenes a Firebase Storage.
+ * @description Registra una nueva mascota en la subcolección de un usuario, convirtiendo la fecha de nacimiento a un Timestamp de Firestore.
  * @param {object} user - El objeto de usuario que contiene el uid.
  * @param {object} mascotaData - Los datos de la mascota a registrar.
  * @returns {Promise<object>} Un objeto indicando el éxito o el fracaso de la operación.
@@ -19,22 +19,25 @@ export async function registrarMascota(user, mascotaData) {
     const userRef = firestore.collection('users').doc(user.uid);
 
     try {
-        // Extraemos enAdopcion para usarlo después
-        const { enAdopcion, ...dataToSave } = mascotaData;
+        // Extraemos enAdopcion y fechaNacimiento para manejarlos por separado.
+        const { enAdopcion, fechaNacimiento, ...dataToSave } = mascotaData;
 
-        // 1. Añadimos la mascota a la subcolección del usuario.
+        // Convertimos la fecha de string a un objeto Date y luego a Timestamp de Firestore.
+        // Se añade T00:00:00 para evitar problemas de zona horaria, asegurando que se tome el día correcto.
+        const fechaNacimientoTimestamp = admin.firestore.Timestamp.fromDate(new Date(`${fechaNacimiento}T00:00:00`));
+
+        // 1. Añadimos la mascota a la subcolección del usuario con la fecha convertida.
         const mascotaRef = await userRef.collection('mascotas').add({
             ...dataToSave,
+            fechaNacimiento: fechaNacimientoTimestamp,
             enAdopcion: enAdopcion || false, // Aseguramos que el campo exista
             fechaRegistro: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // (Aquí iría la lógica de subida de fotos si la tuviéramos implementada con el Admin SDK)
-
         // 2. Revalidamos las rutas para que los cambios se reflejen inmediatamente.
         revalidatePath('/mis-mascotas');
 
-        // 3. Si la mascota es para adopción, revalidamos TAMBIÉN la página de inicio y la de adopciones.
+        // 3. Si la mascota es para adopción, revalidamos también la página de inicio y la de adopciones.
         if (enAdopcion) {
             revalidatePath('/adopciones');
             revalidatePath('/');
