@@ -4,18 +4,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// Función para obtener iniciales para el avatar de fallback
-const getInitials = (name) => {
+// Función para obtener la inicial del nombre a mostrar
+const getInitial = (name) => {
   if (!name) return '?';
-  const names = name.split(' ');
-  if (names.length === 1) return names[0].charAt(0).toUpperCase();
-  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  return name.charAt(0).toUpperCase();
 };
 
 export default function Header() {
     const { user, isLoggedIn, logout } = useAuth(); 
     
-    const displayName = user?.name ? user.name.split(' ')[0] : 'Usuario';
+    // Lógica mejorada para obtener el nombre a mostrar
+    let displayIdentifier = 'Usuario';
+    if (user) {
+        // Prioridad 1: Usar el `displayName` si existe y no está vacío.
+        if (user.displayName) {
+            displayIdentifier = user.displayName.split(' ')[0];
+        } 
+        // Prioridad 2: Usar la parte local del email si no hay `displayName`.
+        else if (user.email) {
+            displayIdentifier = user.email.split('@')[0];
+        }
+    }
 
     return (
         <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
@@ -37,14 +46,14 @@ export default function Header() {
                     <div className="flex-grow"></div>
 
                     <div className="flex items-center gap-4 min-w-[250px] justify-end">
-                        {isLoggedIn ? (
+                        {isLoggedIn && user ? (
                             <div className="flex items-center gap-4">
-                                <span className="hidden lg:inline text-md font-medium text-gray-700">Hola, {displayName}</span>
+                                <span className="hidden lg:inline text-md font-medium text-gray-700 capitalize">Hola, {displayIdentifier}</span>
                                 <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
                                     {user.photoURL ? (
                                         <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
                                     ) : (
-                                        <span>{getInitials(user.name)}</span>
+                                        <span>{getInitial(displayIdentifier)}</span>
                                     )}
                                 </div>
                                 <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
