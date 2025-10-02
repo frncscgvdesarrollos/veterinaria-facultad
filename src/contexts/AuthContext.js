@@ -12,7 +12,10 @@ import {
     updatePassword,
     EmailAuthProvider,
     reauthenticateWithCredential,
-    signInWithCustomToken
+    signInWithCustomToken,
+    // --- FUNCIONES AÑADIDAS ---
+    verifyPasswordResetCode,
+    confirmPasswordReset,
 } from 'firebase/auth';
 // Importamos las instancias ya inicializadas de forma segura
 import { auth, db } from '@/lib/firebase'; 
@@ -28,7 +31,6 @@ export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        // onAuthStateChanged ya se asegura de ejecutarse solo cuando auth está listo.
         const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
             try {
                 if (userAuth) {
@@ -39,7 +41,6 @@ export const AuthProvider = ({ children }) => {
                         const userData = userDocSnap.data();
                         setUser({ ...userAuth, ...userData });
                     } else {
-                        // Para usuarios nuevos, creamos un perfil básico.
                         const newUser = {
                             uid: userAuth.uid,
                             email: userAuth.email,
@@ -62,66 +63,36 @@ export const AuthProvider = ({ children }) => {
                 setUser(null);
                 setIsLoggedIn(false);
             } finally {
-                // Nos aseguramos de que la carga termine, pase lo que pase.
                 setLoading(false);
             }
         });
 
-        // Limpiamos el listener al desmontar el componente
         return () => unsubscribe();
     }, []);
 
+    // --- NO CAMBIAN ---
     const loginWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
-        try {
-            // Con la inicialización corregida, esto ya no debería fallar.
-            return await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error("Fallo al iniciar sesión con Google", error);
-            throw error;
-        }
+        return signInWithPopup(auth, provider);
     };
-
-    const signOut = async () => {
-        try {
-            await firebaseSignOut(auth);
-        } catch (error) {
-            console.error("Error en signOut:", error);
-            throw error;
-        }
-    };
-    
-    const signInWithToken = async (token) => {
-        try {
-            const userCredential = await signInWithCustomToken(auth, token);
-            return userCredential.user;
-        } catch (error) {
-            console.error("Error en signInWithToken:", error);
-            throw error;
-        }
-    };
-
-    const loginWithEmail = async (email, password) => {
-        try {
-            return await signInWithEmailAndPassword(auth, email, password);
-        } catch (error) {
-            console.error("Error en loginWithEmail:", error);
-            throw error;
-        }
-    };
-
-    const registerWithEmailAndPassword = (email, password) => {
-        return createUserWithEmailAndPassword(auth, email, password);
-    };
-
-    const resetPassword = (email) => {
-        return sendPasswordResetEmail(auth, email);
-    };
-
+    const signOut = () => firebaseSignOut(auth);
+    const signInWithToken = (token) => signInWithCustomToken(auth, token);
+    const loginWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
+    const registerWithEmailAndPassword = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+    const resetPassword = (email) => sendPasswordResetEmail(auth, email);
     const changePassword = async (currentPassword, newPassword) => {
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
         await reauthenticateWithCredential(user, credential);
         return updatePassword(user, newPassword);
+    };
+
+    // --- FUNCIONES NUEVAS EXPUESTAS ---
+    const verifyResetCode = (code) => {
+        return verifyPasswordResetCode(auth, code);
+    };
+
+    const handlePasswordReset = (code, newPassword) => {
+        return confirmPasswordReset(auth, code, newPassword);
     };
 
 
@@ -137,6 +108,9 @@ export const AuthProvider = ({ children }) => {
         registerWithEmailAndPassword,
         resetPassword,
         changePassword,
+        // --- AÑADIDAS AL CONTEXTO ---
+        verifyResetCode, 
+        handlePasswordReset,
     };
 
     return (
