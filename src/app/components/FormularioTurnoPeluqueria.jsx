@@ -1,106 +1,131 @@
-'use client';
+'use client'
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { solicitarTurno } from '@/app/actions/turnosActions';
 
-// Este es el formulario restaurado a un estado anterior.
-// La lógica de envío se ha desactivado para revertir los cambios no solicitados.
+const horariosPeluqueria = [
+    '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'
+];
 
-export default function FormularioTurnoPeluqueria({ mascotas = [] }) {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('Funcionalidad no conectada.');
-    const [success, setSuccess] = useState(null);
+export default function FormularioTurnoPeluqueria({ mascotas, ocupacion, incluirTransporte }) {
+    const router = useRouter();
+    const [selectedMascotas, setSelectedMascotas] = useState([]);
+    const [fecha, setFecha] = useState('');
+    const [hora, setHora] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const handleMascotaSelection = (mascotaId) => {
+        setSelectedMascotas(prev =>
+            prev.includes(mascotaId) ? prev.filter(id => id !== mascotaId) : [...prev, mascotaId]
+        );
+    };
+
+    const handleDateChange = (e) => {
+        setFecha(e.target.value);
+        setHora('');
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // No se realiza ninguna acción de servidor.
-        alert('Este formulario no está conectado. Se está restaurando el estado anterior de la aplicación.');
+        if (selectedMascotas.length === 0 || !fecha || !hora) {
+            setError('Por favor, selecciona al menos una mascota y completa todos los campos.');
+            return;
+        }
+
+        // Validar si hay suficientes cupos para todas las mascotas seleccionadas
+        const ocupacionFecha = ocupacion[fecha] || {};
+        const cuposDisponibles = 1 - (ocupacionFecha[hora] || 0);
+        if (selectedMascotas.length > cuposDisponibles) {
+            setError(`No hay suficientes cupos para ${selectedMascotas.length} perros a las ${hora}. Por favor, elige otro horario o menos mascotas.`);
+            return;
+        }
+
+        setError('');
+        setIsSubmitting(true);
+
+        const formData = {
+            mascotaIds: selectedMascotas, // Enviar un array de IDs
+            fecha,
+            hora,
+            tipo: 'peluqueria',
+            transporte: incluirTransporte,
+        };
+
+        const result = await solicitarTurno(formData);
+
+        if (result.error) {
+            setError(result.error);
+            setIsSubmitting(false);
+        } else {
+            router.push('/mis-turnos');
+        }
     };
 
+    const getHorariosDisponibles = () => {
+        if (!fecha) return [];
+        const ocupacionFecha = ocupacion[fecha] || {};
+        return horariosPeluqueria.filter(h => !ocupacionFecha[h] || ocupacionFecha[h] < 1);
+    };
+
+    const horariosDisponibles = getHorariosDisponibles();
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
-            <h2 className="text-3xl font-bold text-center text-pink-600">Solicitar Turno de Peluquería</h2>
-            
-            {/* Selector de Mascota */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+            {error && <p className="text-red-500 font-bold text-center">{error}</p>}
+
             <div>
-                <label htmlFor="mascotaId_peluqueria" className="block text-sm font-medium text-gray-700 mb-2">Mascota</label>
-                <select id="mascotaId_peluqueria" name="mascotaId" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md shadow-sm">
-                    <option value="" disabled>Selecciona una mascota</option>
-                    {mascotas.map(mascota => (
-                        <option key={mascota.id} value={mascota.id}>{mascota.nombre}</option>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Elige a tus perros:</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {mascotas.map(m => (
+                        <div key={m.id} 
+                             onClick={() => handleMascotaSelection(m.id)} 
+                             className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${selectedMascotas.includes(m.id) ? 'bg-indigo-100 border-indigo-500 shadow-md' : 'bg-white border-gray-300 hover:border-indigo-400'}`}>
+                            <label htmlFor={`mascota-${m.id}`} className="flex items-center space-x-3 cursor-pointer">
+                               <input 
+                                   type="checkbox" 
+                                   id={`mascota-${m.id}`} 
+                                   checked={selectedMascotas.includes(m.id)} 
+                                   readOnly 
+                                   className="h-5 w-5 rounded-sm border-gray-300 text-indigo-600 focus:ring-0 focus:ring-offset-0"
+                                />
+                                <span className="font-medium text-gray-800">{m.nombre}</span>
+                            </label>
+                        </div>
                     ))}
-                </select>
-            </div>
-
-            {/* Selector de Fecha y Hora */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label htmlFor="fecha_peluqueria" className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
-                    <input type="date" id="fecha_peluqueria" name="fecha" required min={new Date().toISOString().split('T')[0]} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" />
-                </div>
-                <div>
-                    <label htmlFor="turno_peluqueria" className="block text-sm font-medium text-gray-700 mb-2">Horario</label>
-                    <input type="time" id="turno_peluqueria" name="turno" required min="09:00" max="18:00" step="3600" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" />
                 </div>
             </div>
 
-            {/* Tipo de Servicio */}
             <div>
-                <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-2">Servicio Principal</label>
-                 <select id="motivo" name="motivo" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md shadow-sm">
-                    <option value="Baño y Corte">Baño y Corte</option>
-                    <option value="Solo Baño">Solo Baño</option>
-                    <option value="Solo Corte">Solo Corte</option>
-                </select>
+                <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-1">Fecha:</label>
+                <input type="date" id="fecha" value={fecha} onChange={handleDateChange} min={hoy.toISOString().split('T')[0]} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
             </div>
 
-            {/* Servicios Extra */}
-             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Servicios Adicionales</label>
-                <div className="mt-2 space-y-2">
-                    <div className="relative flex items-start">
-                        <div className="flex items-center h-5">
-                            <input id="corteUnas" name="corteUnas" type="checkbox" className="focus:ring-pink-500 h-4 w-4 text-pink-600 border-gray-300 rounded" />
-                        </div>
-                        <div className="ml-3 text-sm">
-                            <label htmlFor="corteUnas" className="font-medium text-gray-700">Corte de Uñas</label>
-                        </div>
-                    </div>
-                     <div className="relative flex items-start">
-                        <div className="flex items-center h-5">
-                            <input id="banoMedicado" name="banoMedicado" type="checkbox" className="focus:ring-pink-500 h-4 w-4 text-pink-600 border-gray-300 rounded" />
-                        </div>
-                        <div className="ml-3 text-sm">
-                            <label htmlFor="banoMedicado" className="font-medium text-gray-700">Baño Medicado o Especial</label>
-                        </div>
-                    </div>
-                     <div className="relative flex items-start">
-                        <div className="flex items-center h-5">
-                            <input id="limpiezaOidos" name="limpiezaOidos" type="checkbox" className="focus:ring-pink-500 h-4 w-4 text-pink-600 border-gray-300 rounded" />
-                        </div>
-                        <div className="ml-3 text-sm">
-                            <label htmlFor="limpiezaOidos" className="font-medium text-gray-700">Limpieza de Oídos</label>
-                        </div>
+            {fecha && horariosDisponibles.length > 0 && (
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hora:</label>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {horariosDisponibles.map(h => (
+                            <button key={h} type="button" onClick={() => setHora(h)} className={`p-3 rounded-lg text-center font-semibold transition ${hora === h ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-800 hover:bg-indigo-100'}`}>
+                                {h}
+                            </button>
+                        ))}
                     </div>
                 </div>
-            </div>
+            )}
 
-             {/* Método de Pago */}
-            <div>
-                <label htmlFor="metodoPago_peluqueria" className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
-                <select id="metodoPago_peluqueria" name="metodoPago" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md shadow-sm">
-                    <option value="Efectivo">Efectivo</option>
-                    <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
-                    <option value="Transferencia">Transferencia Bancaria</option>
-                </select>
-            </div>
+            {fecha && horariosDisponibles.length === 0 && (
+                <p className="text-center text-yellow-600 font-semibold bg-yellow-50 p-3 rounded-lg">No hay horarios disponibles para la fecha seleccionada. Por favor, elige otro día.</p>
+            )}
 
-            {/* Botón de Envío y Mensajes */}
-            <div className="text-center">
-                <button type="submit" disabled={loading} className="w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-medium rounded-full text-white bg-pink-500 hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:bg-pink-300 transition-colors duration-300">
-                    {loading ? 'Enviando...' : 'Solicitar Turno'}
+            <div className="pt-4">
+                <button type="submit" disabled={isSubmitting || !hora || selectedMascotas.length === 0} className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-300">
+                    {isSubmitting ? 'Reservando...' : 'Confirmar Turno'}
                 </button>
-                {error && <p className="mt-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">Error: {error}</p>}
-                {success && <p className="mt-4 text-sm text-green-600 bg-green-100 p-3 rounded-md">{success}</p>}
             </div>
         </form>
     );

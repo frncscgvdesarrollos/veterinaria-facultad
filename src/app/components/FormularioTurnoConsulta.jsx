@@ -1,71 +1,108 @@
-'use client';
+'use client'
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { solicitarTurno } from '@/app/actions/turnosActions';
 
-// Este es el formulario restaurado a un estado anterior.
-// La lógica de envío se ha desactivado para revertir los cambios no solicitados.
+// Horarios disponibles para consultas
+const horariosConsulta = [
+    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00',
+    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+];
 
-export default function FormularioTurnoConsulta({ mascotas = [] }) {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('Funcionalidad no conectada.');
-    const [success, setSuccess] = useState(null);
+// Número de veterinarios disponibles
+const VETERINARIOS_DISPONIBLES = 2;
+
+export default function FormularioTurnoConsulta({ mascotas, ocupacion }) {
+    const router = useRouter();
+    const [mascotaId, setMascotaId] = useState(mascotas[0]?.id || '');
+    const [fecha, setFecha] = useState('');
+    const [hora, setHora] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const handleDateChange = (e) => {
+        setFecha(e.target.value);
+        setHora('');
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // No se realiza ninguna acción de servidor.
-        alert('Este formulario no está conectado. Se está restaurando el estado anterior de la aplicación.');
+        if (!mascotaId || !fecha || !hora) {
+            setError('Por favor, completa todos los campos.');
+            return;
+        }
+        setError('');
+        setIsSubmitting(true);
+
+        const formData = {
+            mascotaId,
+            fecha,
+            hora,
+            tipo: 'consulta',
+        };
+
+        const result = await solicitarTurno(formData);
+
+        if (result.error) {
+            setError(result.error);
+            setIsSubmitting(false);
+        } else {
+            router.push('/mis-turnos');
+        }
+    };
+    
+    const getHorariosDisponibles = () => {
+        if (!fecha) return [];
+        const ocupacionFecha = ocupacion[fecha] || {};
+        // Puede haber hasta X veterinarios atendiendo consultas a la vez
+        return horariosConsulta.filter(h => !ocupacionFecha[h] || ocupacionFecha[h] < VETERINARIOS_DISPONIBLES);
     };
 
+    const horariosDisponibles = getHorariosDisponibles();
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
-            <h2 className="text-3xl font-bold text-center text-indigo-700">Solicitar Turno de Consulta</h2>
-            
-            {/* Selector de Mascota */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+            {error && <p className="text-red-500 font-bold text-center">{error}</p>}
+
             <div>
-                <label htmlFor="mascotaId" className="block text-sm font-medium text-gray-700 mb-2">Mascota</label>
-                <select id="mascotaId" name="mascotaId" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
-                    <option value="" disabled>Selecciona una mascota</option>
-                    {mascotas.map(mascota => (
-                        <option key={mascota.id} value={mascota.id}>{mascota.nombre}</option>
+                <label htmlFor="mascota" className="block text-sm font-medium text-gray-700 mb-1">Elige a tu mascota:</label>
+                <select id="mascota" value={mascotaId} onChange={(e) => setMascotaId(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    {mascotas.map(m => (
+                        <option key={m.id} value={m.id}>{m.nombre} ({m.especie})</option>
                     ))}
                 </select>
             </div>
 
-            {/* Selector de Fecha y Hora */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
-                    <input type="date" id="fecha" name="fecha" required min={new Date().toISOString().split('T')[0]} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                </div>
-                <div>
-                    <label htmlFor="turno" className="block text-sm font-medium text-gray-700 mb-2">Horario</label>
-                    <input type="time" id="turno" name="turno" required min="09:00" max="18:00" step="1800" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                </div>
+            <div>
+                <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-1">Fecha:</label>
+                <input type="date" id="fecha" value={fecha} onChange={handleDateChange} min={hoy.toISOString().split('T')[0]} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
             </div>
 
-            {/* Motivo de la Consulta */}
-            <div>
-                <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-2">Motivo de la Consulta</label>
-                <textarea id="motivo" name="motivo" rows={4} required placeholder="Describe brevemente el motivo de la visita (ej. control anual, vómitos, cojera, etc.)" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-            </div>
-            
-            {/* Método de Pago */}
-            <div>
-                <label htmlFor="metodoPago" className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
-                <select id="metodoPago" name="metodoPago" required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
-                    <option value="Efectivo">Efectivo</option>
-                    <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
-                    <option value="Transferencia">Transferencia Bancaria</option>
-                </select>
-            </div>
+            {fecha && horariosDisponibles.length > 0 && (
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hora:</label>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {horariosDisponibles.map(h => (
+                            <button key={h} type="button" onClick={() => setHora(h)} className={`p-3 rounded-lg text-center font-semibold transition ${hora === h ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-800 hover:bg-indigo-100'}`}>
+                                {h}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-            {/* Botón de Envío y Mensajes */}
-            <div className="text-center">
-                <button type="submit" disabled={loading} className="w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-medium rounded-full text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 transition-colors duration-300">
-                    {loading ? 'Enviando...' : 'Solicitar Turno'}
+            {fecha && horariosDisponibles.length === 0 && (
+                <p className="text-center text-yellow-600 font-semibold bg-yellow-50 p-3 rounded-lg">No hay horarios disponibles para la fecha seleccionada. Por favor, elige otro día.</p>
+            )}
+
+            <div className="pt-4">
+                <button type="submit" disabled={isSubmitting || !hora} className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-300">
+                    {isSubmitting ? 'Reservando...' : 'Confirmar Turno'}
                 </button>
-                {error && <p className="mt-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">Error: {error}</p>}
-                {success && <p className="mt-4 text-sm text-green-600 bg-green-100 p-3 rounded-md">{success}</p>}
             </div>
         </form>
     );

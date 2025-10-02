@@ -147,7 +147,6 @@ function ResetPasswordPage() {
             );
         }
         
-        // Fallback por si ninguna condición se cumple (aunque no debería pasar)
         return null;
     };
 
@@ -163,7 +162,7 @@ function ResetPasswordPage() {
     );
 }
 
-// Usamos Suspense para asegurarnos de que `useSearchParams` funcione correctamente.
+
 export default function ResetPasswordPageWrapper() {
     return (
         <Suspense fallback={<div>Cargando...</div>}>
