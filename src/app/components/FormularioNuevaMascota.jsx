@@ -50,41 +50,45 @@ export default function FormularioNuevaMascota() {
     const [loading, setLoading] = useState(false);
     const [enAdopcion, setEnAdopcion] = useState(false);
 
-    // --- NUEVOS ESTADOS para la lógica dinámica ---
     const [especie, setEspecie] = useState('');
     const [raza, setRaza] = useState('');
     const [tamaño, setTamaño] = useState('');
-    const [razasDisponibles, setRazasDisponibles] = useState([]);
-    const [tamañoDeshabilitado, setTamañoDeshabilitado] = useState(true);
+    const [sexo, setSexo] = useState('');
 
-    // --- Efecto para actualizar la lista de razas cuando cambia la especie ---
+    const [razasDisponibles, setRazasDisponibles] = useState([]);
+    const [isTamañoManual, setIsTamañoManual] = useState(false);
+
+    // Efecto para actualizar la lista de razas cuando cambia la especie
     useEffect(() => {
         if (especie === 'perro') {
             setRazasDisponibles(razasDePerros.map(r => r.nombre));
-            setTamañoDeshabilitado(true); // Se deshabilita hasta que se elija raza
         } else if (especie === 'gato') {
             setRazasDisponibles(razasDeGatos);
-            setTamañoDeshabilitado(false); // Los gatos tienen tamaño manual
         } else {
             setRazasDisponibles([]);
-            setTamañoDeshabilitado(true);
         }
+        // Resetear campos dependientes
         setRaza('');
         setTamaño('');
+        setIsTamañoManual(false);
     }, [especie]);
 
-    // --- Efecto para autocompletar el tamaño si es un perro ---
+    // Efecto para gestionar la lógica del tamaño cuando cambia la raza (para perros)
     useEffect(() => {
         if (especie === 'perro' && raza) {
-            const razaInfo = razasDePerros.find(r => r.nombre === raza);
-            if (razaInfo && razaInfo.tamaño) {
-                setTamaño(razaInfo.tamaño);
-                setTamañoDeshabilitado(true);
+            const infoRaza = razasDePerros.find(r => r.nombre === raza);
+            if (infoRaza && infoRaza.tamaño) {
+                // Si la raza tiene un tamaño definido (ej. Labrador), se autocompleta y bloquea
+                setTamaño(infoRaza.tamaño);
+                setIsTamañoManual(false);
             } else {
-                // Para 'Mestizo', 'Otra raza' o 'No especificada'
+                // Si es Mestizo, Otra Raza, o No especificada, se habilita para el usuario
                 setTamaño('');
-                setTamañoDeshabilitado(false);
+                setIsTamañoManual(true);
             }
+        } else if (especie === 'gato') {
+            // Para los gatos, el tamaño siempre es manual
+            setIsTamañoManual(true);
         }
     }, [raza, especie]);
 
@@ -99,20 +103,22 @@ export default function FormularioNuevaMascota() {
         const toastId = toast.loading('Registrando mascota...');
 
         const formData = new FormData(event.currentTarget);
+        const nombre = formData.get('nombre');
+        const fechaNacimiento = formData.get('fechaNacimiento');
         const otraRaza = formData.get('otraRaza') || '';
 
         const mascotaData = {
-            nombre: formData.get('nombre'),
-            fechaNacimiento: formData.get('fechaNacimiento'),
-            sexo: formData.get('sexo'),
+            nombre: nombre,
+            fechaNacimiento: fechaNacimiento,
+            sexo: sexo,
             especie: especie,
             raza: raza === 'Otra raza' ? otraRaza : raza,
             tamaño: tamaño,
             enAdopcion: enAdopcion,
         };
 
-        if (!mascotaData.nombre || !mascotaData.especie || !mascotaData.fechaNacimiento || !mascotaData.sexo || !mascotaData.tamaño || !mascotaData.raza) {
-            toast.error("Por favor, completa todos los campos.", { id: toastId });
+        if (!nombre || !especie || !fechaNacimiento || !sexo || !tamaño || !raza) {
+            toast.error("Por favor, completa todos los campos obligatorios.", { id: toastId });
             setLoading(false);
             return;
         }
@@ -144,33 +150,31 @@ export default function FormularioNuevaMascota() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <SelectField icon={<FaVenusMars />} label="Sexo" name="sexo" value={sexo} onChange={(e) => setSexo(e.target.value)} required disabled={loading}>
+                    <option value="">Selecciona el sexo</option>
+                    <option value="macho">Macho</option>
+                    <option value="hembra">Hembra</option>
+                </SelectField>
                 <SelectField icon={<FaDog />} label="Especie" name="especie" value={especie} onChange={(e) => setEspecie(e.target.value)} required disabled={loading}>
                     <option value="">Selecciona una especie</option>
                     <option value="perro">Perro</option>
                     <option value="gato">Gato</option>
                     <option value="otro">Otro</option>
                 </SelectField>
-                <SelectField icon={<FaVenusMars />} label="Sexo" name="sexo" required disabled={loading}>
-                    <option value="">Selecciona el sexo</option>
-                    <option value="macho">Macho</option>
-                    <option value="hembra">Hembra</option>
-                </SelectField>
             </div>
 
-            {(especie === 'perro' || especie === 'gato') && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <SelectField icon={<FaTag />} label="Raza" name="raza" value={raza} onChange={(e) => setRaza(e.target.value)} required disabled={loading || !especie}>
-                        <option value="">Selecciona una raza</option>
-                        {razasDisponibles.map(r => <option key={r} value={r}>{r}</option>)}
-                    </SelectField>
-                    <SelectField icon={<FaRulerCombined />} label="Tamaño" name="tamaño" value={tamaño} onChange={(e) => setTamaño(e.target.value)} required disabled={loading || tamañoDeshabilitado}>
-                        <option value="">Selecciona el tamaño</option>
-                        <option value="pequeño">Pequeño</option>
-                        <option value="mediano">Mediano</option>
-                        <option value="grande">Grande</option>
-                    </SelectField>
-                </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SelectField icon={<FaTag />} label="Raza" name="raza" value={raza} onChange={(e) => setRaza(e.target.value)} required disabled={loading || !especie}>
+                    <option value="">Selecciona una raza</option>
+                    {razasDisponibles.map(r => <option key={r} value={r}>{r}</option>)}
+                </SelectField>
+                <SelectField icon={<FaRulerCombined />} label="Tamaño" name="tamaño" value={tamaño} onChange={(e) => setTamaño(e.target.value)} required disabled={loading || !isTamañoManual}>
+                    <option value="">Selecciona el tamaño</option>
+                    <option value="pequeño">Pequeño</option>
+                    <option value="mediano">Mediano</option>
+                    <option value="grande">Grande</option>
+                </SelectField>
+            </div>
 
             {raza === 'Otra raza' && (
                 <InputField icon={<FaTag />} label="Especifica la raza" name="otraRaza" type="text" placeholder="Ej: Bulldog Inglés" required disabled={loading} />
