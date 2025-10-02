@@ -12,10 +12,11 @@ import {
     updatePassword,
     EmailAuthProvider,
     reauthenticateWithCredential,
-    signInWithCustomToken 
+    signInWithCustomToken
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore'; 
+// Importamos las instancias ya inicializadas de forma segura
+import { auth, db } from '@/lib/firebase'; 
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -27,43 +28,72 @@ export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
+        // onAuthStateChanged ya se asegura de ejecutarse solo cuando auth está listo.
         const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
-            if (userAuth) {
-                const userDocRef = doc(db, 'users', userAuth.uid);
-                const userDocSnap = await getDoc(userDocRef);
+            try {
+                if (userAuth) {
+                    const userDocRef = doc(db, 'users', userAuth.uid);
+                    const userDocSnap = await getDoc(userDocRef);
 
-                if (userDocSnap.exists()) {
-                    const userData = userDocSnap.data();
-                    setUser({ ...userAuth, ...userData });
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data();
+                        setUser({ ...userAuth, ...userData });
+                    } else {
+                        // Para usuarios nuevos, creamos un perfil básico.
+                        const newUser = {
+                            uid: userAuth.uid,
+                            email: userAuth.email,
+                            displayName: userAuth.displayName || 'Sin Nombre',
+                            photoURL: userAuth.photoURL || null,
+                            role: 'dueño',
+                            profileCompleted: false,
+                            createdAt: new Date(),
+                        };
+                        await setDoc(userDocRef, newUser);
+                        setUser({ ...userAuth, ...newUser });
+                    }
+                    setIsLoggedIn(true);
                 } else {
-                    // Para usuarios nuevos (ej. Google Sign-In), creamos un perfil inicial
-                    const newUser = {
-                        uid: userAuth.uid,
-                        email: userAuth.email,
-                        displayName: userAuth.displayName || 'Sin Nombre',
-                        photoURL: userAuth.photoURL || null,
-                        role: 'dueño', 
-                        profileCompleted: false, // Perfil incompleto hasta que llenen el formulario
-                        createdAt: new Date(),
-                    };
-                    await setDoc(userDocRef, newUser);
-                    setUser({ ...userAuth, ...newUser });
+                    setUser(null);
+                    setIsLoggedIn(false);
                 }
-                setIsLoggedIn(true);
-            } else {
+            } catch (error) {
+                console.error("Error durante la verificación de estado de autenticación:", error);
                 setUser(null);
                 setIsLoggedIn(false);
+            } finally {
+                // Nos aseguramos de que la carga termine, pase lo que pase.
+                setLoading(false);
             }
-            setLoading(false);
         });
+
+        // Limpiamos el listener al desmontar el componente
         return () => unsubscribe();
     }, []);
 
-    // FIX: Nueva función para manejar el inicio de sesión con token personalizado
+    const loginWithGoogle = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+            // Con la inicialización corregida, esto ya no debería fallar.
+            return await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Fallo al iniciar sesión con Google", error);
+            throw error;
+        }
+    };
+
+    const signOut = async () => {
+        try {
+            await firebaseSignOut(auth);
+        } catch (error) {
+            console.error("Error en signOut:", error);
+            throw error;
+        }
+    };
+    
     const signInWithToken = async (token) => {
         try {
             const userCredential = await signInWithCustomToken(auth, token);
-            // onAuthStateChanged se encargará de actualizar el estado del usuario automáticamente
             return userCredential.user;
         } catch (error) {
             console.error("Error en signInWithToken:", error);
@@ -80,27 +110,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const loginWithGoogle = async () => {
-        const provider = new GoogleAuthProvider();
-        try {
-            return await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error("Error en loginWithGoogle:", error);
-            throw error;
-        }
-    };
-
-    const signOut = async () => {
-        try {
-            await firebaseSignOut(auth);
-        } catch (error) {
-            console.error("Error en signOut:", error);
-            throw error;
-        }
-    };
-
-    // Esta función ya no es la principal para el registro, pero se puede mantener por si se necesita.
-    const registerWithEmailAndPassword = async (email, password) => {
+    const registerWithEmailAndPassword = (email, password) => {
         return createUserWithEmailAndPassword(auth, email, password);
     };
 
@@ -114,18 +124,19 @@ export const AuthProvider = ({ children }) => {
         return updatePassword(user, newPassword);
     };
 
+
     const value = {
         user,
         isLoggedIn,
         loading,
         loginWithGoogle,
-        loginWithEmail,
-        registerWithEmailAndPassword, // Se mantiene por completitud
         signOut,
+        logout: signOut,
+        signInWithToken,
+        loginWithEmail,
+        registerWithEmailAndPassword,
         resetPassword,
         changePassword,
-        logout: signOut,
-        signInWithToken // Se expone la nueva función al resto de la app
     };
 
     return (
