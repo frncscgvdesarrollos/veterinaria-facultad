@@ -512,3 +512,384 @@
 [debug] [2025-10-01T22:33:53.276Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
 [debug] [2025-10-01T22:33:53.276Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
 [debug] [2025-10-01T22:33:53.276Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:25:42.522Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.522Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.522Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.527Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.527Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.600Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.601Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.601Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.602Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.602Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.606Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.606Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.606Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.607Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.608Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.610Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.611Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.611Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.611Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.612Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.614Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.614Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.614Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.615Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.615Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:25:42.674Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.675Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.675Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.675Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.675Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.678Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.678Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.678Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.679Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.679Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.681Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.681Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.681Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.682Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.682Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.684Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.685Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.685Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.685Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.685Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.694Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.694Z] Checked if tokens are valid: false, expires at: 1759361482998
+[debug] [2025-10-02T10:25:42.694Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T10:25:42.694Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T10:25:42.694Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.740Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.740Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.759Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-10-02T10:25:42.759Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.767Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.768Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.780Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [none]
+[debug] [2025-10-02T10:25:42.780Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.786Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.786Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.802Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [none]
+[debug] [2025-10-02T10:25:42.802Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.809Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.809Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.822Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [none]
+[debug] [2025-10-02T10:25:42.822Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.826Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.827Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.840Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-10-02T10:25:42.840Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.848Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.848Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.867Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-10-02T10:25:42.867Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.870Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.871Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.890Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-10-02T10:25:42.891Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.913Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.917Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.932Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-10-02T10:25:42.932Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.937Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.937Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.949Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [none]
+[debug] [2025-10-02T10:25:42.950Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.952Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T10:25:42.952Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T10:25:42.966Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-10-02T10:25:42.966Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:25:42.971Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-10-02T10:25:42.971Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-10-02T10:25:42.976Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com 403
+[debug] [2025-10-02T10:25:42.976Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [omitted]
+[debug] [2025-10-02T10:25:42.992Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-10-02T10:25:42.992Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-10-02T10:25:43.010Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-10-02T10:25:43.010Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-10-02T10:25:43.026Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-10-02T10:25:43.026Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-10-02T10:25:43.031Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com 403
+[debug] [2025-10-02T10:25:43.031Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [omitted]
+[debug] [2025-10-02T10:25:43.032Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-10-02T10:25:43.032Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-10-02T10:25:43.068Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-10-02T10:25:43.069Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-10-02T10:25:43.295Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ 200
+[debug] [2025-10-02T10:25:43.295Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:25:43.298Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T10:25:43.299Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[debug] [2025-10-02T10:25:43.307Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ 200
+[debug] [2025-10-02T10:25:43.307Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:54:14.042Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.044Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.046Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.047Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.047Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.048Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.052Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.053Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.053Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.053Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.058Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [none]
+[debug] [2025-10-02T10:54:14.059Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.215Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-10-02T10:54:14.218Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.228Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-10-02T10:54:14.229Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.238Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-10-02T10:54:14.239Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.244Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [none]
+[debug] [2025-10-02T10:54:14.245Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com x-goog-quota-user=projects/veterinaria-facultad
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:54:14.451Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.455Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.456Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.456Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.459Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.459Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.462Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.462Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.462Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.463Z] Checked if tokens are valid: true, expires at: 1759404341952
+[debug] [2025-10-02T10:54:14.465Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [none]
+[debug] [2025-10-02T10:54:14.465Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.475Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-10-02T10:54:14.477Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.485Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-10-02T10:54:14.486Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.507Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-10-02T10:54:14.508Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.519Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [none]
+[debug] [2025-10-02T10:54:14.519Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T10:54:14.618Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-10-02T10:54:14.619Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-10-02T10:54:14.688Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-10-02T10:54:14.692Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-10-02T10:54:14.699Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com 403
+[debug] [2025-10-02T10:54:14.699Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [omitted]
+[debug] [2025-10-02T10:54:14.721Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-10-02T10:54:14.722Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-10-02T10:54:14.730Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com 403
+[debug] [2025-10-02T10:54:14.730Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [omitted]
+[debug] [2025-10-02T10:54:14.769Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-10-02T10:54:14.771Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-10-02T10:54:14.777Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-10-02T10:54:14.778Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-10-02T10:54:14.780Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-10-02T10:54:14.781Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-10-02T10:54:14.796Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ 200
+[debug] [2025-10-02T10:54:14.796Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [omitted]
+[debug] [2025-10-02T10:54:15.071Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ 200
+[debug] [2025-10-02T10:54:15.074Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:54:15.111Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T10:54:15.112Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:54:15.205Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T10:54:15.223Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T10:54:15.272Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T10:54:15.272Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T13:03:44.314Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.324Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.325Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:44.384Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:44.386Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:44.889Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.896Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.896Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:44.899Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:44.899Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:44.930Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.931Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.931Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:44.940Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:44.947Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:44.965Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.966Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.966Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:44.975Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:44.975Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:44.989Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.989Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.989Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:44.996Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:44.997Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T13:03:45.404Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.404Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.404Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.409Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.410Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.423Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.423Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.423Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.433Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.433Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.447Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.448Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.448Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.453Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.453Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.470Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.470Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.470Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.470Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.476Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.491Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.491Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.491Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.500Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.500Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T13:03:44.972Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.982Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:44.983Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.013Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.021Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.415Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.424Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.424Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.427Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.427Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.452Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.454Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.457Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.463Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.463Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.486Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.486Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.486Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.489Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.489Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:45.507Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.508Z] Checked if tokens are valid: false, expires at: 1759404341952
+[debug] [2025-10-02T13:03:45.508Z] > refreshing access token with scopes: []
+[debug] [2025-10-02T13:03:45.517Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-02T13:03:45.517Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.080Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.216Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.080Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.173Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.174Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.185Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.186Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.226Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.226Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.266Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.230Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.302Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [none]
+[debug] [2025-10-02T13:03:46.302Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.321Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.321Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.347Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.347Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.267Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.294Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.294Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.308Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.310Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.337Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.339Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.411Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.395Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.395Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.420Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.420Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.437Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.437Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.464Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.465Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.411Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.441Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [none]
+[debug] [2025-10-02T13:03:46.441Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.552Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.509Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.509Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.542Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [none]
+[debug] [2025-10-02T13:03:46.542Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.558Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.588Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [none]
+[debug] [2025-10-02T13:03:46.591Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.610Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.701Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-10-02T13:03:46.701Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.706Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-10-02T13:03:46.711Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.715Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-10-02T13:03:46.716Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.611Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.652Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.652Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.674Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.674Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.701Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [none]
+[debug] [2025-10-02T13:03:46.703Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.709Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.709Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.741Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-10-02T13:03:46.741Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.763Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com 403
+[debug] [2025-10-02T13:03:46.774Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-02T13:03:46.765Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [omitted]
+[debug] [2025-10-02T13:03:46.775Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-02T13:03:46.808Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [none]
+[debug] [2025-10-02T13:03:46.808Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com x-goog-quota-user=projects/veterinaria-facultad
+[debug] [2025-10-02T13:03:46.825Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ 200
+[debug] [2025-10-02T13:03:46.830Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-10-02T13:03:46.825Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [omitted]
+[debug] [2025-10-02T13:03:46.830Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.835Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-10-02T13:03:46.835Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.839Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-10-02T13:03:46.839Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.853Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-10-02T13:03:46.853Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.868Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com 403
+[debug] [2025-10-02T13:03:46.868Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [omitted]
+[debug] [2025-10-02T13:03:46.879Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-10-02T13:03:46.879Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-10-02T13:03:46.887Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com 403
+[debug] [2025-10-02T13:03:46.887Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebaseio.com [omitted]
+[debug] [2025-10-02T13:03:46.928Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ 200
+[debug] [2025-10-02T13:03:46.934Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T13:03:46.937Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T13:03:46.938Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[debug] [2025-10-02T13:03:47.115Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ 200
+[debug] [2025-10-02T13:03:47.115Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/ [omitted]
+[debug] [2025-10-02T13:03:47.146Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-10-02T13:03:47.146Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/veterinaria-facultad/services/firebasedataconnect.googleapis.com [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T13:03:47.644Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T13:03:47.644Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-10-02T13:03:47.859Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T13:03:47.861Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
+[debug] [2025-10-02T13:03:47.863Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-10-02T13:03:47.864Z] > authorizing via signed-in user (frncscgvdesarrollos@gmail.com)
