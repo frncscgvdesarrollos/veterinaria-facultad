@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const PasswordStrengthMeter = ({ password }) => {
+const PasswordStrengthMeter = ({ password, onStrengthChange }) => {
     const [strength, setStrength] = useState({ percentage: 0, label: '', color: 'bg-gray-200', textColor: 'text-gray-500' });
 
     useEffect(() => {
@@ -14,6 +14,7 @@ const PasswordStrengthMeter = ({ password }) => {
 
             if (pwd.length === 0) {
                 setStrength({ percentage: 0, label: '', color: 'bg-gray-200', textColor: 'text-gray-500' });
+                if (onStrengthChange) onStrengthChange(0);
                 return;
             }
 
@@ -23,6 +24,8 @@ const PasswordStrengthMeter = ({ password }) => {
             if (/\d/.test(pwd)) score++;
             if (/[^A-Za-z0-9]/.test(pwd)) score++;
             
+            if (onStrengthChange) onStrengthChange(score);
+
             const percentage = (score / 5) * 100;
 
             if (score <= 2) {
@@ -47,7 +50,7 @@ const PasswordStrengthMeter = ({ password }) => {
         };
 
         checkStrength(password);
-    }, [password]);
+    }, [password, onStrengthChange]);
 
     return (
         <div className="mb-4 transition-all duration-300">

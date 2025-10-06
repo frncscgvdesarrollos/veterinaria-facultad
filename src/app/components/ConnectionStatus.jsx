@@ -9,12 +9,10 @@ const ConnectionStatus = () => {
 
   useEffect(() => {
     const checkConnection = async () => {
-      // Asegúrate de que este código solo se ejecute en el lado del cliente
+    
       if (typeof window !== "undefined") {
         try {
           const db = getFirestore(app);
-          // Intentamos leer un documento que no existe para verificar la conexión.
-          // Esto es una operación de bajo costo que no consume lecturas si el documento no se encuentra.
           const docRef = doc(db, "_connection_test", "_doc");
           await getDoc(docRef);
           setIsConnected(true);
@@ -26,9 +24,8 @@ const ConnectionStatus = () => {
 
     const interval = setInterval(() => {
       checkConnection();
-    }, 5000); // Verificamos la conexión cada 5 segundos
+    }, 5000); 
 
-    // Verificación inicial
     checkConnection();
 
     return () => {

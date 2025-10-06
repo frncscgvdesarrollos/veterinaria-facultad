@@ -10,7 +10,7 @@ export default function AccionesTurnoUsuario({ turno }) {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // No mostramos ninguna acción si el turno ya está cancelado, completado o si ya pasó la fecha.
+ 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const fechaTurno = new Date(turno.fecha + 'T12:00:00');

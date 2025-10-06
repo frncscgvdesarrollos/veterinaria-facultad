@@ -11,7 +11,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
 
-// Componente de Input rediseñado para consistencia visual
+
 const FormInput = ({ id, name, type, placeholder, value, onChange, required = false, maxLength, label, icon: Icon }) => (
     <div className="mb-4">
         <label className="block text-xs font-semibold text-gray-500 mb-1" htmlFor={id}>{label}</label>

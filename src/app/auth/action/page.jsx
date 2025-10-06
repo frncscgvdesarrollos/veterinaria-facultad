@@ -10,7 +10,7 @@ function ResetPasswordPage() {
     const searchParams = useSearchParams();
     const { verifyResetCode, handlePasswordReset } = useAuth();
 
-    // Estados para manejar el flujo
+
     const [mode, setMode] = useState(null);
     const [oobCode, setOobCode] = useState(null);
     const [isValidCode, setIsValidCode] = useState(false);
@@ -18,7 +18,7 @@ function ResetPasswordPage() {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
     
-    // Estados para el formulario
+
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -35,7 +35,7 @@ function ResetPasswordPage() {
             return;
         }
 
-        // Verificar el código al cargar la página
+      
         verifyResetCode(codeParam)
             .then(() => {
                 setIsValidCode(true);

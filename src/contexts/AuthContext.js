@@ -13,11 +13,9 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential,
     signInWithCustomToken,
-    // --- FUNCIONES AÑADIDAS ---
     verifyPasswordResetCode,
     confirmPasswordReset,
 } from 'firebase/auth';
-// Importamos las instancias ya inicializadas de forma segura
 import { auth, db } from '@/lib/firebase'; 
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -70,7 +68,6 @@ export const AuthProvider = ({ children }) => {
         return () => unsubscribe();
     }, []);
 
-    // --- NO CAMBIAN ---
     const loginWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
         return signInWithPopup(auth, provider);
@@ -86,7 +83,7 @@ export const AuthProvider = ({ children }) => {
         return updatePassword(user, newPassword);
     };
 
-    // --- FUNCIONES NUEVAS EXPUESTAS ---
+
     const verifyResetCode = (code) => {
         return verifyPasswordResetCode(auth, code);
     };
@@ -108,7 +105,6 @@ export const AuthProvider = ({ children }) => {
         registerWithEmailAndPassword,
         resetPassword,
         changePassword,
-        // --- AÑADIDAS AL CONTEXTO ---
         verifyResetCode, 
         handlePasswordReset,
     };
