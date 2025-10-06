@@ -1,165 +1,189 @@
-'use client'
+'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { signInWithGoogle, registerWithEmail } from '@/app/actions';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { Toaster, toast } from 'react-hot-toast';
+import { registerWithEmail } from '@/app/actions';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
-import Image from 'next/image';
 
 export default function LoginPage() {
+    const { user, loginWithGoogle, loginWithEmail, signInWithToken, resetPassword } = useAuth();
     const router = useRouter();
-    const [isRegistering, setIsRegistering] = useState(false);
-
-    // Estado del formulario
+    
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [nombre, setNombre] = useState('');
-    const [apellido, setApellido] = useState('');
-    const [dni, setDni] = useState('');
-    const [telefonoPrincipal, setTelefonoPrincipal] = useState('');
-    const [telefonoSecundario, setTelefonoSecundario] = useState('');
-    const [direccion, setDireccion] = useState('');
-    const [nombreContactoEmergencia, setNombreContactoEmergencia] = useState('');
-    const [telefonoContactoEmergencia, setTelefonoContactoEmergencia] = useState('');
-
-    // Estado de la UI
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(null);
+    const [isRegistering, setIsRegistering] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [passwordStrength, setPasswordStrength] = useState({ percentage: 0, text: '' });
 
-    const handleGoogleSignIn = async () => {
-        setLoading(true);
-        const result = await signInWithGoogle();
-        if (result.error) {
-            setError(result.error);
-            setLoading(false);
-        } else {
-            router.push('/mascotas');
+    const [formData, setFormData] = useState({
+        nombre: '', apellido: '', dni: '', telefonoPrincipal: '', telefonoSecundario: '', 
+        direccion: '', nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
+    });
+
+    useEffect(() => {
+        if (user) {
+            if (user.profileCompleted) {
+                router.push(user.role === 'admin' ? '/admin' : '/');
+            } else {
+                router.push('/completar-perfil');
+            }
         }
-    };
+    }, [user, router]);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        // Aquí llamarías a una Server Action para iniciar sesión con email/password
-        // const result = await signInWithEmail(email, password);
-        // if (result.error) { ... }
-        console.log("Login con", { email, password });
-        // Simulación, reemplaza con tu lógica real
-        setTimeout(() => {
-            setLoading(false);
-            setError("La funcionalidad de inicio de sesión con email aún no está implementada.");
-        }, 1000);
-    };
-
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        if (password !== confirmPassword) {
-            setError('Las contraseñas no coinciden.');
-            return;
+    const handleLoginWithGoogle = async () => {
+        setError(null);
+        try {
+            await loginWithGoogle();
+        } catch (error) {
+            console.error('Fallo al iniciar sesión con Google', error);
+            setError('Fallo al iniciar sesión con Google. Por favor, intenta de nuevo.');
         }
-        if (passwordStrength.percentage < 75) {
-            setError('La contraseña no es lo suficientemente segura.');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        const userData = {
-            email, password, nombre, apellido, dni,
-            telefonoPrincipal, telefonoSecundario, direccion,
-            nombreContactoEmergencia, telefonoContactoEmergencia
-        };
-
-        const result = await registerWithEmail(userData);
-
-        if (result.error) {
-            setError(result.error);
-        } else {
-            router.push('/mascotas');
-        }
-        setLoading(false);
     };
     
-    const isRegisterButtonDisabled = isRegistering && (passwordStrength.percentage < 75 || password !== confirmPassword || !email || !nombre || !apellido || !dni);
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+
+        if (isRegistering) {
+            if (password !== confirmPassword) return setError("Las contraseñas no coinciden.");
+            if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
+            
+            try {
+                const newUserData = { email, password, ...formData };
+                const result = await registerWithEmail(newUserData);
+
+                if (result.success && result.token) {
+                    await signInWithToken(result.token);
+                } else {
+                    setError(result.error);
+                }
+            } catch (error) {
+                console.error('Fallo al registrar', error);
+                setError(error.message || 'No se pudo crear la cuenta.');
+            }
+        } else {
+            try {
+                await loginWithEmail(email, password);
+            } catch (error) {
+                console.error('Fallo al iniciar sesión', error);
+                setError('Email o contraseña incorrectos.');
+            }
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        if (!email) return setError("Ingresa tu email para restablecer la contraseña.");
+        setError(null);
+        try {
+            await resetPassword(email);
+            toast.success('Correo de restablecimiento enviado. Revisa tu bandeja de entrada.');
+        } catch (error) {
+            setError('No se pudo enviar el correo de restablecimiento.');
+        }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        if ((name === 'dni' || name.includes('telefono')) && value && !/^[0-9]+$/.test(value)) return;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-xl space-y-6">
-                <div className="text-center">
-                    <h2 className="text-3xl font-extrabold text-gray-900">{isRegistering ? 'Crea tu cuenta' : 'Inicia sesión'}</h2>
-                    <p className="mt-2 text-sm text-gray-600">
-                        {isRegistering ? '¿Ya tienes una cuenta?' : '¿No tienes una cuenta?'}{' '}
-                        <button onClick={() => setIsRegistering(!isRegistering)} className="font-medium text-indigo-600 hover:text-indigo-500">
-                            {isRegistering ? 'Inicia sesión' : 'Regístrate'}
-                        </button>
-                    </p>
-                </div>
+        <div className="min-h-screen bg-white flex flex-col justify-center items-center p-4">
+            <Toaster position="bottom-center" />
+            <div className="w-full max-w-sm mx-auto">
+                <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">{
+                    isRegistering ? 'Crear una Cuenta' : 'Iniciar Sesión'
+                }</h1>
 
-                <button onClick={handleGoogleSignIn} disabled={loading} className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-200">
-                    <Image src="/google.svg" alt="Google logo" width={20} height={20} className="mr-2" />
-                    Continuar con Google
-                </button>
+                <div className="bg-white p-8 rounded-2xl shadow-lg w-full">
+                    {error && <p className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-center text-sm">{error}</p>}
 
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">O continúa con tu email</span>
-                    </div>
-                </div>
+                    <form onSubmit={handleFormSubmit} className="space-y-5">
+                        <div>
+                            <label className="text-xs font-semibold text-gray-600">Email</label>
+                            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required 
+                                className="mt-1 w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
+                        </div>
 
-                <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-4">
-                     {isRegistering && (
-                        <>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input type="text" placeholder="Nombre" required value={nombre} onChange={e => setNombre(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                                <input type="text" placeholder="Apellido" required value={apellido} onChange={e => setApellido(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                        <div>
+                            <div className="flex justify-between items-baseline">
+                                <label className="text-xs font-semibold text-gray-600">Contraseña</label>
+                                {!isRegistering && (
+                                    <button type="button" onClick={handlePasswordReset} className="text-xs text-blue-500 hover:underline font-semibold">
+                                        ¿Olvidaste tu contraseña?
+                                    </button>
+                                )}
                             </div>
-                            <input type="text" placeholder="DNI" required value={dni} onChange={e => setDni(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                       </>
-                    )}
-                    <input type="email" placeholder="Email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                     <div className="relative">
-                        <input type={showPassword ? "text" : "password"} placeholder="Contraseña" required value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 px-3 flex items-center text-sm text-gray-600">
-                            {showPassword ? "Ocultar" : "Mostrar"}
+                            <div className="relative mt-1">
+                                <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required 
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-500">
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {isRegistering && (
+                            <>
+                                <PasswordStrengthMeter password={password} />
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600">Confirmar Contraseña</label>
+                                    <div className="relative mt-1">
+                                        <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required
+                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
+                                    </div>
+                                </div>
+                                
+                                <hr className="my-4"/>
+
+                                <h2 className="text-center text-base font-semibold text-gray-700">Tu Información</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                    <input name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                </div>
+                                <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleInputChange} required maxLength="8" className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="direccion" placeholder="Dirección" value={formData.direccion} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="telefonoPrincipal" placeholder="Teléfono" value={formData.telefonoPrincipal} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                
+                                <h2 className="text-center text-base font-semibold text-gray-700">Contacto de Emergencia</h2>
+                                <input name="nombreContactoEmergencia" placeholder="Nombre" value={formData.nombreContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="telefonoContactoEmergencia" placeholder="Teléfono" value={formData.telefonoContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                            </>
+                        )}
+
+                        <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
+                            {isRegistering ? 'Registrarse' : 'Entrar'}
                         </button>
-                    </div>
+                    </form>
                     
-                    {isRegistering && (
-                        <>
-                            <PasswordStrengthMeter password={password} onStrengthChange={setPasswordStrength} />
-                            <input type="password" placeholder="Confirmar Contraseña" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                            {password && confirmPassword && password !== confirmPassword && <p className="text-red-500 text-xs mt-1">Las contraseñas no coinciden.</p>}
-                            
-                            <h3 class="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Datos Adicionales (Opcional)</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <input type="text" placeholder="Teléfono Principal" value={telefonoPrincipal} onChange={e => setTelefonoPrincipal(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                               <input type="text" placeholder="Teléfono Secundario" value={telefonoSecundario} onChange={e => setTelefonoSecundario(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                            </div>
-                            <input type="text" placeholder="Dirección" value={direccion} onChange={e => setDireccion(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <input type="text" placeholder="Contacto de Emergencia" value={nombreContactoEmergencia} onChange={e => setNombreContactoEmergencia(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                              <input type="text" placeholder="Teléfono de Emergencia" value={telefonoContactoEmergencia} onChange={e => setTelefonoContactoEmergencia(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                            </div>
-                        </>
-                    )}
-
-                    {error && <p className="text-red-500 text-sm font-semibold text-center">{error}</p>}
-
-                    <div>
-                        <button type="submit" disabled={loading || isRegisterButtonDisabled} className="w-full py-3 px-4 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed">
-                            {loading ? 'Cargando...' : (isRegistering ? 'Registrarse' : 'Iniciar Sesión')}
-                        </button>
-                         {isRegisterButtonDisabled && <p className="text-center text-xs text-gray-500 mt-2">Completa los campos requeridos y asegúrate de que la contraseña sea al menos &apos;Fuerte&apos;.</p>}
+                    <div className="text-center mt-6">
+                        <p className="text-sm text-gray-600">¿{isRegistering ? 'Ya tienes' : 'No tienes'} una cuenta? 
+                            <button onClick={() => { setIsRegistering(!isRegistering); setError(null); }} className="font-semibold text-blue-500 hover:underline ml-1">
+                                {isRegistering ? 'Inicia Sesión' : 'Regístrate'}
+                            </button>
+                        </p>
                     </div>
-                </form>
+                </div>
+
+                <div className="text-center my-6 text-gray-400 text-xs tracking-wider">o</div>
+
+                <button onClick={handleLoginWithGoogle} 
+                    className="w-full flex items-center justify-center py-3 px-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-md">
+                    <span className="text-sm font-semibold text-gray-700 mr-2">Continuar con</span>
+                    <span className="text-sm font-bold">
+                        <span style={{ color: '#4285F4' }}>G</span>
+                        <span style={{ color: '#EA4335' }}>o</span>
+                        <span style={{ color: '#FBBC05' }}>o</span>
+                        <span style={{ color: '#4285F4' }}>g</span>
+                        <span style={{ color: '#34A853' }}>l</span>
+                        <span style={{ color: '#EA4335' }}>e</span>
+                    </span>
+                </button>
             </div>
         </div>
     );
