@@ -3,16 +3,86 @@
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
-// Definición de roles de la aplicación para evitar errores de referencia.
 const aplicationRoles = {
   // Ejemplo: '12345678': 'admin'
 };
 
-/**
- * @function registerWithEmail
- * @description Server Action para registrar un nuevo usuario con email/contraseña y crear su perfil completo de una sola vez.
- * @param {object} userData - Datos del formulario de registro, incluyendo email, password, nombre, apellido, etc.
- */
+export async function signInWithGoogle(idToken) {
+  if (!idToken) {
+    return { success: false, error: 'No se proporcionó un token de ID.' };
+  }
+
+  const auth = admin.auth();
+  const firestore = admin.firestore();
+
+  try {
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+    const email = decodedToken.email;
+    const displayName = decodedToken.name || '';
+
+    const userDocRef = firestore.collection('users').doc(uid);
+    const userDoc = await userDocRef.get();
+
+    let userRole = 'dueño';
+    let profileCompleted = false;
+
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      userRole = userData.role || userRole;
+      profileCompleted = userData.profileCompleted || false;
+    } else {
+      const [nombre, ...apellidoParts] = displayName.split(' ');
+      const apellido = apellidoParts.join(' ');
+      
+      try {
+        await auth.getUser(uid);
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          await auth.createUser({
+            uid: uid,
+            email: email,
+            displayName: displayName
+          });
+        } else {
+          throw error;
+        }
+      }
+
+      await userDocRef.set({
+        nombre: nombre || '',
+        apellido: apellido || '',
+        email: email,
+        role: userRole,
+        profileCompleted: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      
+      await auth.setCustomUserClaims(uid, { role: userRole });
+    }
+
+    const customToken = await auth.createCustomToken(uid);
+
+    return {
+      success: true,
+      token: customToken,
+      user: {
+        uid,
+        email,
+        role: userRole,
+        profileCompleted: profileCompleted
+      }
+    };
+
+  } catch (error) {
+    console.error('Error en signInWithGoogle:', error);
+    if (error.code === 'auth/id-token-expired') {
+        return { success: false, error: 'El token de sesión ha expirado. Por favor, inicia sesión de nuevo.' };
+    }
+    return { success: false, error: 'Ocurrió un error en el servidor durante el inicio de sesión con Google.' };
+  }
+}
+
 export async function registerWithEmail(userData) {
   const { email, password, nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
 
@@ -24,7 +94,6 @@ export async function registerWithEmail(userData) {
   const firestore = admin.firestore();
 
   try {
-    // 1. Crear el usuario en Firebase Authentication
     const userRecord = await auth.createUser({
       email,
       password,
@@ -34,34 +103,31 @@ export async function registerWithEmail(userData) {
     const userId = userRecord.uid;
     const userRole = aplicationRoles[dni] || 'dueño';
 
-    // 2. Establecer el rol del usuario (custom claims)
     await auth.setCustomUserClaims(userId, { role: userRole });
 
-    // 3. Crear el documento de perfil en Firestore
     await firestore.collection('users').doc(userId).set({
       nombre,
       apellido,
       dni,
-      email, // Guardar email en Firestore para consultas más sencillas
+      email,
       telefonoPrincipal,
       telefonoSecundario: telefonoSecundario || '',
       direccion,
       nombreContactoEmergencia,
       telefonoContactoEmergencia,
       role: userRole,
-      profileCompleted: true, // El perfil está completo desde el principio
+      profileCompleted: true,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     
     revalidatePath('/');
     
-    // 4. Crear un token personalizado para que el cliente inicie sesión automáticamente
     const customToken = await auth.createCustomToken(userId);
 
     return { 
       success: true, 
       token: customToken,
-      user: { // Devolvemos los datos del usuario para el estado local
+      user: {
         uid: userId, 
         email: userRecord.email, 
         role: userRole,
@@ -99,7 +165,6 @@ export async function completarPerfil(userId, userData) {
   try {
     const userRole = aplicationRoles[dni] || 'dueño';
 
-    // FIX: Asegurarse de que el displayName también se actualice en Auth
     await auth.updateUser(userId, {
         displayName: `${nombre} ${apellido}`
     });

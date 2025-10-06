@@ -157,7 +157,7 @@ export default function LoginPage() {
                         <button type="submit" disabled={loading || isRegisterButtonDisabled} className="w-full py-3 px-4 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed">
                             {loading ? 'Cargando...' : (isRegistering ? 'Registrarse' : 'Iniciar Sesión')}
                         </button>
-                         {isRegisterButtonDisabled && <p className="text-center text-xs text-gray-500 mt-2">Completa los campos requeridos y asegúrate de que la contraseña sea al menos 'Fuerte'.</p>}
+                         {isRegisterButtonDisabled && <p className="text-center text-xs text-gray-500 mt-2">Completa los campos requeridos y asegúrate de que la contraseña sea al menos &apos;Fuerte&apos;.</p>}
                     </div>
                 </form>
             </div>
