@@ -1,68 +1,87 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+
+const requirements = [
+    { id: 1, text: 'Al menos 8 caracteres', regex: /.{8,}/ },
+    { id: 2, text: 'Al menos una letra minúscula (a-z)', regex: /[a-z]/ },
+    { id: 3, text: 'Al menos una letra mayúscula (A-Z)', regex: /[A-Z]/ },
+    { id: 4, text: 'Al menos un número (0-9)', regex: /\d/ },
+    { id: 5, text: 'Al menos un carácter especial (!@#$...)', regex: /[^A-Za-z0-9]/ },
+];
 
 const PasswordStrengthMeter = ({ password, onStrengthChange }) => {
-    const [strength, setStrength] = useState({ percentage: 0, label: '', color: 'bg-gray-200', textColor: 'text-gray-500' });
+    const [strength, setStrength] = useState({ percentage: 0, label: '', color: 'bg-gray-200' });
+    const [metRequirements, setMetRequirements] = useState([]);
 
     useEffect(() => {
-        const checkStrength = (pwd) => {
-            let score = 0;
-            let label = 'Muy débil';
-            let color = 'bg-red-500';
-            let textColor = 'text-red-500';
+        const satisfied = requirements.filter(req => req.regex.test(password));
+        const score = satisfied.length;
 
-            if (pwd.length === 0) {
-                setStrength({ percentage: 0, label: '', color: 'bg-gray-200', textColor: 'text-gray-500' });
-                if (onStrengthChange) onStrengthChange(0);
-                return;
-            }
+        if (onStrengthChange) {
+            onStrengthChange(score);
+        }
 
-            if (pwd.length >= 8) score++;
-            if (/[A-Z]/.test(pwd)) score++;
-            if (/[a-z]/.test(pwd)) score++;
-            if (/\d/.test(pwd)) score++;
-            if (/[^A-Za-z0-9]/.test(pwd)) score++;
-            
-            if (onStrengthChange) onStrengthChange(score);
+        setMetRequirements(satisfied.map(req => req.id));
 
-            const percentage = (score / 5) * 100;
+        const percentage = (score / requirements.length) * 100;
+        let label = 'Muy Débil';
+        let color = 'bg-red-500';
 
-            if (score <= 2) {
-                label = 'Débil';
-                color = 'bg-orange-500';
-                textColor = 'text-orange-500';
-            } else if (score === 3) {
-                label = 'Regular';
-                color = 'bg-yellow-500';
-                textColor = 'text-yellow-500';
-            } else if (score === 4) {
-                label = 'Buena';
-                color = 'bg-blue-500';
-                textColor = 'text-blue-500';
-            } else if (score === 5) {
-                label = 'Fuerte';
-                color = 'bg-green-500';
-                textColor = 'text-green-500';
-            }
+        if (password.length === 0) {
+            label = '';
+            color = 'bg-gray-200';
+        } else if (score <= 2) {
+            label = 'Débil';
+            color = 'bg-orange-500';
+        } else if (score === 3) {
+            label = 'Regular';
+            color = 'bg-yellow-500';
+        } else if (score === 4) {
+            label = 'Buena';
+            color = 'bg-blue-500';
+        } else if (score === 5) {
+            label = 'Fuerte';
+            color = 'bg-green-500';
+        }
 
-            setStrength({ percentage, label, color, textColor });
-        };
+        setStrength({ percentage, label, color });
 
-        checkStrength(password);
     }, [password, onStrengthChange]);
 
     return (
-        <div className="mb-4 transition-all duration-300">
-            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                <div
-                    className={`h-full rounded-full transition-all duration-500 ${strength.color}`}
-                    style={{ width: `${strength.percentage}%` }}
-                ></div>
+        <div className="w-full transition-all duration-300">
+            {password.length > 0 && (
+                <>
+                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden mb-2">
+                        <div
+                            className={`h-full rounded-full transition-all duration-500 ${strength.color}`}
+                            style={{ width: `${strength.percentage}%` }}
+                        ></div>
+                    </div>
+                    <p className={`text-xs text-right font-semibold transition-colors duration-500 text-gray-600`}>
+                        Seguridad: {strength.label}
+                    </p>
+                </>
+            )}
+            <div className="mt-3 space-y-1">
+                {requirements.map(req => {
+                    const isMet = metRequirements.includes(req.id);
+                    return (
+                        <div key={req.id} className="flex items-center text-xs">
+                            {isMet ? (
+                                <FaCheckCircle className="text-green-500 mr-2 flex-shrink-0" />
+                            ) : (
+                                <FaTimesCircle className="text-gray-400 mr-2 flex-shrink-0" />
+                            )}
+                            <span className={isMet ? 'text-gray-800' : 'text-gray-500'}>
+                                {req.text}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
-            <p className={`text-xs mt-1 text-right font-semibold transition-colors duration-500 ${strength.textColor}`}>
-                {strength.label}
-            </p>
         </div>
     );
 };
