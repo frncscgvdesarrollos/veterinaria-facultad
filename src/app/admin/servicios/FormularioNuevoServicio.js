@@ -172,7 +172,7 @@ export default function FormularioNuevoServicio({ onServiceAdded }) {
                 {formData.categoria !== 'medicamentos' && (
                     <div className="flex items-center">
                         <input id="activo" name="activo" type="checkbox" checked={formData.activo} onChange={handleChange} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                        <label htmlFor="activo" className="ml-2 block text-sm text-gray-900">Servicio Activo</oabel>
+                        <label htmlFor="activo" className="ml-2 block text-sm text-gray-900">Servicio Activo</label>
                     </div>
                 )}
                 
