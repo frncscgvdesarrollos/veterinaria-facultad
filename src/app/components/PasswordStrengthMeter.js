@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // hook 
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const requirements = [

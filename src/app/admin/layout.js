@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { FaTachometerAlt, FaCalendarAlt, FaUsers, FaDog, FaCog } from 'react-icons/fa';
+import { FaTachometerAlt, FaCalendarAlt, FaUsers, FaDog, FaCog, FaConciergeBell } from 'react-icons/fa';
 
 const SidebarLink = ({ icon, text, href, active }) => {
     const Icon = icon;
@@ -29,6 +29,7 @@ export default function AdminLayout({ children }) {
             <SidebarLink icon={FaCalendarAlt} text="Turnos" href="/admin/turnos" />
             <SidebarLink icon={FaUsers} text="Clientes" href="/admin/clientes" />
             <SidebarLink icon={FaDog} text="Pacientes" href="/admin/pacientes" />
+            <SidebarLink icon={FaConciergeBell} text="Servicios" href="/admin/servicios" />
             <SidebarLink icon={FaCog} text="Configuración" href="/admin/configuracion" />
         </nav>
         <div className="mt-auto">
