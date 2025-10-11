@@ -1,20 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { obtenerServicios, eliminarServicio, toggleServicioActivo } from './actions';
-import { FaEdit, FaTrash, FaToggleOn, FaToggleOff, FaSpinner, FaInfoCircle } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaInfoCircle } from 'react-icons/fa';
+import { eliminarServicio } from './actions';
 
 // Componente para la tabla de una categoría específica
-const TablaServicio = ({ titulo, categoria, servicios, onUpdate }) => {
+const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva }) => {
     const esPeluqueria = categoria === 'peluqueria';
     const esMedicamento = categoria === 'medicamentos';
-
-    const handleToggle = async (id, estadoActual) => {
-        if (window.confirm(`¿Seguro que quieres cambiar el estado de este servicio?`)) {
-            await toggleServicioActivo(categoria, id, estadoActual);
-            onUpdate(); // Refresca los datos
-        }
-    };
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Estás seguro de que quieres eliminar este servicio permanentemente?')) {
@@ -34,8 +26,20 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate }) => {
 
     const serviceEntries = Object.entries(servicios || {});
 
+    // Los medicamentos no tienen un estado global, siempre se muestran como activos.
+    const isCurrentlyActive = esMedicamento ? true : CategoriaActiva;
+
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-lg mb-8">
+        <div className={`relative bg-white p-6 rounded-2xl shadow-lg mb-8 transition-opacity duration-300 ${isCurrentlyActive ? 'opacity-100' : 'opacity-50'}`}>
+            {!isCurrentlyActive && (
+                <div className="absolute inset-0 bg-gray-500 bg-opacity-20 rounded-2xl z-10 flex items-center justify-center">
+                    <div className="text-center p-4 bg-white rounded-lg shadow-xl">
+                         <FaInfoCircle className="mx-auto text-4xl text-blue-500 mb-2"/>
+                         <p className="font-bold text-gray-700">Categoría Desactivada</p>
+                         <p className="text-sm text-gray-500">Actívala desde el panel de control para usar estos servicios.</p>
+                    </div>
+                </div>
+            )}
             <h3 className="text-xl font-bold text-gray-800 mb-4">{titulo}</h3>
             {serviceEntries.length > 0 ? (
                 <div className="overflow-x-auto">
@@ -44,7 +48,6 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate }) => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                                {!esMedicamento && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>}
                                 {esMedicamento && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frecuencia</th>}
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
@@ -59,22 +62,9 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate }) => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {esPeluqueria ? getPriceRange(servicio.precios) : `$${servicio.precio}`}
                                     </td>
-                                    {!esMedicamento && (
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            {servicio.activo ? 
-                                                <span className='px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800'>Activo</span> : 
-                                                <span className='px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800'>Inactivo</span>
-                                            }
-                                        </td>
-                                    )}
                                     {esMedicamento && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{servicio.se_aplica_cada_dias} días</td>}
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button className="text-indigo-600 hover:text-indigo-900 mr-3"><FaEdit /></button>
-                                        {!esMedicamento && (
-                                            <button onClick={() => handleToggle(id, servicio.activo)} className={`mr-3 ${servicio.activo ? 'text-gray-400 hover:text-gray-600' : 'text-green-500 hover:text-green-700'}`}>
-                                                {servicio.activo ? <FaToggleOff size={20}/> : <FaToggleOn size={20}/>}
-                                            </button>
-                                        )}
                                         <button onClick={() => handleDelete(id)} className="text-red-600 hover:text-red-900"><FaTrash /></button>
                                     </td>
                                 </tr>
@@ -89,41 +79,36 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate }) => {
     );
 };
 
-// Componente principal que obtiene y gestiona el estado de los servicios
-export default function ListaServicios() {
-    const [servicios, setServicios] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    const fetchServicios = async () => {
-        try {
-            setLoading(true);
-            const data = await obtenerServicios();
-            setServicios(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchServicios();
-    }, []);
-
-    if (loading) {
-        return <div className="flex justify-center items-center p-8"><FaSpinner className="animate-spin text-4xl text-blue-500" /></div>;
-    }
-
-    if (error) {
-        return <p className="text-red-500 bg-red-50 p-4 rounded-md">Error al cargar los servicios: {error}</p>;
+// El componente principal ahora solo recibe las props y las distribuye
+export default function ListaServicios({ servicios, config, onUpdate }) {
+    if (!servicios || !config) {
+        return null; // O un loader más simple si se prefiere
     }
 
     return (
         <div>
-            <TablaServicio titulo="Peluquería" categoria="peluqueria" servicios={servicios.peluqueria} onUpdate={fetchServicios} />
-            <TablaServicio titulo="Clínica" categoria="clinica" servicios={servicios.clinica} onUpdate={fetchServicios} />
-            <TablaServicio titulo="Medicamentos" categoria="medicamentos" servicios={servicios.medicamentos} onUpdate={fetchServicios} />
+            <TablaServicio 
+                titulo="Peluquería" 
+                categoria="peluqueria" 
+                servicios={servicios.peluqueria} 
+                onUpdate={onUpdate} 
+                CategoriaActiva={config.peluqueria_activa}
+            />
+            <TablaServicio 
+                titulo="Clínica" 
+                categoria="clinica" 
+                servicios={servicios.clinica} 
+                onUpdate={onUpdate} 
+                CategoriaActiva={config.clinica_activa}
+            />
+            {/* Los medicamentos no tienen un interruptor global, siempre están "activos" */}
+            <TablaServicio 
+                titulo="Medicamentos" 
+                categoria="medicamentos" 
+                servicios={servicios.medicamentos} 
+                onUpdate={onUpdate} 
+                CategoriaActiva={true}
+            />
         </div>
     );
 }

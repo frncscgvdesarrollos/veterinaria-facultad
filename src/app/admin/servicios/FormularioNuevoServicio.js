@@ -18,7 +18,7 @@ const initialState = {
     categoria: 'peluqueria',
     nombre: '',
     descripcion: '',
-    activo: true,
+    // El campo 'activo' ya no es necesario aquí
     precio: '', // Para clinica y medicamentos
     precios: { // Para peluqueria
         chico: '',
@@ -44,9 +44,10 @@ export default function FormularioNuevoServicio({ onServiceAdded }) {
                 precios: { ...prev.precios, [size]: value }
             }));
         } else {
+            // El checkbox 'activo' ya no existe, así que simplificamos esta parte
             setFormData(prev => ({
                 ...prev,
-                [name]: type === 'checkbox' ? checked : value
+                [name]: value
             }));
         }
     };
@@ -58,7 +59,7 @@ export default function FormularioNuevoServicio({ onServiceAdded }) {
         setSuccess(null);
 
         try {
-            const { categoria, nombre, descripcion, activo, precio, precios, se_aplica_cada_dias } = formData;
+            const { categoria, nombre, descripcion, precio, precios, se_aplica_cada_dias } = formData;
             const servicioId = generateServiceId(nombre);
 
             if (!nombre) {
@@ -68,7 +69,7 @@ export default function FormularioNuevoServicio({ onServiceAdded }) {
             let data = { nombre, descripcion };
 
             if (categoria === 'peluqueria') {
-                data.activo = activo;
+                // Ya no pasamos 'activo'
                 data.precios = {
                     chico: parseFloat(precios.chico || 0),
                     mediano: parseFloat(precios.mediano || 0),
@@ -76,7 +77,7 @@ export default function FormularioNuevoServicio({ onServiceAdded }) {
                     muy_grande: parseFloat(precios.muy_grande || 0),
                 };
             } else if (categoria === 'clinica') {
-                data.activo = activo;
+                // Ya no pasamos 'activo'
                 data.precio = parseFloat(precio || 0);
             } else { // Medicamentos
                 data.precio = parseFloat(precio || 0);
@@ -168,15 +169,8 @@ export default function FormularioNuevoServicio({ onServiceAdded }) {
                     </div>
                 )}
 
-                {/* Toggle Activo (No para medicamentos) */}
-                {formData.categoria !== 'medicamentos' && (
-                    <div className="flex items-center">
-                        <input id="activo" name="activo" type="checkbox" checked={formData.activo} onChange={handleChange} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                        <label htmlFor="activo" className="ml-2 block text-sm text-gray-900">Servicio Activo</label>
-                    </div>
-                )}
+                {/* El Toggle Activo ha sido eliminado */}
                 
-
                  {/* Botón de Guardar */}
                 <div className="flex items-center justify-end pt-4">
                     <button type="submit" disabled={loading} className="flex items-center justify-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
