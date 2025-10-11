@@ -1,18 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import { obtenerPrecios, actualizarPrecios } from './actions';
+import { guardarServicio } from './actions';
 import { FaSpinner } from 'react-icons/fa';
+
+const generateServiceId = (name) => {
+    return name
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .replace(/[^a-z0-9\s-]/g, '') // Quitar caracteres especiales excepto espacios y guiones
+        .trim()
+        .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+        .replace(/-+/g, '_');
+};
 
 const initialState = {
     categoria: 'peluqueria',
     nombre: '',
-    tamano: 'chico',
-    precio: '',
+    descripcion: '',
     activo: true,
+    precio: '', // Para clinica y medicamentos
+    precios: { // Para peluqueria
+        chico: '',
+        mediano: '',
+        grande: '',
+        muy_grande: '',
+    },
+    se_aplica_cada_dias: '' // Para medicamentos
 };
 
-export default function FormularioNuevoServicio() {
+export default function FormularioNuevoServicio({ onServiceAdded }) {
     const [formData, setFormData] = useState(initialState);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -20,10 +37,18 @@ export default function FormularioNuevoServicio() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        if (name.startsWith('precios.')) {
+            const size = name.split('.')[1];
+            setFormData(prev => ({
+                ...prev,
+                precios: { ...prev.precios, [size]: value }
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -33,33 +58,37 @@ export default function FormularioNuevoServicio() {
         setSuccess(null);
 
         try {
-            // 1. Obtener la estructura de precios actual
-            const preciosActuales = await obtenerPrecios();
+            const { categoria, nombre, descripcion, activo, precio, precios, se_aplica_cada_dias } = formData;
+            const servicioId = generateServiceId(nombre);
 
-            // 2. Crear el nuevo objeto de servicio
-            const nuevoServicio = {
-                nombre: formData.nombre,
-                precio: parseFloat(formData.precio),
-                activo: formData.activo,
-            };
+            if (!nombre) {
+                throw new Error('El nombre del servicio es obligatorio.');
+            }
 
-            if (formData.categoria === 'peluqueria') {
-                nuevoServicio.tamano = formData.tamano;
+            let data = { nombre, descripcion };
+
+            if (categoria === 'peluqueria') {
+                data.activo = activo;
+                data.precios = {
+                    chico: parseFloat(precios.chico || 0),
+                    mediano: parseFloat(precios.mediano || 0),
+                    grande: parseFloat(precios.grande || 0),
+                    muy_grande: parseFloat(precios.muy_grande || 0),
+                };
+            } else if (categoria === 'clinica') {
+                data.activo = activo;
+                data.precio = parseFloat(precio || 0);
+            } else { // Medicamentos
+                data.precio = parseFloat(precio || 0);
+                data.se_aplica_cada_dias = parseInt(se_aplica_cada_dias || 0, 10);
             }
             
-            // 3. Añadir el nuevo servicio a la categoría correspondiente
-            const nuevosPrecios = { ...preciosActuales };
-            if (!nuevosPrecios[formData.categoria]) {
-                nuevosPrecios[formData.categoria] = [];
-            }
-            nuevosPrecios[formData.categoria].push(nuevoServicio);
-
-            // 4. Actualizar el documento en Firestore
-            const result = await actualizarPrecios(nuevosPrecios);
+            const result = await guardarServicio(categoria, servicioId, data);
 
             if (result.success) {
-                setSuccess('¡Servicio agregado con éxito!');
-                setFormData(initialState); // Resetear el formulario
+                setSuccess(`¡Servicio '${nombre}' guardado con éxito!`);
+                setFormData(initialState); // Resetear formulario
+                if(onServiceAdded) onServiceAdded(); // Llama al callback si existe
             } else {
                 throw new Error(result.error || 'Ocurrió un error desconocido.');
             }
@@ -73,7 +102,7 @@ export default function FormularioNuevoServicio() {
 
     return (
         <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">Agregar Nuevo Servicio</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-6">Agregar o Editar Servicio</h3>
             
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Categoría */}
@@ -86,30 +115,67 @@ export default function FormularioNuevoServicio() {
                     </select>
                 </div>
 
-                {/* Nombre del Servicio */}
-                 <div>
+                {/* Nombre y Descripción */}
+                <div>
                     <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">Nombre del Servicio</label>
                     <input type="text" id="nombre" name="nombre" value={formData.nombre} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
                 </div>
+                 <div>
+                    <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea id="descripcion" name="descripcion" value={formData.descripcion} onChange={handleChange} rows="3" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
 
-                {/* Tamaño (solo para peluquería) */}
+                {/* --- CAMPOS CONDICIONALES --- */}
+                
+                {/* Para Peluquería */}
                 {formData.categoria === 'peluqueria' && (
-                    <div>
-                        <label htmlFor="tamano" className="block text-sm font-medium text-gray-700 mb-1">Tamaño (solo perros)</label>
-                        <select id="tamano" name="tamano" value={formData.tamano} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="chico">Chico</option>
-                            <option value="mediano">Mediano</option>
-                            <option value="grande">Grande</option>
-                            <option value="muygrande">Muy Grande</option>
-                        </select>
+                    <div className='space-y-4 p-4 border border-gray-200 rounded-lg'>
+                         <p className="font-medium text-gray-800">Precios por Tamaño</p>
+                         <div className='grid grid-cols-2 gap-4'>
+                            <div>
+                               <label htmlFor="precios.chico" className="block text-xs text-gray-600">Chico</label>
+                               <input type="number" id="precios.chico" name="precios.chico" value={formData.precios.chico} onChange={handleChange} min="0" className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md" />
+                            </div>
+                            <div>
+                               <label htmlFor="precios.mediano" className="block text-xs text-gray-600">Mediano</label>
+                               <input type="number" id="precios.mediano" name="precios.mediano" value={formData.precios.mediano} onChange={handleChange} min="0" className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md" />
+                            </div>
+                             <div>
+                               <label htmlFor="precios.grande" className="block text-xs text-gray-600">Grande</label>
+                               <input type="number" id="precios.grande" name="precios.grande" value={formData.precios.grande} onChange={handleChange} min="0" className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md" />
+                            </div>
+                             <div>
+                               <label htmlFor="precios.muy_grande" className="block text-xs text-gray-600">Muy Grande</label>
+                               <input type="number" id="precios.muy_grande" name="precios.muy_grande" value={formData.precios.muy_grande} onChange={handleChange} min="0" className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md" />
+                            </div>
+                         </div>
                     </div>
                 )}
 
-                {/* Precio */}
-                <div>
-                    <label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-                    <input type="number" id="precio" name="precio" value={formData.precio} onChange={handleChange} required min="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
+                {/* Para Clínica y Medicamentos */}
+                {(formData.categoria === 'clinica' || formData.categoria === 'medicamentos') && (
+                     <div>
+                        <label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                        <input type="number" id="precio" name="precio" value={formData.precio} onChange={handleChange} required min="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                    </div>
+                )}
+                
+                {/* Para Medicamentos */}
+                {formData.categoria === 'medicamentos' && (
+                     <div>
+                        <label htmlFor="se_aplica_cada_dias" className="block text-sm font-medium text-gray-700 mb-1">Frecuencia de Aplicación (días)</label>
+                        <input type="number" id="se_aplica_cada_dias" name="se_aplica_cada_dias" value={formData.se_aplica_cada_dias} onChange={handleChange} min="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                    </div>
+                )}
+
+                {/* Toggle Activo (No para medicamentos) */}
+                {formData.categoria !== 'medicamentos' && (
+                    <div className="flex items-center">
+                        <input id="activo" name="activo" type="checkbox" checked={formData.activo} onChange={handleChange} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                        <label htmlFor="activo" className="ml-2 block text-sm text-gray-900">Servicio Activo</oabel>
+                    </div>
+                )}
+                
 
                  {/* Botón de Guardar */}
                 <div className="flex items-center justify-end pt-4">
