@@ -1,6 +1,6 @@
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getCurrentUser } from '@/lib/session';
 import TurnoConsultaClientPage from './TurnoConsultaClientPage';
 
@@ -12,13 +12,11 @@ async function getMascotas() {
         const q = collection(db, 'users', user.uid, 'mascotas');
         const querySnapshot = await getDocs(q);
         
-        // ¡CORRECCIÓN! Serializar los datos de fecha antes de pasarlos al cliente.
         const mascotas = querySnapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 id: doc.id,
                 ...data,
-                // Aseguramos que las fechas sean texto plano (string)
                 fechaNacimiento: data.fechaNacimiento?.toDate ? data.fechaNacimiento.toDate().toISOString() : data.fechaNacimiento,
                 fechaRegistro: data.fechaRegistro?.toDate ? data.fechaRegistro.toDate().toISOString() : data.fechaRegistro,
             };

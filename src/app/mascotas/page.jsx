@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import SubHeader from '@/app/components/SubHeader';
 import { FaPlus, FaCat, FaDog } from 'react-icons/fa';
 
-// --- FUNCIÓN DE FORMATEO MEJORADA ---
+
 const formatDate = (dateInput) => {
     if (!dateInput) return 'No especificada';
 
