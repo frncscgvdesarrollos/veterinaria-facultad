@@ -11,11 +11,16 @@ const expiresIn = 60 * 60 * 24 * 5;
  */
 export async function POST(request) {
   const authorization = request.headers.get('Authorization');
-  if (!authorization?.startsWith('Bearer ')) {
+  if (!authorization) {
     return NextResponse.json({ error: 'Token no proporcionado.' }, { status: 401 });
   }
 
-  const idToken = authorization.split('Bearer ')[1];
+  // Expresión regular para extraer el token de forma robusta
+  const match = authorization.match(/^Bearer\s+(.*)$/i);
+  if (!match) {
+    return NextResponse.json({ error: 'Formato de token inválido.' }, { status: 401 });
+  }
+  const idToken = match[1];
 
   try {
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn: expiresIn * 1000 });
