@@ -52,9 +52,9 @@ export default function Header() {
                     
                     {isLoggedIn && (
                          <nav className="hidden md:flex items-center gap-8">
-                            <Link href="/turnos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Turnos</Link>
+                            <Link href="/mis-datos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Datos</Link>
                             <Link href="/mis-mascotas" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Mascotas</Link>
-                            <Link href="/adopciones" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Adopciones</Link>
+                            <Link href="/turnos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Turnos</Link>
                          </nav>
                     )}
 
@@ -77,10 +77,7 @@ export default function Header() {
                             </div>
                         ) : (
                             <div className="flex items-center gap-4">
-                                <Link href="/register">
-                                    <span className="font-bold text-violet-600 hover:text-violet-800 transition-colors text-base">Registrarse</span>
-                                </Link>
-                                <Link href="/login">
+                                 <Link href="/login">
                                     <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
                                 </Link>
                             </div>
