@@ -1,18 +1,29 @@
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { getCurrentUser } from '@/lib/session'; // Usamos la función de sesión correcta
+import { collection, getDocs, query } from 'firebase/firestore';
+import { getCurrentUser } from '@/lib/session';
 import TurnoConsultaClientPage from './TurnoConsultaClientPage';
 
 async function getMascotas() {
-    const user = await getCurrentUser(); // Obtenemos el usuario de forma segura
+    const user = await getCurrentUser();
     if (!user) return [];
 
     try {
-        // Usamos el uid del usuario verificado para la consulta
         const q = collection(db, 'users', user.uid, 'mascotas');
         const querySnapshot = await getDocs(q);
-        const mascotas = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // ¡CORRECCIÓN! Serializar los datos de fecha antes de pasarlos al cliente.
+        const mascotas = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                // Aseguramos que las fechas sean texto plano (string)
+                fechaNacimiento: data.fechaNacimiento?.toDate ? data.fechaNacimiento.toDate().toISOString() : data.fechaNacimiento,
+                fechaRegistro: data.fechaRegistro?.toDate ? data.fechaRegistro.toDate().toISOString() : data.fechaRegistro,
+            };
+        });
+
         return mascotas;
     } catch (error) {
         console.error("Error fetching mascotas: ", error);
