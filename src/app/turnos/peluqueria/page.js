@@ -1,18 +1,16 @@
 
-import { cookies } from 'next/headers';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { getCurrentUser } from '@/lib/session'; // Usamos la función de sesión correcta
 import TurnoPeluqueriaClientPage from './TurnoPeluqueriaClientPage';
 
 async function getMascotas() {
-    const cookieStore = cookies();
-    const session = cookieStore.get('__session');
-    if (!session) return [];
+    const user = await getCurrentUser(); // Obtenemos el usuario de forma segura
+    if (!user) return [];
 
     try {
-        const sessionData = JSON.parse(session.value);
-        // Corregido: Apuntar a la subcolección de mascotas del usuario
-        const q = collection(db, 'users', sessionData.uid, 'mascotas');
+        // Usamos el uid del usuario verificado para la consulta
+        const q = collection(db, 'users', user.uid, 'mascotas');
         const querySnapshot = await getDocs(q);
         const mascotas = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         return mascotas;
