@@ -11,7 +11,8 @@ async function getMascotas() {
 
     try {
         const sessionData = JSON.parse(session.value);
-        const q = query(collection(db, 'mascotas'), where('owner_uid', '==', sessionData.uid));
+        // Corregido: Apuntar a la subcolección de mascotas del usuario
+        const q = collection(db, 'users', sessionData.uid, 'mascotas');
         const querySnapshot = await getDocs(q);
         const mascotas = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         return mascotas;
@@ -23,9 +24,8 @@ async function getMascotas() {
 
 async function getOcupacion() {
     try {
-        const q = query(collection(db, 'turnos'), where('estado', 'in', ['confirmado', 'pendiente']));
+        const q = query(collection(db, 'turnos'), where('tipo', '==', 'peluqueria'), where('estado', 'in', ['confirmado', 'pendiente']));
         const querySnapshot = await getDocs(q);
-        // Las fechas se deben convertir a un formato serializable, como un string ISO.
         const ocupacion = querySnapshot.docs.map(doc => doc.data().fecha.toDate().toISOString());
         return ocupacion;
     } catch (error) {
