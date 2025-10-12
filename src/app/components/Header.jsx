@@ -77,8 +77,8 @@ export default function Header() {
                     </div>
                 ) : (
                     <nav className="space-x-4">
-                        <Link href="/login" className="px-4 py-2 rounded hover:bg-gray-700">Iniciar Sesión</pre>
-                        <Link href="/register" className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">Registrarse</pre>
+                        <Link href="/login" className="px-4 py-2 rounded hover:bg-gray-700">Iniciar Sesión</Link>
+                        <Link href="/register" className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">Registrarse</Link>
                     </nav>
                 )}
             </div>
