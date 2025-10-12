@@ -32,6 +32,15 @@ export const AuthProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
             try {
                 if (userAuth) {
+                    // 1. Create server-side session cookie
+                    const idToken = await userAuth.getIdToken();
+                    await fetch('/api/auth/session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken }),
+                    });
+                    
+                    // 2. Get user data from Firestore
                     const userDocRef = doc(db, 'users', userAuth.uid);
                     const userDocSnap = await getDoc(userDocRef);
 
@@ -39,6 +48,7 @@ export const AuthProvider = ({ children }) => {
                         const userData = userDocSnap.data();
                         setUser({ ...userAuth, ...userData });
                     } else {
+                        // This case is mainly for Google Sign-in where the user might not be in our DB yet
                         const newUser = {
                             uid: userAuth.uid,
                             email: userAuth.email,
@@ -52,12 +62,17 @@ export const AuthProvider = ({ children }) => {
                         setUser({ ...userAuth, ...newUser });
                     }
                     setIsLoggedIn(true);
+
                 } else {
+                    // User is signed out, clear server-side session cookie
+                    await fetch('/api/auth/session', { method: 'DELETE' });
                     setUser(null);
                     setIsLoggedIn(false);
                 }
             } catch (error) {
-                console.error("Error durante la verificación de estado de autenticación:", error);
+                console.error("Error en onAuthStateChanged:", error);
+                // Also clear session on error
+                await fetch('/api/auth/session', { method: 'DELETE' });
                 setUser(null);
                 setIsLoggedIn(false);
             } finally {
@@ -68,21 +83,31 @@ export const AuthProvider = ({ children }) => {
         return () => unsubscribe();
     }, []);
 
+    // These functions now just trigger the Firebase SDK methods.
+    // The onAuthStateChanged listener above handles all the session and state logic.
+
     const loginWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
         return signInWithPopup(auth, provider);
     };
-    const signOut = () => firebaseSignOut(auth);
-    const signInWithToken = (token) => signInWithCustomToken(auth, token);
-    const loginWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
-    const registerWithEmailAndPassword = (email, password) => createUserWithEmailAndPassword(auth, email, password);
-    const resetPassword = (email) => sendPasswordResetEmail(auth, email);
-    const changePassword = async (currentPassword, newPassword) => {
-        const credential = EmailAuthProvider.credential(user.email, currentPassword);
-        await reauthenticateWithCredential(user, credential);
-        return updatePassword(user, newPassword);
-    };
 
+    const signOut = () => firebaseSignOut(auth);
+
+    const signInWithToken = (token) => signInWithCustomToken(auth, token);
+    
+    const loginWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
+    
+    const registerWithEmailAndPassword = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+
+    const resetPassword = (email) => sendPasswordResetEmail(auth, email);
+
+    const changePassword = async (currentPassword, newPassword) => {
+        const userCredential = auth.currentUser;
+        if (!userCredential) throw new Error("No hay usuario autenticado.");
+        const credential = EmailAuthProvider.credential(userCredential.email, currentPassword);
+        await reauthenticateWithCredential(userCredential, credential);
+        return updatePassword(userCredential, newPassword);
+    };
 
     const verifyResetCode = (code) => {
         return verifyPasswordResetCode(auth, code);
@@ -91,7 +116,6 @@ export const AuthProvider = ({ children }) => {
     const handlePasswordReset = (code, newPassword) => {
         return confirmPasswordReset(auth, code, newPassword);
     };
-
 
     const value = {
         user,
