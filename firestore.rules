@@ -11,10 +11,9 @@ service cloud.firestore {
 
       // Reglas para la subcolección de mascotas
       match /mascotas/{mascotaId} {
-        // El dueño puede gestionar la información de su mascota.
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        // El dueño puede obtener, listar y modificar sus mascotas.
+        allow get, list, write: if request.auth != null && request.auth.uid == userId;
 
-        // --- ¡REGLA CLAVE AÑADIDA! ---
         // Permite al dueño de la mascota gestionar su carnet sanitario.
         match /carnetSanitario/{registroId} {
           allow read, write: if request.auth != null && request.auth.uid == userId;
