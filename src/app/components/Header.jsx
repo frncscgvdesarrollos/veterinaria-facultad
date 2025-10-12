@@ -3,9 +3,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation'; // Importamos el router de Next.js
+import { useRouter } from 'next/navigation';
 
-// Función para obtener la inicial del nombre a mostrar
 const getInitial = (name) => {
   if (!name) return '?';
   return name.charAt(0).toUpperCase();
@@ -13,20 +12,17 @@ const getInitial = (name) => {
 
 export default function Header() {
     const { user, isLoggedIn, logout } = useAuth(); 
-    const router = useRouter(); // Instanciamos el router
+    const router = useRouter();
 
-    // Lógica de cierre de sesión CORREGIDA
     const cerrarsesion = async () => {
         try {
-            await logout(); // Esperamos a que el logout se complete
-            router.push('/'); // Redirigimos usando el router de Next.js
+            await logout();
+            router.push('/');
         } catch (error) {
             console.error('Error al cerrar sesión:', error);
-            // Opcional: Mostrar una notificación al usuario de que hubo un error
         }
     }
-    
-    // Lógica mejorada para obtener el nombre a mostrar
+
     let displayIdentifier = 'Usuario';
     if (user) {
         if (user.displayName) {
@@ -38,50 +34,60 @@ export default function Header() {
     }
 
     return (
-        <header className="bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
-            <div className="flex items-center">
-                <Link href="/" className="text-2xl font-bold tracking-tight">
-                    Clínica Veterinaria
-                </Link>
-                {isLoggedIn && (
-                     <nav className="ml-10 space-x-4 hidden md:flex">
-                        <Link href="/turnos" className="hover:text-gray-300">Turnos</Link>
-                        <Link href="/mis-mascotas" className="hover:text-gray-300">Mis Mascotas</Link>
-                        <Link href="/adopciones" className="hover:text-gray-300">Adopciones</Link>
-                     </nav>
-                )}
-            </div>
+        <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
+            <nav className="max-w-screen-xl mx-auto px-6 lg:px-8">
+                <div className="flex items-center justify-between h-24">
+                    
+                    <div className="flex-shrink-0">
+                        <Link href="/">
+                            <Image 
+                                src="/LOGO.svg" 
+                                alt="Logo de Veterinaria Magali Martin"
+                                width={200}
+                                height={55}
+                                priority
+                            />
+                        </Link>
+                    </div>
+                    
+                    {isLoggedIn && (
+                         <nav className="hidden md:flex items-center gap-8">
+                            <Link href="/turnos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Turnos</Link>
+                            <Link href="/mis-mascotas" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Mascotas</Link>
+                            <Link href="/adopciones" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Adopciones</Link>
+                         </nav>
+                    )}
 
-            <div>
-                {isLoggedIn ? (
-                    <div className="relative flex items-center">
-                        <span className="mr-4 hidden sm:inline">Hola, {displayIdentifier}</span>
-                        <div className="group">
-                            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center cursor-pointer text-xl font-bold">
-                                {user.photoURL ? (
-                                    <Image src={user.photoURL} alt="Foto de perfil" width={40} height={40} className="rounded-full" />
-                                ) : (
-                                    <span>{getInitial(displayIdentifier)}</span>
-                                )}
-                            </div>
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden group-hover:block">
-                                <Link href="/perfil" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mi Perfil</Link>
-                                <button
-                                    onClick={cerrarsesion}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                    Cerrar Sesión
+                    <div className="flex-grow md:hidden"></div>
+
+                    <div className="flex items-center gap-4 min-w-[250px] justify-end">
+                        {isLoggedIn && user ? (
+                            <div className="flex items-center gap-4">
+                                <span className="hidden lg:inline text-md font-medium text-gray-700 capitalize">Hola, {displayIdentifier}</span>
+                                <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
+                                    {user.photoURL ? (
+                                        <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
+                                    ) : (
+                                        <span>{getInitial(displayIdentifier)}</span>
+                                    )}
+                                </div>
+                                <button onClick={cerrarsesion} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
+                                    Logout
                                 </button>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="flex items-center gap-4">
+                                <Link href="/register">
+                                    <span className="font-bold text-violet-600 hover:text-violet-800 transition-colors text-base">Registrarse</span>
+                                </Link>
+                                <Link href="/login">
+                                    <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
+                                </Link>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <nav className="space-x-4">
-                        <Link href="/login" className="px-4 py-2 rounded hover:bg-gray-700">Iniciar Sesión</Link>
-                        <Link href="/register" className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">Registrarse</Link>
-                    </nav>
-                )}
-            </div>
+                </div>
+            </nav>
         </header>
     );
 }
