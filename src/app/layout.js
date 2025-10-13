@@ -1,13 +1,14 @@
-"use client"
+'use client';
 
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/app/components/Header";
 
+
 export default function RootLayout({ children }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className="flex flex-col min-h-screen">
+      <body className={`bg-gray-50 flex flex-col min-h-screen`}>
         <AuthProvider>
           <Header />
           <main className="flex-grow w-full">
@@ -16,5 +17,5 @@ export default function RootLayout({ children }) {
         </AuthProvider>
       </body>
     </html>
-  );
+  )
 }
