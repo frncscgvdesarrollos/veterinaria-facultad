@@ -34,7 +34,7 @@ export default function HomePageClient({ serverComponents }) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {/* Card Consulta Veterinaria */}
-              <Link href="/turnos/consulta" className="group block rounded-lg p-6 bg-gray-50 hover:bg-blue-100 transition-all duration-300 ease-in-out shadow-md hover:shadow-xl transform hover:-translate-y-1">
+              <Link href="/turnos/nuevo" className="group block rounded-lg p-6 bg-gray-50 hover:bg-blue-100 transition-all duration-300 ease-in-out shadow-md hover:shadow-xl transform hover:-translate-y-1">
                 <div className="flex items-center">
                   <div className="p-4 bg-blue-500 rounded-lg text-white">
                     <FaStethoscope size={32} />
@@ -42,18 +42,6 @@ export default function HomePageClient({ serverComponents }) {
                   <div className="ml-6">
                     <h3 className="text-2xl font-bold text-gray-900">Consulta Veterinaria</h3>
                     <p className="mt-2 text-gray-600">Agenda una cita con nuestros veterinarios expertos.</p>
-                  </div>
-                </div>
-              </Link>
-              {/* Card Peluquería Canina */}
-              <Link href="/turnos/peluqueria" className="group block rounded-lg p-6 bg-gray-50 hover:bg-green-100 transition-all duration-300 ease-in-out shadow-md hover:shadow-xl transform hover:-translate-y-1">
-                <div className="flex items-center">
-                  <div className="p-4 bg-green-500 rounded-lg text-white">
-                    <FaCut size={32} />
-                  </div>
-                  <div className="ml-6">
-                    <h3 className="text-2xl font-bold text-gray-900">Peluquería Canina</h3>
-                    <p className="mt-2 text-gray-600">Un servicio completo de baño, corte y cuidado estético.</p>
                   </div>
                 </div>
               </Link>
