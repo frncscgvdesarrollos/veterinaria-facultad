@@ -44,9 +44,8 @@ export async function solicitarTurno(formData) {
 
         await batch.commit();
 
-        revalidatePath('/mis-turnos');
-        revalidatePath('/turnos/consulta');
-        revalidatePath('/turnos/peluqueria');
+        revalidatePath('/turnos/mis-turnos');
+        revalidatePath('/admin/turnos');
 
         return { success: true };
 
@@ -84,7 +83,7 @@ export async function cancelarTurnoUsuario(turnoId) {
 
         await turnoRef.update({ estado: 'cancelado' });
 
-        revalidatePath('/mis-turnos');
+        revalidatePath('/turnos/mis-turnos');
         revalidatePath('/admin/turnos');
 
         return { success: true, message: "Turno cancelado correctamente." };
