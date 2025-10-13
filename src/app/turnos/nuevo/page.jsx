@@ -1,16 +1,16 @@
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { getAuthenticatedAppForUser } from '@/lib/firebase/getAuthenticatedAppForUser';
+import { getUserIdFromSession } from '@/lib/firebaseAdmin';
 import NuevoTurnoClientPage from './NuevoTurnoClientPage';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // Función para obtener las mascotas del usuario autenticado
 async function getMascotas() {
-    const { currentUser } = await getAuthenticatedAppForUser();
-    if (!currentUser) return [];
+    const userId = await getUserIdFromSession();
+    if (!userId) return [];
 
     try {
-        const mascotasRef = collection(db, `users/${currentUser.uid}/mascotas`);
+        const mascotasRef = collection(db, `users/${userId}/mascotas`);
         const snapshot = await getDocs(mascotasRef);
         // Ordenar alfabéticamente por nombre
         return snapshot.docs
