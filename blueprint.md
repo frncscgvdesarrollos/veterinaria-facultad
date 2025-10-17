@@ -6,6 +6,18 @@ Esta aplicación es una plataforma completa para la gestión de una clínica vet
 
 La aplicación sigue un diseño moderno y limpio, con un enfoque en la facilidad de uso y la accesibilidad. La paleta de colores es vibrante y acogedora, con un uso prominente de azules y verdes para transmitir confianza y tranquilidad. La tipografía es clara y legible, con un buen contraste para garantizar la accesibilidad.
 
+## Arquitectura de Datos en Firestore
+
+La base de datos se estructura de la siguiente manera:
+
+*   **`usuarios`**: Colección que almacena la información de cada usuario registrado, incluyendo su rol (dueño, empleado, admin).
+*   **`mascotas`**: Colección que almacena la información de cada mascota, vinculada a un usuario `dueño` por su ID.
+*   **`turnos`**: Colección que almacena cada turno reservado, vinculado a un `dueño` y a una `mascota`.
+*   **`servicios`**: Colección que contiene un único documento llamado `catalogo`.
+    *   **Documento `catalogo`**: Este documento contiene mapas (objetos) para las diferentes categorías de servicios: `peluqueria`, `clinica` y `medicamentos`. Cada mapa contiene los servicios individuales como objetos, identificados por un ID único. Esta colección actúa como un catálogo central para los servicios que se pueden seleccionar en los formularios.
+*   **`configuracion`**: Colección que contiene un documento llamado `servicios`.
+    *   **Documento `servicios`**: Almacena los estados de activación (booleano) para categorías de servicios completas (ej. `peluqueria_activa`), permitiendo a los administradores habilitar o deshabilitar secciones enteras de servicios de forma centralizada.
+
 ## Características Implementadas
 
 ### Autenticación y Perfiles de Usuario
@@ -38,19 +50,15 @@ El proceso de registro se ha diseñado para ser seguro y amigable para el usuari
 *   **Gestión de Clientes:** Los administradores y empleados pueden ver y gestionar la información de los clientes.
 *   **Gestión de Turnos:** Visualización y gestión de todos los turnos reservados.
 *   **Gestión de Productos:** Creación, edición y eliminación de productos de la tienda.
+*   **Gestión de Servicios:** Creación, edición y eliminación de servicios y medicamentos del catálogo central.
 
 # Plan de Implementación Actual (Completado)
 
-## Tarea: Implementar un Flujo de Registro Seguro con Modal para reCAPTCHA
+## Tarea: Refactorizar la Colección `precios` a `servicios`
 
 ### Pasos Realizados:
 
-1.  **Crear Componente Modal Genérico:** Se ha creado un componente reutilizable `src/components/Modal.js` para mostrar contenido en un pop-up.
-2.  **Separar Lógica de Registro:** Se dividió el proceso en dos etapas:
-    *   `handleFormSubmit`: Valida el formulario y abre el modal.
-    *   `handleFinalRegister`: Se ejecuta desde el modal, verifica el reCAPTCHA y completa el registro en Firebase.
-3.  **Integrar el Modal en la Página de Login:** Se ha añadido el componente `Modal` a `src/app/login/page.js`, conteniendo el reCAPTCHA y el botón de confirmación final.
-4.  **Carga Dinámica de reCAPTCHA:** Se ha utilizado `next/dynamic` para asegurar que el componente reCAPTCHA solo se cargue en el cliente, solucionando el error de renderizado del servidor.
-5.  **Actualizar `blueprint.md`:** La documentación ha sido actualizada para reflejar la nueva arquitectura del flujo de registro.
-
-<!-- Trigger Vercel deploy -->
+1.  **Análisis de la Arquitectura:** Se identificó que la colección `precios` contenía no solo precios, sino también servicios y medicamentos aplicables, lo que generaba confusión semántica.
+2.  **Refactorización del Código:** Se actualizó el archivo `src/app/admin/servicios/actions.js` para cambiar la referencia de la colección de `precios` a `servicios` y el documento interno de `lista` a `catalogo`, nombres más descriptivos.
+3.  **Actualización de `blueprint.md`:** La documentación ha sido actualizada para reflejar la nueva y más clara arquitectura de datos en Firestore.
+4.  **Instrucciones para la Base de Datos:** Se proporcionaron instrucciones claras al usuario para renombrar manualmente la colección y el documento en la consola de Firebase, completando así la migración.

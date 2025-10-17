@@ -4,19 +4,20 @@ import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
 const firestore = admin.firestore();
-const preciosRef = firestore.collection('precios').doc('lista');
+// REFACTOR: La colección 'precios' se renombra a 'servicios' y el doc 'lista' a 'catalogo' para mayor claridad.
+const serviciosRef = firestore.collection('servicios').doc('catalogo');
 const configRef = firestore.collection('configuracion').doc('servicios');
 
 /**
  * Obtiene el objeto completo de servicios desde Firestore.
- * @returns {Promise<object>} El objeto de precios con todas las categorías.
+ * @returns {Promise<object>} El objeto de servicios con todas las categorías.
  */
 export async function obtenerServicios() {
     try {
-        const doc = await preciosRef.get();
+        const doc = await serviciosRef.get();
         if (!doc.exists) {
             const initialData = { peluqueria: {}, clinica: {}, medicamentos: {} };
-            await preciosRef.set(initialData);
+            await serviciosRef.set(initialData);
             return initialData;
         }
         return doc.data();
@@ -56,7 +57,10 @@ export async function toggleCategoriaActiva(categoria, estadoActual) {
         const campo = `${categoria}_activa`; // ej. peluqueria_activa
         await configRef.update({ [campo]: !estadoActual });
 
+        // Revalidar los paths para que el cambio se refleje inmediatamente en la UI
         revalidatePath('/admin/servicios');
+        revalidatePath('/turnos/nuevo');
+
         return { success: true };
     } catch (error) {
         console.error(`Error al cambiar estado de ${categoria}:`, error);
@@ -68,18 +72,16 @@ export async function toggleCategoriaActiva(categoria, estadoActual) {
  * Guarda (añade o actualiza) un servicio específico en una categoría.
  * @param {string} categoria - La categoría del servicio (ej. 'peluqueria').
  * @param {string} servicioId - El ID único del servicio.
- * @param {object} data - El objeto de datos del servicio (sin el campo 'activo').
+ * @param {object} data - El objeto de datos del servicio.
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 export async function guardarServicio(categoria, servicioId, data) {
     try {
-        // Nos aseguramos de que el campo 'activo' no se guarde aquí
         const { activo, ...restData } = data;
-
         const updateData = {};
         updateData[`${categoria}.${servicioId}`] = restData;
         
-        await preciosRef.update(updateData);
+        await serviciosRef.update(updateData);
 
         revalidatePath('/admin/servicios');
         return { success: true };
@@ -102,7 +104,7 @@ export async function eliminarServicio(categoria, servicioId) {
         const updateData = {};
         updateData[`${categoria}.${servicioId}`] = FieldValue.delete();
 
-        await preciosRef.update(updateData);
+        await serviciosRef.update(updateData);
 
         revalidatePath('/admin/servicios');
         return { success: true };
