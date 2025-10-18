@@ -51,7 +51,7 @@ export default function Paso5_ResumenYConfirmar({ datosPrevios, alAnterior }) {
                 <FaCheckCircle className="text-green-500 text-6xl mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-800">¡Turno Confirmado!</h2>
                 <p className="text-gray-600 mt-2">{mensaje}</p>
-                <p className="text-sm text-gray-500 mt-2">Serás redirigido a "Mis Turnos" en breve...</p>
+                <p className="text-sm text-gray-500 mt-2">Serás redirigido a &quot;Mis Turnos&quot; en breve...</p>
             </div>
         );
     }
