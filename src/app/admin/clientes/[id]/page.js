@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase'; // <-- CORREGIDO
 import { doc, getDoc, collection, getDocs, query, where, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
-import StarRating from '@/app/components/StarRating';
+// import StarRating from '@/app/components/StarRating';
 
 const ClienteDetallePage = () => {
   const { userRole } = useAuth();
@@ -95,9 +95,9 @@ const ClienteDetallePage = () => {
         <div className="bg-white shadow-lg rounded-lg p-6 md:p-8 mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center mb-4">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mr-4">{cliente.displayName}</h1>
-                <div className="mt-2 sm:mt-0">
+                {/* <div className="mt-2 sm:mt-0">
                     <StarRating clientId={cliente.id} initialRating={cliente.rating || 0} onRatingChange={handleRatingChange} />
-                </div>
+                </div> */}
             </div>
             <div className="text-gray-600 space-y-2">
                 <p><strong>Email:</strong> {cliente.email}</p>
