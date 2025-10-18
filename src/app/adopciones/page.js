@@ -1,6 +1,6 @@
 'use server';
 
-import { getMascotasEnAdopcion } from '@/app/actions/adopcionesActions';
+import { getMascotasEnAdopcion } from '@/lib/actions/adopciones.actions.js';
 import SubHeader from '@/app/components/SubHeader';
 import Image from 'next/image';
 import { HeartIcon, UserIcon, EnvelopeIcon } from '@heroicons/react/24/solid';

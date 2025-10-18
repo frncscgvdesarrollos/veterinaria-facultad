@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { solicitarTurno } from '@/app/actions/turnosActions';
+import { solicitarTurno } from '@/lib/actions/turnos.actions.js';
 import toast, { Toaster } from 'react-hot-toast';
 import { FaDog, FaStethoscope, FaCut, FaCalendarAlt, FaClock, FaUsers, FaCheckCircle, FaTruck } from 'react-icons/fa';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { FaEdit, FaTrash, FaInfoCircle } from 'react-icons/fa';
-import { eliminarServicio } from './actions';
+import { eliminarServicio } from '@/lib/actions/servicios.actions.js';
 
 // Componente para la tabla de una categoría específica
 const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva }) => {

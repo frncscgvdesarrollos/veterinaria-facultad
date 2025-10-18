@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Toaster, toast } from 'react-hot-toast';
-import { registerWithEmail } from '@/app/actions';
+import { registerWithEmail } from '@/lib/actions/user.actions.js';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 
 export default function LoginPage() {

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Modal from '@/app/components/Modal';
 import FormularioNuevoServicio from './FormularioNuevoServicio';
 import ListaServicios from './ListaServicios';
-import { obtenerServicios, obtenerConfiguracionServicios, toggleCategoriaActiva } from './actions';
+import { obtenerServicios, obtenerConfiguracionServicios, toggleCategoriaActiva } from '@/lib/actions/servicios.actions.js';
 import { FaPlus, FaSpinner, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 
 // Componente para un único interruptor de categoría

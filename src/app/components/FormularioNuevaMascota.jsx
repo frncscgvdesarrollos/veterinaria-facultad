@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { registrarMascota } from '@/app/actions/mascotasActions';
+import { registrarMascota } from '@/lib/actions/mascotas.actions.js';
 import { FaDog, FaCat, FaVenusMars, FaRulerCombined, FaPaw, FaBirthdayCake, FaTag } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';

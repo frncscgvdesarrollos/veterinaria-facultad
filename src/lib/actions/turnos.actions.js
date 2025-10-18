@@ -1,8 +1,9 @@
 'use server'
 
-import admin from '@/lib/firebaseAdmin';
-import { getUserIdFromSession } from '@/lib/firebaseAdmin';
+import admin, { getUserIdFromSession } from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
+
+const firestore = admin.firestore();
 
 export async function solicitarTurno(formData) {
     const userId = await getUserIdFromSession();
@@ -17,8 +18,6 @@ export async function solicitarTurno(formData) {
     if (!ids || ids.length === 0 || !fecha || !hora || !tipo) {
         return { error: 'Faltan datos para procesar la solicitud.' };
     }
-
-    const firestore = admin.firestore();
 
     try {
         const batch = firestore.batch();
@@ -65,7 +64,6 @@ export async function cancelarTurnoUsuario(turnoId) {
         return { success: false, error: "ID de turno no proporcionado." };
     }
 
-    const firestore = admin.firestore();
     const turnoRef = firestore.collection('turnos').doc(turnoId);
 
     try {
@@ -91,4 +89,50 @@ export async function cancelarTurnoUsuario(turnoId) {
         console.error("Error al cancelar el turno:", error);
         return { success: false, error: "Ocurrió un error al cancelar el turno." };
     }
+}
+
+/**
+ * Confirma un turno pendiente. (Función de Admin)
+ * @param {string} turnoId El ID del turno a confirmar.
+ */
+export async function confirmarTurno(turnoId) {
+  if (!turnoId) {
+    return { success: false, error: 'Se requiere el ID del turno.' };
+  }
+
+  try {
+    const turnoRef = firestore.collection('turnos').doc(turnoId);
+    await turnoRef.update({ estado: 'confirmado' });
+
+    revalidatePath('/admin/turnos');
+    revalidatePath('/mis-turnos');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error al confirmar el turno:', error);
+    return { success: false, error: 'No se pudo actualizar el turno.' };
+  }
+}
+
+/**
+ * Cancela un turno pendiente o confirmado. (Función de Admin)
+ * @param {string} turnoId El ID del turno a cancelar.
+ */
+export async function cancelarTurno(turnoId) {
+  if (!turnoId) {
+    return { success: false, error: 'Se requiere el ID del turno.' };
+  }
+
+  try {
+    const turnoRef = firestore.collection('turnos').doc(turnoId);
+    await turnoRef.update({ estado: 'cancelado' });
+
+    revalidatePath('/admin/turnos');
+    revalidatePath('/mis-turnos');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error al cancelar el turno:', error);
+    return { success: false, error: 'No se pudo actualizar el turno.' };
+  }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { guardarServicio } from './actions';
+import { guardarServicio } from '@/lib/actions/servicios.actions.js';
 import { FaSpinner } from 'react-icons/fa';
 
 const generateServiceId = (name) => {

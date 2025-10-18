@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
 const firestore = admin.firestore();
-// REFACTOR: La colección 'precios' se renombra a 'servicios' y el doc 'lista' a 'catalogo' para mayor claridad.
 const serviciosRef = firestore.collection('servicios').doc('catalogo');
 const configRef = firestore.collection('configuracion').doc('servicios');
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { actualizarPerfil } from '@/app/actions';
+import { actualizarPerfil } from '@/lib/actions/user.actions.js';
 import SubHeader from '@/app/components/SubHeader';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
 

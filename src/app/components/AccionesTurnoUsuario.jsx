@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
-import { cancelarTurnoUsuario } from '@/app/actions/turnosActions';
+import { cancelarTurnoUsuario } from '@/lib/actions/turnos.actions.js';
 
 export default function AccionesTurnoUsuario({ turno }) {
     const [loading, setLoading] = useState(false);

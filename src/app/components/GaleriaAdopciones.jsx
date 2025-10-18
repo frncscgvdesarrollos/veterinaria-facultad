@@ -1,5 +1,5 @@
 
-import { getMascotasEnAdopcion } from '@/app/actions/adopcionesActions.js';
+import { getMascotasEnAdopcion } from '@/lib/actions/adopciones.actions.js';
 import { HeartIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 

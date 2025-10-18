@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { FiCheckCircle, FiXCircle, FiLoader } from 'react-icons/fi';
-import { confirmarTurno, cancelarTurno } from '@/app/admin/actions';
+import { confirmarTurno, cancelarTurno } from '@/lib/actions/turnos.actions.js';
 
 const TurnoActions = ({ turnoId }) => {
     const [loading, setLoading] = useState(null); // null, 'confirm', 'cancel'
