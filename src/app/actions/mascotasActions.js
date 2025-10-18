@@ -19,25 +19,18 @@ export async function registrarMascota(user, mascotaData) {
     const userRef = firestore.collection('users').doc(user.uid);
 
     try {
-        // Extraemos enAdopcion y fechaNacimiento para manejarlos por separado.
         const { enAdopcion, fechaNacimiento, ...dataToSave } = mascotaData;
-
-        // Convertimos la fecha de string a un objeto Date y luego a Timestamp de Firestore.
-        // Se añade T00:00:00 para evitar problemas de zona horaria, asegurando que se tome el día correcto.
         const fechaNacimientoTimestamp = admin.firestore.Timestamp.fromDate(new Date(`${fechaNacimiento}T00:00:00`));
 
-        // 1. Añadimos la mascota a la subcolección del usuario con la fecha convertida.
         const mascotaRef = await userRef.collection('mascotas').add({
             ...dataToSave,
             fechaNacimiento: fechaNacimientoTimestamp,
-            enAdopcion: enAdopcion || false, // Aseguramos que el campo exista
+            enAdopcion: enAdopcion || false,
             fechaRegistro: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // 2. Revalidamos las rutas para que los cambios se reflejen inmediatamente.
         revalidatePath('/mis-mascotas');
 
-        // 3. Si la mascota es para adopción, revalidamos también la página de inicio y la de adopciones.
         if (enAdopcion) {
             revalidatePath('/adopciones');
             revalidatePath('/');
@@ -48,5 +41,48 @@ export async function registrarMascota(user, mascotaData) {
     } catch (error) {
         console.error('Error al registrar la mascota:', error);
         return { success: false, error: 'Ocurrió un error en el servidor. Por favor, intenta de nuevo.' };
+    }
+}
+
+/**
+ * @function getMascotasDelUsuario
+ * @description Obtiene todas las mascotas de un usuario específico desde Firestore.
+ * @param {object} user - El objeto de usuario que contiene el uid.
+ * @returns {Promise<object>} Un objeto con la lista de mascotas o un error.
+ */
+export async function getMascotasDelUsuario(user) {
+    if (!user || !user.uid) {
+        return { success: false, error: "Usuario no autenticado." };
+    }
+
+    const firestore = admin.firestore();
+    const mascotasRef = firestore.collection('users').doc(user.uid).collection('mascotas');
+
+    try {
+        const snapshot = await mascotasRef.orderBy('fechaRegistro', 'desc').get();
+
+        if (snapshot.empty) {
+            return { success: true, mascotas: [] };
+        }
+
+        const mascotas = snapshot.docs.map(doc => {
+            const data = doc.data();
+            // Convertir Timestamps a string ISO para que sean serializables
+            const fechaNacimiento = data.fechaNacimiento.toDate().toISOString().split('T')[0];
+            const fechaRegistro = data.fechaRegistro.toDate().toISOString();
+
+            return {
+                id: doc.id,
+                ...data,
+                fechaNacimiento,
+                fechaRegistro,
+            };
+        });
+
+        return { success: true, mascotas };
+
+    } catch (error) {
+        console.error('Error al obtener las mascotas del usuario:', error);
+        return { success: false, error: 'No se pudieron cargar las mascotas.' };
     }
 }
