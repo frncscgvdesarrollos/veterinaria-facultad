@@ -3,13 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
-/**
- * @function registrarMascota
- * @description Registra una nueva mascota en la subcolección de un usuario, convirtiendo la fecha de nacimiento a un Timestamp de Firestore.
- * @param {object} user - El objeto de usuario que contiene el uid.
- * @param {object} mascotaData - Los datos de la mascota a registrar.
- * @returns {Promise<object>} Un objeto indicando el éxito o el fracaso de la operación.
- */
+// La función registrarMascota no necesita cambios.
 export async function registrarMascota(user, mascotaData) {
     if (!user || !user.uid || !mascotaData) {
         return { success: false, error: "Faltan datos para el registro." };
@@ -45,8 +39,8 @@ export async function registrarMascota(user, mascotaData) {
 }
 
 /**
- * @function getMascotasDelUsuario
- * @description Obtiene todas las mascotas de un usuario específico desde Firestore.
+ * @function getMascotasDelUsuario - VERSIÓN CORREGIDA
+ * @description Obtiene todas las mascotas de un usuario, manejando de forma segura la posible ausencia de campos de fecha.
  * @param {object} user - El objeto de usuario que contiene el uid.
  * @returns {Promise<object>} Un objeto con la lista de mascotas o un error.
  */
@@ -59,7 +53,7 @@ export async function getMascotasDelUsuario(user) {
     const mascotasRef = firestore.collection('users').doc(user.uid).collection('mascotas');
 
     try {
-        const snapshot = await mascotasRef.orderBy('fechaRegistro', 'desc').get();
+        const snapshot = await mascotasRef.orderBy('nombre', 'asc').get();
 
         if (snapshot.empty) {
             return { success: true, mascotas: [] };
@@ -67,15 +61,17 @@ export async function getMascotasDelUsuario(user) {
 
         const mascotas = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Convertir Timestamps a string ISO para que sean serializables
-            const fechaNacimiento = data.fechaNacimiento.toDate().toISOString().split('T')[0];
-            const fechaRegistro = data.fechaRegistro.toDate().toISOString();
+            
+            // Comprobación de seguridad para las fechas
+            // Si la fecha existe, la convierte a string. Si no, la deja como null.
+            const fechaNacimiento = data.fechaNacimiento ? data.fechaNacimiento.toDate().toISOString().split('T')[0] : null;
+            const fechaRegistro = data.fechaRegistro ? data.fechaRegistro.toDate().toISOString() : null;
 
             return {
                 id: doc.id,
                 ...data,
-                fechaNacimiento,
-                fechaRegistro,
+                fechaNacimiento, // Ahora es un string o null
+                fechaRegistro, // Ahora es un string o null
             };
         });
 
@@ -83,6 +79,7 @@ export async function getMascotasDelUsuario(user) {
 
     } catch (error) {
         console.error('Error al obtener las mascotas del usuario:', error);
-        return { success: false, error: 'No se pudieron cargar las mascotas.' };
+        // Si todavía hay un error, lo registramos para depurarlo.
+        return { success: false, error: 'No se pudieron cargar las mascotas. Ocurrió un error inesperado al procesar los datos.' };
     }
 }
