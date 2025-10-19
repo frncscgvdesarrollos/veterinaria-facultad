@@ -18,27 +18,24 @@ export default function NuevoTurnoPage() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Si la autenticación ha terminado y no hay usuario, redirigir.
         if (!authLoading && !user) {
             router.push('/login?redirectTo=/turnos/nuevo');
             return;
         }
 
-        // Si hay un usuario, cargar los datos necesarios.
         if (user) {
             const cargarDatos = async () => {
                 setLoadingData(true);
                 try {
-                    // Hacemos las llamadas en paralelo
+                    // CORRECCIÓN: Pasamos user.uid (string) en lugar de user (objeto)
                     const [mascotasResult, serviciosData] = await Promise.all([
-                        getMascotasDelUsuario(user), // Esta función ya la teníamos
-                        obtenerServicios()           // Y esta también
+                        getMascotasDelUsuario(user.uid), // <-- ¡Cambio clave aquí!
+                        obtenerServicios()
                     ]);
 
                     if (mascotasResult.success) {
                         setMascotas(mascotasResult.mascotas);
                     } else {
-                        // Si falla la carga de mascotas, lo anotamos como un error
                         throw new Error(mascotasResult.error || 'No se pudieron cargar las mascotas.');
                     }
                     
@@ -56,7 +53,6 @@ export default function NuevoTurnoPage() {
         }
     }, [user, authLoading, router]);
 
-    // Estado de carga mientras se verifica el usuario o se cargan los datos.
     if (authLoading || loadingData) {
         return (
             <div className="flex justify-center items-center min-h-[60vh]">
@@ -65,17 +61,15 @@ export default function NuevoTurnoPage() {
         );
     }
     
-    // Si hubo un error al cargar los datos.
     if (error) {
          return (
             <div className="text-center text-red-500 bg-red-100 p-6 rounded-lg shadow-md max-w-2xl mx-auto">
-                <h2 class="font-bold text-xl mb-2">Error al cargar la página</h2>
+                <h2 className="font-bold text-xl mb-2">Error al cargar la página</h2>
                 <p>{error}</p>
             </div>
         );
     }
 
-    // Si el usuario está logueado pero no tiene mascotas.
     if (user && mascotas.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md">
@@ -90,7 +84,6 @@ export default function NuevoTurnoPage() {
         );
     }
 
-    // Si todo está correcto, mostramos el formulario.
     return (
         <section className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 md:p-12 max-w-4xl mx-auto">
             <div className="container mx-auto">
@@ -102,7 +95,7 @@ export default function NuevoTurnoPage() {
                 </div>
                 
                 <FormularioTurno
-                    user={user}
+                    user={user} // El formulario puede seguir recibiendo el objeto user completo
                     mascotas={mascotas}
                     servicios={servicios}
                 />
