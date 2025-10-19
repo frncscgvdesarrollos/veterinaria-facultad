@@ -1,21 +1,22 @@
 'use server';
 
-import { firestore } from '@/lib/firebase/firebase-admin';
+import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
+
+const firestore = admin.firestore();
 
 // Mapa para normalizar los tamaños de mascota a las claves de precios
 const TAMAÑO_MAP = {
     'pequeño': 'chico',
     'mediano': 'mediano',
     'grande': 'grande',
-    // Añadir otros mapeos si son necesarios en el futuro
 };
 
 export async function crearTurnosPeluqueria(user, turnosData) {
     const { 
-        selectedMascotas, // Array de objetos de mascota completos
-        serviciosPorMascota, // { mascotaId: servicioId, ... }
-        serviciosPeluqueria, // Array de objetos de servicio completos
+        selectedMascotas, 
+        serviciosPorMascota, 
+        serviciosPeluqueria, 
         fecha,
         turnoHorario,
         necesitaTransporte,
@@ -41,7 +42,6 @@ export async function crearTurnosPeluqueria(user, turnosData) {
                 throw new Error(`El servicio con ID ${servicioId} no es válido.`);
             }
             
-            // Normalizar el tamaño y obtener el precio
             const tamañoNormalizado = TAMAÑO_MAP[mascota.tamaño.toLowerCase()];
             const precio = servicio.precios[tamañoNormalizado] || 0;
 
@@ -49,7 +49,7 @@ export async function crearTurnosPeluqueria(user, turnosData) {
 
             const nuevoTurno = {
                 fecha: fecha,
-                horario: turnoHorario, // 'mañana' o 'tarde'
+                horario: turnoHorario, 
                 tipo: 'peluqueria',
                 mascotaId: mascota.id,
                 mascotaNombre: mascota.nombre,
@@ -58,7 +58,7 @@ export async function crearTurnosPeluqueria(user, turnosData) {
                 precio: precio,
                 necesitaTransporte: necesitaTransporte,
                 metodoPago: metodoPago,
-                estado: 'pendiente', // o 'confirmado'
+                estado: 'pendiente', 
                 creadoEn: new Date(),
             };
 
@@ -68,7 +68,6 @@ export async function crearTurnosPeluqueria(user, turnosData) {
 
         await batch.commit();
 
-        // Opcional: Revalidar la página de turnos para que se muestren los nuevos
         revalidatePath('/turnos');
 
         return { success: true, turnos: turnosCreados };
