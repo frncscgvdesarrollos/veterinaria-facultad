@@ -9,24 +9,24 @@ service cloud.firestore {
     }
 
     // --- USER DATA ---
-    // Users can read/write their own profile. Admins can read anyone's profile.
     match /users/{userId} {
       allow read, update: if request.auth.uid == userId || isAdmin();
       allow create: if request.auth != null;
 
       // Subcollection: MASCOTAS
-      // Users can manage their own pets. Admins can read any pet.
+      // Users can manage their own pets. Admins can manage any pet.
       match /mascotas/{mascotaId} {
-        allow write: if request.auth.uid == userId;
-        // Anyone can get a pet's details (for adoptions page).
-        // Listing a user's whole pet collection is restricted to the owner or an admin.
-        allow get: if true;
-        allow list: if request.auth.uid == userId || isAdmin();
+        allow get, list, write: if request.auth.uid == userId || isAdmin();
 
-        // Subcollection: CARNET SANITARIO
-        // Only the pet owner and admins can manage the health record.
-        match /carnetSanitario/{registroId} {
+        // -- NEW NESTED STRUCTURE --
+        // A user can manage the appointments for their own pet.
+        match /turnos/{turnoId} {
           allow read, write: if request.auth.uid == userId || isAdmin();
+
+          // A user can manage the medical records for an appointment.
+          match /medicamentos/{medicamentoId} {
+            allow read, write: if request.auth.uid == userId || isAdmin();
+          }
         }
       }
     }
@@ -34,26 +34,24 @@ service cloud.firestore {
     // --- GLOBAL COLLECTIONS ---
 
     // SERVICIOS
-    // Anyone can read the list of services. Only admins can manage them.
+    // Anyone can read services. Only admins can modify them.
     match /servicios/{servicioId} {
       allow read: if true;
       allow write: if isAdmin();
     }
-
-    // TURNOS (Global Collection)
-    // - Authenticated users can create appointments for themselves.
-    // - Users can read/update/delete their own appointments.
-    // - Admins can read/write any appointment.
-    match /turnos/{turnoId} {
-      allow create: if request.auth != null && request.resource.data.clienteUid == request.auth.uid;
-      allow read, update, delete: if (resource.data.clienteUid == request.auth.uid) || isAdmin();
-    }
     
-    // PRODUCTOS (for Tienda/Store)
-    // Anyone can view products, only admins can manage them.
+    // PRODUCTOS (for Store)
+    // Anyone can read products. Only admins can modify them.
     match /productos/{productoId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // TURNOS PELUQUERIA (for Availability)
+    // Anyone can read availability. Only authenticated users can update it (via server action).
+    match /turnos_peluqueria/{fecha} {
+        allow read: if true;
+        allow write: if request.auth != null;
     }
   }
 }

@@ -10,55 +10,65 @@ La aplicación sigue un diseño moderno y limpio, con un enfoque en la facilidad
 
 La base de datos se estructura de la siguiente manera:
 
-*   **`usuarios`**: Colección que almacena la información de cada usuario registrado, incluyendo su rol (dueño, empleado, admin).
-*   **`mascotas`**: Colección que almacena la información de cada mascota, vinculada a un usuario `dueño` por su ID.
-*   **`turnos`**: Colección que almacena cada turno reservado, vinculado a un `dueño` y a una `mascota`.
-*   **`servicios`**: Colección que contiene un único documento llamado `catalogo`.
-    *   **Documento `catalogo`**: Este documento contiene mapas (objetos) para las diferentes categorías de servicios: `peluqueria`, `clinica` y `medicamentos`. Cada mapa contiene los servicios individuales como objetos, identificados por un ID único. Esta colección actúa como un catálogo central para los servicios que se pueden seleccionar en los formularios.
-*   **`configuracion`**: Colección que contiene un documento llamado `servicios`.
-    *   **Documento `servicios`**: Almacena los estados de activación (booleano) para categorías de servicios completas (ej. `peluqueria_activa`), permitiendo a los administradores habilitar o deshabilitar secciones enteras de servicios de forma centralizada.
+*   **`users/{userId}`**: Colección que almacena la información de cada usuario registrado.
+    *   **Subcolección `mascotas/{mascotaId}`**: Almacena la información de cada mascota (nombre, especie, raza, **tamaño**).
+        *   **Subcolección `turnos/{turnoId}`**: Almacena cada turno reservado para esa mascota específica. Contiene detalles como el servicio, la fecha, el precio y el estado.
+            *   **Subcolección `medicamentos/{medicamentoId}`**: Almacena cualquier medicamento o tratamiento aplicado durante un turno específico, creando un historial clínico detallado.
+
+*   **`servicios/{servicioId}`**: Colección principal que actúa como catálogo de todos los servicios ofrecidos. Cada documento representa un servicio con su nombre, descripción, precio base y a qué categoría pertenece (`clinica`, `peluqueria`).
+
+*   **`productos/{productoId}`**: Colección principal que contiene todos los productos de la tienda online.
+
+*   **`turnos_peluqueria/{fecha}`**: Colección para gestionar la disponibilidad de la peluquería. Cada documento representa un día (ej. "2024-12-25") y contiene la capacidad disponible para los turnos de mañana y tarde.
 
 ## Características Implementadas
 
-### Autenticación y Perfiles de Usuario
+*   **Autenticación Segura:** Registro e inicio de sesión con Correo/Contraseña y Google, protegido con reCAPTCHA.
+*   **Gestión de Perfiles y Mascotas:** Los usuarios pueden gestionar su información personal y añadir/editar/ver sus mascotas.
+*   **Formularios de Turnos (Rediseñados):** Formularios con diseño mejorado, siguiendo el estilo general de la aplicación.
+*   **Panel de Administración (Básico):** Funcionalidades para que los administradores gestionen servicios y productos.
 
-*   **Autenticación:** Los usuarios pueden registrarse e iniciar sesión utilizando su cuenta de Google o mediante correo electrónico y contraseña.
-*   **Perfiles de Usuario:** Después de registrarse, los usuarios completan su perfil con información adicional, como DNI, teléfono y dirección.
-*   **Roles de Usuario:** El sistema admite tres roles de usuario:
-    *   `dueño`: Clientes de la veterinaria.
-    *   `empleado`: Personal de la veterinaria con acceso al panel de administración.
-    *   `admin`: Administradores con control total sobre la aplicación.
+---
 
-### Flujo de Registro Seguro en Dos Pasos (con Modal)
+# Plan de Implementación Actual
 
-El proceso de registro se ha diseñado para ser seguro y amigable para el usuario, utilizando un modal para la verificación reCAPTCHA:
+## Tarea: Re-arquitectura del Sistema de Turnos y Formulario de Peluquería Avanzado
 
-1.  **Rellenar el Formulario:** El usuario completa sus datos en un formulario de registro limpio.
-2.  **Validación y Apertura del Modal:** Al hacer clic en "Registrarme", la aplicación valida los datos localmente. Si son correctos, se abre un modal de verificación de seguridad.
-3.  **Verificación reCAPTCHA:** Dentro del modal, el usuario completa el desafío reCAPTCHA v2 ("No soy un robot").
-4.  **Finalización del Registro:** Al confirmar en el modal, la aplicación envía los datos y el token de reCAPTCHA a Firebase para crear la cuenta de forma segura. Este enfoque evita conflictos de renderizado en el servidor y mejora la experiencia del usuario.
+**Objetivo:** Implementar un flujo de reserva de turnos de peluquería detallado y migrar la estructura de datos de `turnos` para que esté anidada dentro de cada mascota, permitiendo un historial clínico más robusto.
 
-### Funcionalidades para Dueños de Mascotas
+### 1. Modificación de Estructura de Datos y Formularios Existentes
 
-*   **Gestión de Mascotas:** Los usuarios pueden agregar y ver las mascotas asociadas a su cuenta.
-*   **Reservas de Turnos:** Los usuarios pueden reservar turnos para consultas veterinarias y servicios de peluquería.
-*   **Tienda Online:** Los usuarios pueden explorar y comprar productos para sus mascotas.
-*   **Adopciones:** Los usuarios pueden ver una galería de mascotas disponibles para adopción.
+-   [ ] **Añadir Campo `tamaño` a Mascotas:**
+    -   Modificar el formulario de "Nueva Mascota" (`/mascotas/nueva`) para incluir un campo de selección para el tamaño (`Pequeño`, `Mediano`, `Grande`).
+    -   Actualizar la lógica de guardado para incluir este campo en el documento de la mascota.
+-   [ ] **Actualizar Reglas de Seguridad de Firestore:**
+    -   Modificar `firestore.rules` para reflejar la nueva estructura anidada `users/{userId}/mascotas/{mascotaId}/turnos/{turnoId}`.
+    -   Asegurar que los usuarios solo puedan leer/escribir en sus propias subcolecciones y que los `admin` tengan acceso global.
 
-### Panel de Administración
+### 2. Diseño del Nuevo Formulario de Peluquería
 
-*   **Gestión de Clientes:** Los administradores y empleados pueden ver y gestionar la información de los clientes.
-*   **Gestión de Turnos:** Visualización y gestión de todos los turnos reservados.
-*   **Gestión de Productos:** Creación, edición y eliminación de productos de la tienda.
-*   **Gestión de Servicios:** Creación, edición y eliminación de servicios y medicamentos del catálogo central.
+-   [ ] **Componente Principal del Formulario:**
+    -   Crear un nuevo componente de React para el flujo de peluquería.
+    -   El formulario permitirá la **selección de múltiples mascotas** de una lista (con checkboxes).
+-   [ ] **Detalles por Mascota Seleccionada:**
+    -   Para cada mascota seleccionada, se mostrará una sección donde el usuario debe elegir el **servicio de peluquería específico** (ej. "Baño y Corte", "Solo Baño").
+-   [ ] **Cálculo de Precio Dinámico:**
+    -   El sistema calculará el precio total en tiempo real.
+    -   `Precio Total = Suma(precio_servicio_mascota_1 + precio_servicio_mascota_2 + ...)`
+    -   El precio de cada servicio dependerá del **tamaño de la mascota**. Esto requiere tener una estructura de precios en los documentos de `servicios` (ej. `precio: {pequeno: 20, mediano: 25, grande: 30}`).
+-   [ ] **Logística y Opciones Adicionales:**
+    -   Añadir un interruptor (toggle) para "Necesita Transporte" (Sí/No).
+    -   Añadir botones de selección para "Método de Pago" (Efectivo / Transferencia).
+-   [ ] **Selector de Fecha y Turno (Calendario):**
+    -   Implementar un calendario donde el usuario elija el día.
+    -   Para el día seleccionado, se mostrarán los dos turnos fijos disponibles: "Turno Mañana (9:00)" y "Turno Tarde (14:00)".
+    -   La disponibilidad de estos turnos se consultará de la colección `turnos_peluqueria`.
 
-# Plan de Implementación Actual (Completado)
+### 3. Lógica de Creación de Turnos
 
-## Tarea: Refactorizar la Colección `precios` a `servicios`
-
-### Pasos Realizados:
-
-1.  **Análisis de la Arquitectura:** Se identificó que la colección `precios` contenía no solo precios, sino también servicios y medicamentos aplicables, lo que generaba confusión semántica.
-2.  **Refactorización del Código:** Se actualizó el archivo `src/app/admin/servicios/actions.js` para cambiar la referencia de la colección de `precios` a `servicios` y el documento interno de `lista` a `catalogo`, nombres más descriptivos.
-3.  **Actualización de `blueprint.md`:** La documentación ha sido actualizada para reflejar la nueva y más clara arquitectura de datos en Firestore.
-4.  **Instrucciones para la Base de Datos:** Se proporcionaron instrucciones claras al usuario para renombrar manualmente la colección y el documento en la consola de Firebase, completando así la migración.
+-   [ ] **Acción de Envío (`handleSubmit`):**
+    -   Al confirmar el formulario, la función recorrerá la lista de mascotas seleccionadas.
+    -   Para **cada mascota**, se creará un **documento de turno individual** en su correspondiente subcoleión: `users/USER_ID/mascotas/MASCOTA_ID/turnos/`.
+    -   Cada documento de turno guardará toda la información relevante: `servicioId`, `precioFinal`, `fecha`, `horarioTurno` ("Mañana" o "Tarde"), `necesitaTransporte`, `metodoPago`.
+-   [ ] **Actualización de Disponibilidad:**
+    -   Después de crear los turnos, se actualizará el documento del día correspondiente en `turnos_peluqueria` para reducir la capacidad del turno (mañana/tarde) según la cantidad de mascotas añadidas.

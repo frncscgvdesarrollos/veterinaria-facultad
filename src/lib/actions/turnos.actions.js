@@ -1,138 +1,80 @@
-'use server'
+'use server';
 
-import admin, { getUserIdFromSession } from '@/lib/firebaseAdmin';
+import { firestore } from '@/lib/firebase/firebase-admin';
 import { revalidatePath } from 'next/cache';
 
-const firestore = admin.firestore();
+// Mapa para normalizar los tamaños de mascota a las claves de precios
+const TAMAÑO_MAP = {
+    'pequeño': 'chico',
+    'mediano': 'mediano',
+    'grande': 'grande',
+    // Añadir otros mapeos si son necesarios en el futuro
+};
 
-export async function solicitarTurno(formData) {
-    const userId = await getUserIdFromSession();
-    if (!userId) {
-        return { error: 'Debes iniciar sesión para solicitar un turno.' };
+export async function crearTurnosPeluqueria(user, turnosData) {
+    const { 
+        selectedMascotas, // Array de objetos de mascota completos
+        serviciosPorMascota, // { mascotaId: servicioId, ... }
+        serviciosPeluqueria, // Array de objetos de servicio completos
+        fecha,
+        turnoHorario,
+        necesitaTransporte,
+        metodoPago
+    } = turnosData;
+
+    if (!user || !user.uid) {
+        return { success: false, error: 'Usuario no autenticado.' };
     }
 
-    const { mascotaIds, mascotaId, fecha, hora, tipo, transporte } = formData;
-
-    const ids = mascotaIds || [mascotaId];
-
-    if (!ids || ids.length === 0 || !fecha || !hora || !tipo) {
-        return { error: 'Faltan datos para procesar la solicitud.' };
-    }
+    const batch = firestore.batch();
+    const turnosCreados = [];
 
     try {
-        const batch = firestore.batch();
+        for (const mascota of selectedMascotas) {
+            const servicioId = serviciosPorMascota[mascota.id];
+            if (!servicioId) {
+                throw new Error(`No se encontró servicio para ${mascota.nombre}`);
+            }
 
-        for (const id of ids) {
-            const turnoRef = firestore.collection('turnos').doc();
-            const turnoData = {
-                usuarioId: userId,
-                mascotaId: id,
-                fecha,
-                hora,
-                tipo,
-                estado: 'pendiente',
+            const servicio = serviciosPeluqueria.find(s => s.id === servicioId);
+            if (!servicio) {
+                throw new Error(`El servicio con ID ${servicioId} no es válido.`);
+            }
+            
+            // Normalizar el tamaño y obtener el precio
+            const tamañoNormalizado = TAMAÑO_MAP[mascota.tamaño.toLowerCase()];
+            const precio = servicio.precios[tamañoNormalizado] || 0;
+
+            const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
+
+            const nuevoTurno = {
+                fecha: fecha,
+                horario: turnoHorario, // 'mañana' o 'tarde'
+                tipo: 'peluqueria',
+                mascotaId: mascota.id,
+                mascotaNombre: mascota.nombre,
+                servicioId: servicio.id,
+                servicioNombre: servicio.nombre,
+                precio: precio,
+                necesitaTransporte: necesitaTransporte,
+                metodoPago: metodoPago,
+                estado: 'pendiente', // o 'confirmado'
                 creadoEn: new Date(),
             };
 
-            if (transporte !== undefined) {
-                turnoData.transporte = transporte;
-            }
-            
-            batch.set(turnoRef, turnoData);
+            batch.set(turnoRef, nuevoTurno);
+            turnosCreados.push({ ...nuevoTurno, id: turnoRef.id });
         }
 
         await batch.commit();
 
-        revalidatePath('/turnos/mis-turnos');
-        revalidatePath('/admin/turnos');
+        // Opcional: Revalidar la página de turnos para que se muestren los nuevos
+        revalidatePath('/turnos');
 
-        return { success: true };
+        return { success: true, turnos: turnosCreados };
 
     } catch (error) {
-        console.error('Error al solicitar turno:', error);
-        return { error: 'Ocurrió un error al procesar la solicitud. Inténtalo de nuevo.' };
+        console.error("Error al crear turnos de peluquería:", error);
+        return { success: false, error: error.message || 'Error al guardar los turnos en la base de datos.' };
     }
-}
-
-export async function cancelarTurnoUsuario(turnoId) {
-    const userId = await getUserIdFromSession();
-    if (!userId) {
-        return { success: false, error: "Usuario no autenticado." };
-    }
-
-    if (!turnoId) {
-        return { success: false, error: "ID de turno no proporcionado." };
-    }
-
-    const turnoRef = firestore.collection('turnos').doc(turnoId);
-
-    try {
-        const turnoDoc = await turnoRef.get();
-
-        if (!turnoDoc.exists) {
-            return { success: false, error: "El turno no existe." };
-        }
-
-        const turnoData = turnoDoc.data();
-
-        if (turnoData.usuarioId !== userId) {
-            return { success: false, error: "No tienes permiso para cancelar este turno." };
-        }
-
-        await turnoRef.update({ estado: 'cancelado' });
-
-        revalidatePath('/turnos/mis-turnos');
-        revalidatePath('/admin/turnos');
-
-        return { success: true, message: "Turno cancelado correctamente." };
-    } catch (error) {
-        console.error("Error al cancelar el turno:", error);
-        return { success: false, error: "Ocurrió un error al cancelar el turno." };
-    }
-}
-
-/**
- * Confirma un turno pendiente. (Función de Admin)
- * @param {string} turnoId El ID del turno a confirmar.
- */
-export async function confirmarTurno(turnoId) {
-  if (!turnoId) {
-    return { success: false, error: 'Se requiere el ID del turno.' };
-  }
-
-  try {
-    const turnoRef = firestore.collection('turnos').doc(turnoId);
-    await turnoRef.update({ estado: 'confirmado' });
-
-    revalidatePath('/admin/turnos');
-    revalidatePath('/mis-turnos');
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error al confirmar el turno:', error);
-    return { success: false, error: 'No se pudo actualizar el turno.' };
-  }
-}
-
-/**
- * Cancela un turno pendiente o confirmado. (Función de Admin)
- * @param {string} turnoId El ID del turno a cancelar.
- */
-export async function cancelarTurno(turnoId) {
-  if (!turnoId) {
-    return { success: false, error: 'Se requiere el ID del turno.' };
-  }
-
-  try {
-    const turnoRef = firestore.collection('turnos').doc(turnoId);
-    await turnoRef.update({ estado: 'cancelado' });
-
-    revalidatePath('/admin/turnos');
-    revalidatePath('/mis-turnos');
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error al cancelar el turno:', error);
-    return { success: false, error: 'No se pudo actualizar el turno.' };
-  }
 }
