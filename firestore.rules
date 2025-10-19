@@ -1,29 +1,59 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Reglas para la colección de usuarios
+
+    // Helper function to check for admin role via custom claims
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // --- USER DATA ---
+    // Users can read/write their own profile. Admins can read anyone's profile.
     match /users/{userId} {
-      // Un usuario solo puede leer y actualizar su propio perfil.
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      // Cualquiera autenticado puede crear un perfil de usuario (al registrarse).
+      allow read, update: if request.auth.uid == userId || isAdmin();
       allow create: if request.auth != null;
 
-      // Reglas para la subcolección de mascotas
+      // Subcollection: MASCOTAS
+      // Users can manage their own pets. Admins can read any pet.
       match /mascotas/{mascotaId} {
-        // El dueño puede obtener, listar y modificar sus mascotas.
-        allow get, list, write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth.uid == userId;
+        // Anyone can get a pet's details (for adoptions page).
+        // Listing a user's whole pet collection is restricted to the owner or an admin.
+        allow get: if true;
+        allow list: if request.auth.uid == userId || isAdmin();
 
-        // Permite al dueño de la mascota gestionar su carnet sanitario.
+        // Subcollection: CARNET SANITARIO
+        // Only the pet owner and admins can manage the health record.
         match /carnetSanitario/{registroId} {
-          allow read, write: if request.auth != null && request.auth.uid == userId;
+          allow read, write: if request.auth.uid == userId || isAdmin();
         }
       }
+    }
 
-       // Permite a un usuario gestionar sus propios turnos.
-      match /turnos/{turnoId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+    // --- GLOBAL COLLECTIONS ---
+
+    // SERVICIOS
+    // Anyone can read the list of services. Only admins can manage them.
+    match /servicios/{servicioId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // TURNOS (Global Collection)
+    // - Authenticated users can create appointments for themselves.
+    // - Users can read/update/delete their own appointments.
+    // - Admins can read/write any appointment.
+    match /turnos/{turnoId} {
+      allow create: if request.auth != null && request.resource.data.clienteUid == request.auth.uid;
+      allow read, update, delete: if (resource.data.clienteUid == request.auth.uid) || isAdmin();
+    }
+    
+    // PRODUCTOS (for Tienda/Store)
+    // Anyone can view products, only admins can manage them.
+    match /productos/{productoId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
