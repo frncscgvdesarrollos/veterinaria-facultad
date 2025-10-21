@@ -2,8 +2,23 @@
 
 import admin from '@/lib/firebaseAdmin';
 
-// Inicializa Firestore a partir de la instancia de admin importada
 const db = admin.firestore();
+
+// Función auxiliar para convertir Timestamps de forma segura
+const safeToLocaleDateString = (timestamp) => {
+  if (timestamp && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate().toLocaleDateString();
+  }
+  // Si ya es un string o un valor no válido, lo devuelve o devuelve N/A
+  return (typeof timestamp === 'string') ? timestamp : 'N/A'; 
+};
+
+const safeToISOString = (timestamp) => {
+  if (timestamp && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate().toISOString();
+  }
+  return (typeof timestamp === 'string') ? timestamp : 'N/A';
+};
 
 export async function getAllUsers() {
   try {
@@ -46,8 +61,8 @@ export async function getUserByIdAndPets(userId) {
       mascotas.push({
         id: doc.id,
         ...mascotaData,
-        fechaNacimiento: mascotaData.fechaNacimiento ? mascotaData.fechaNacimiento.toDate().toLocaleDateString() : 'N/A',
-        createdAt: mascotaData.createdAt ? mascotaData.createdAt.toDate().toISOString() : 'N/A',
+        fechaNacimiento: safeToLocaleDateString(mascotaData.fechaNacimiento),
+        createdAt: safeToISOString(mascotaData.createdAt),
       });
     });
 
@@ -70,11 +85,11 @@ export async function getAllAppointmentsWithDetails() {
     }
 
     const appointments = [];
-    const ownersCache = {}; // Caché para no buscar el mismo dueño varias veces
+    const ownersCache = {};
 
     for (const turnoDoc of turnosSnapshot.docs) {
       const turnoData = turnoDoc.data();
-      const turnoPath = turnoDoc.ref.path.split('/'); // users/{userId}/mascotas/{mascotaId}/turnos/{turnoId}
+      const turnoPath = turnoDoc.ref.path.split('/');
       const userId = turnoPath[1];
 
       let ownerData;
@@ -84,7 +99,7 @@ export async function getAllAppointmentsWithDetails() {
         const userDoc = await db.collection('users').doc(userId).get();
         if (userDoc.exists) {
           ownerData = userDoc.data();
-          ownersCache[userId] = ownerData; // Guardar en caché
+          ownersCache[userId] = ownerData;
         } else {
           ownerData = { nombre: 'Usuario no encontrado', apellido: '' };
         }
@@ -93,8 +108,8 @@ export async function getAllAppointmentsWithDetails() {
       appointments.push({
         id: turnoDoc.id,
         ...turnoData,
-        fecha: turnoData.fecha, // Ya está como string
-        creadoEn: turnoData.creadoEn.toDate().toISOString(),
+        fecha: turnoData.fecha,
+        creadoEn: safeToISOString(turnoData.creadoEn),
         owner: {
           id: userId,
           nombre: ownerData.nombre,
