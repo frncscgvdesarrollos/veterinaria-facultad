@@ -1,3 +1,4 @@
+
 'use server';
 
 import admin from '@/lib/firebaseAdmin';
@@ -75,5 +76,79 @@ export async function crearTurnosPeluqueria(user, turnosData) {
     } catch (error) {
         console.error("Error al crear turnos de peluquería:", error);
         return { success: false, error: error.message || 'Error al guardar los turnos en la base de datos.' };
+    }
+}
+
+export async function confirmarTurno(turnoId) {
+    if (!turnoId) {
+        return { success: false, error: 'ID de turno no proporcionado.' };
+    }
+
+    try {
+        const turnoRef = firestore.collection('turnos').doc(turnoId);
+        await turnoRef.update({ estado: 'confirmado' });
+
+        revalidatePath('/admin/turnos'); 
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error al confirmar el turno:", error);
+        return { success: false, error: 'Error al actualizar el estado del turno.' };
+    }
+}
+
+export async function cancelarTurno(turnoId) {
+    if (!turnoId) {
+        return { success: false, error: 'ID de turno no proporcionado.' };
+    }
+
+    try {
+        const turnoRef = firestore.collection('turnos').doc(turnoId);
+        await turnoRef.update({ estado: 'cancelado' });
+
+        revalidatePath('/admin/turnos');
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error al cancelar el turno:", error);
+        return { success: false, error: 'Error al actualizar el estado del turno.' };
+    }
+}
+
+export async function cancelarTurnoUsuario(turnoId) {
+     if (!turnoId) {
+        return { success: false, error: 'ID de turno no proporcionado.' };
+    }
+
+    try {
+        const turnoRef = firestore.collection('turnos').doc(turnoId);
+        await turnoRef.update({ estado: 'cancelado' });
+
+        revalidatePath('/turnos/mis-turnos');
+        revalidatePath('/admin/turnos');
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error al cancelar el turno por el usuario:", error);
+        return { success: false, error: 'Error al procesar la cancelación.' };
+    }
+}
+
+export async function modificarTurno(turnoId, nuevosDatos) {
+    if (!turnoId || !nuevosDatos) {
+        return { success: false, error: 'Datos insuficientes para modificar el turno.' };
+    }
+
+    try {
+        const turnoRef = firestore.collection('turnos').doc(turnoId);
+        await turnoRef.update(nuevosDatos);
+
+        revalidatePath('/admin/turnos');
+        revalidatePath('/turnos/mis-turnos');
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error al modificar el turno:", error);
+        return { success: false, error: 'Error al actualizar el turno en la base de datos.' };
     }
 }
