@@ -1,142 +1,97 @@
 
-'use client';
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/lib/firebase'; // <-- CORREGIDO
-import { doc, getDoc, collection, getDocs, query, where, updateDoc } from 'firebase/firestore';
-import { useParams, useRouter } from 'next/navigation';
-// import StarRating from '@/app/components/StarRating';
+import { getUserByIdAndPets } from '@/lib/actions/admin.actions.js';
+import Link from 'next/link';
 
-const ClienteDetallePage = () => {
-  const { userRole } = useAuth();
-  const router = useRouter();
-  const params = useParams();
-  const { id } = params; // El ID del cliente desde la URL
+// Componente para mostrar un ícono de flecha
+const ArrowLeftIcon = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 19-7-7 7-7" />
+    <path d="M19 12H5" />
+  </svg>
+);
 
-  const [cliente, setCliente] = useState(null);
-  const [mascotas, setMascotas] = useState([]);
-  const [loading, setLoading] = useState(true);
+// Página de detalles del cliente (Componente de Servidor)
+export default async function ClienteDetallePage({ params }) {
+  const { id } = params;
+  const { user, mascotas, error } = await getUserByIdAndPets(id);
 
-  useEffect(() => {
-    if (userRole !== 'admin' || !id) {
-        if(userRole && userRole !== 'admin') router.push('/');
-        return;
-    }
-
-    const fetchClienteYMascotas = async () => {
-      setLoading(true);
-      try {
-        // 1. Obtener datos del cliente
-        const clienteRef = doc(db, 'users', id); // <-- CORREGIDO
-        const clienteSnap = await getDoc(clienteRef);
-
-        if (clienteSnap.exists()) {
-          setCliente({ id: clienteSnap.id, ...clienteSnap.data() });
-        } else {
-          console.error("No se encontró el cliente.");
-          router.push('/admin/clientes');
-          return;
-        }
-
-        // 2. Obtener mascotas del cliente
-        const mascotasRef = collection(db, 'pets'); // <-- CORREGIDO
-        const q = query(mascotasRef, where("ownerId", "==", id));
-        const mascotasSnap = await getDocs(q);
-        const mascotasData = mascotasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setMascotas(mascotasData);
-
-      } catch (error) {
-        console.error("Error al obtener los datos:", error);
-      }
-      setLoading(false);
-    };
-
-    fetchClienteYMascotas();
-  }, [id, userRole, router]);
-
-  const handleRatingChange = async (clientId, newRating) => {
-    if (userRole !== 'admin') return;
-    try {
-        const clientRef = doc(db, 'users', clientId); // <-- CORREGIDO
-        await updateDoc(clientRef, { rating: newRating });
-        setCliente(prev => ({...prev, rating: newRating}));
-    } catch (error) {
-        console.error("Error al actualizar la calificación: ", error);
-    }
-  };
-
-  if (loading || !userRole) {
-    return <p className="text-center mt-8">Cargando datos del cliente...</p>;
-  }
-
-  if (userRole !== 'admin') {
-    return <p className="text-red-500 text-center mt-8">No tienes permiso para ver esta página.</p>;
-  }
-  
-  if (!cliente) {
+  if (error) {
     return (
-        <div className="text-center mt-8">
-            <p>No se pudo encontrar la información del cliente.</p>
-            <button onClick={() => router.push('/admin/clientes')} className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Volver a la lista
-            </button>
-        </div>
+      <div className="p-4 sm:p-6 lg:p-8 text-center">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+        <p className="text-gray-700">{error}</p>
+        <Link href="/admin/clientes" className="mt-6 inline-block bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700">
+          Volver a la lista de clientes
+        </Link>
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-        <button onClick={() => router.back()} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded mb-6 inline-flex items-center">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-            Volver
-        </button>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <Link href="/admin/clientes" className="inline-flex items-center text-gray-600 hover:text-indigo-600 transition-colors">
+          <ArrowLeftIcon className="h-5 w-5 mr-2" />
+          Volver a Clientes
+        </Link>
+      </div>
 
-        {/* Tarjeta de Información del Cliente */}
-        <div className="bg-white shadow-lg rounded-lg p-6 md:p-8 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center mb-4">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mr-4">{cliente.displayName}</h1>
-                {/* <div className="mt-2 sm:mt-0">
-                    <StarRating clientId={cliente.id} initialRating={cliente.rating || 0} onRatingChange={handleRatingChange} />
-                </div> */}
-            </div>
-            <div className="text-gray-600 space-y-2">
-                <p><strong>Email:</strong> {cliente.email}</p>
-                <p><strong>Teléfono:</strong> {cliente.phone || 'No especificado'}</p>
-            </div>
+      {/* Card de Información del Cliente */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">{user.nombre} {user.apellido}</h1>
+        <p className="text-sm text-gray-500 mb-4">ID de Cliente: {user.id}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-gray-700">
+          <div><strong>Email:</strong> {user.email}</div>
+          <div><strong>DNI:</strong> {user.dni || 'No especificado'}</div>
+          <div><strong>Teléfono Principal:</strong> {user.telefonoPrincipal || 'No especificado'}</div>
+          <div><strong>Teléfono Secundario:</strong> {user.telefonoSecundario || 'No especificado'}</div>
+          <div className="md:col-span-2"><strong>Dirección:</strong> {user.direccion || 'No especificada'}</div>
+          <div className="md:col-span-2 pt-2">
+            <h4 className="font-semibold">Contacto de Emergencia</h4>
+            <p className="pl-4 border-l-2 border-gray-200 mt-1">
+              {user.nombreContactoEmergencia || 'No especificado'} - {user.telefonoContactoEmergencia || 'No especificado'}
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Sección de Mascotas */}
-        <h2 className="text-2xl font-semibold mb-4 text-gray-700">Mascotas Registradas</h2>
-        <div className="bg-white shadow-md rounded my-6 overflow-x-auto">
-            {mascotas.length > 0 ? (
-                <table className="min-w-full leading-normal">
-                    <thead>
-                        <tr>
-                            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre</th>
-                            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Especie</th>
-                            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Raza</th>
-                            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Edad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {mascotas.map(mascota => (
-                            <tr key={mascota.id}>
-                                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{mascota.name || 'N/A'}</td>
-                                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{mascota.species || 'N/A'}</td>
-                                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{mascota.breed || 'N/A'}</td>
-                                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{mascota.age ? `${mascota.age} años` : 'N/A'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <div className="text-center p-5">
-                    <p className="text-gray-500">Este cliente aún no ha registrado ninguna mascota.</p>
-                </div>
-            )}
+      {/* Sección de Mascotas */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Mascotas Registradas</h2>
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {mascotas && mascotas.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Especie</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Raza</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nacimiento</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tamaño</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {mascotas.map(mascota => (
+                    <tr key={mascota.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mascota.nombre}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.especie}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.raza}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.fechaNacimiento}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.tamaño}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center p-8">
+              <p className="text-gray-500">Este cliente aún no ha registrado ninguna mascota.</p>
+            </div>
+          )}
         </div>
+      </div>
     </div>
   );
-};
-
-export default ClienteDetallePage;
+}
