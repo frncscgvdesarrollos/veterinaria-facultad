@@ -1,6 +1,9 @@
 'use server';
 
-import { db } from '@/lib/firebaseAdmin';
+import admin from '@/lib/firebaseAdmin';
+
+// Inicializa Firestore a partir de la instancia de admin importada
+const db = admin.firestore();
 
 export async function getAllUsers() {
   try {
@@ -27,7 +30,6 @@ export async function getUserByIdAndPets(userId) {
   }
 
   try {
-    // Obtener datos del usuario
     const userDocRef = db.collection('users').doc(userId);
     const userDoc = await userDocRef.get();
 
@@ -37,12 +39,10 @@ export async function getUserByIdAndPets(userId) {
 
     const userData = userDoc.data();
 
-    // Obtener mascotas del usuario
     const mascotasSnapshot = await userDocRef.collection('mascotas').get();
     const mascotas = [];
     mascotasSnapshot.forEach(doc => {
       const mascotaData = doc.data();
-      // Convertir Timestamps a strings para que sean serializables
       mascotas.push({
         id: doc.id,
         ...mascotaData,
@@ -59,5 +59,55 @@ export async function getUserByIdAndPets(userId) {
   } catch (error) {
     console.error(`Error al obtener el usuario y sus mascotas (ID: ${userId}):`, error);
     return { error: "Ocurrió un error al cargar los datos del cliente." };
+  }
+}
+
+export async function getAllAppointmentsWithDetails() {
+  try {
+    const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
+    if (turnosSnapshot.empty) {
+      return [];
+    }
+
+    const appointments = [];
+    const ownersCache = {}; // Caché para no buscar el mismo dueño varias veces
+
+    for (const turnoDoc of turnosSnapshot.docs) {
+      const turnoData = turnoDoc.data();
+      const turnoPath = turnoDoc.ref.path.split('/'); // users/{userId}/mascotas/{mascotaId}/turnos/{turnoId}
+      const userId = turnoPath[1];
+
+      let ownerData;
+      if (ownersCache[userId]) {
+        ownerData = ownersCache[userId];
+      } else {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          ownerData = userDoc.data();
+          ownersCache[userId] = ownerData; // Guardar en caché
+        } else {
+          ownerData = { nombre: 'Usuario no encontrado', apellido: '' };
+        }
+      }
+      
+      appointments.push({
+        id: turnoDoc.id,
+        ...turnoData,
+        fecha: turnoData.fecha, // Ya está como string
+        creadoEn: turnoData.creadoEn.toDate().toISOString(),
+        owner: {
+          id: userId,
+          nombre: ownerData.nombre,
+          apellido: ownerData.apellido,
+          email: ownerData.email,
+        },
+      });
+    }
+
+    return appointments;
+
+  } catch (error) {
+    console.error("Error al obtener todos los turnos:", error);
+    return { error: "No se pudo cargar la lista de turnos." };
   }
 }
