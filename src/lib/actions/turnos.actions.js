@@ -1,8 +1,8 @@
-
 'use server';
 
 import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
+import { verificarDisponibilidadTraslado } from '../logica_traslado';
 
 const firestore = admin.firestore();
 
@@ -13,6 +13,47 @@ const TAMAÑO_MAP = {
     'grande': 'grande',
 };
 
+/**
+ * Server Action para verificar la disponibilidad de horarios y traslado antes de confirmar.
+ * Por ahora se enfoca en el traslado, asumiendo que la disponibilidad de horario de clínica
+ * se valida principalmente en el cliente con una posterior verificación al crear el turno.
+ */
+export async function verificarDisponibilidadDeTurnosyTraslados({ fecha, nuevasMascotas }) {
+    try {
+        if (!fecha || !nuevasMascotas) {
+            throw new Error('Faltan datos para la verificación del traslado.');
+        }
+
+        // Firestore necesita la fecha en formato YYYY-MM-DD para la consulta.
+        // Aseguramos que la fecha que viene del cliente (que puede ser un objeto Date o un string) se formatea correctamente.
+        const fechaObj = new Date(fecha);
+        const fechaString = fechaObj.toISOString().split('T')[0];
+
+        const turnosSnap = await firestore.collectionGroup('turnos')
+            .where('fecha', '==', fechaString)
+            .where('necesitaTraslado', '==', true)
+            .get();
+
+        // Extraemos los datos y nos aseguramos de que tengan el formato que espera la lógica de negocio
+        const turnosDelDia = turnosSnap.docs.map(doc => ({
+            mascota: { tamaño: doc.data().mascotaTamaño } 
+        }));
+
+        const hayDisponibilidad = verificarDisponibilidadTraslado(turnosDelDia, nuevasMascotas);
+
+        if (!hayDisponibilidad) {
+            return { success: false, error: 'No hay más lugar en el vehículo de traslado para la fecha seleccionada.' };
+        }
+
+        return { success: true };
+
+    } catch (error) {
+        console.error("Error al verificar disponibilidad de traslado:", error);
+        return { success: false, error: error.message || 'No se pudo completar la verificación.' };
+    }
+}
+
+
 export async function crearTurnosPeluqueria(user, turnosData) {
     const { 
         selectedMascotas, 
@@ -20,7 +61,7 @@ export async function crearTurnosPeluqueria(user, turnosData) {
         serviciosPeluqueria, 
         fecha,
         turnoHorario,
-        necesitaTransporte,
+        necesitaTraslado, // Corregido de necesitaTransporte
         metodoPago
     } = turnosData;
 
@@ -49,15 +90,16 @@ export async function crearTurnosPeluqueria(user, turnosData) {
             const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
 
             const nuevoTurno = {
-                fecha: fecha,
+                fecha: fecha, // Asegurarse que se guarde como YYYY-MM-DD
                 horario: turnoHorario, 
                 tipo: 'peluqueria',
                 mascotaId: mascota.id,
                 mascotaNombre: mascota.nombre,
+                mascotaTamaño: mascota.tamaño, // ¡CAMBIO CLAVE! Guardamos el tamaño.
                 servicioId: servicio.id,
                 servicioNombre: servicio.nombre,
                 precio: precio,
-                necesitaTransporte: necesitaTransporte,
+                necesitaTraslado: necesitaTraslado, // Corregido
                 metodoPago: metodoPago,
                 estado: 'pendiente', 
                 creadoEn: new Date(),
@@ -78,6 +120,8 @@ export async function crearTurnosPeluqueria(user, turnosData) {
         return { success: false, error: error.message || 'Error al guardar los turnos en la base de datos.' };
     }
 }
+
+// ... (El resto de las funciones como confirmarTurno, cancelarTurno, etc. se mantienen igual)
 
 export async function confirmarTurno(turnoId) {
     if (!turnoId) {
