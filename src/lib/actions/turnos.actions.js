@@ -6,26 +6,19 @@ import { verificarDisponibilidadTraslado } from '../logica_traslado';
 
 const firestore = admin.firestore();
 
-// Mapa para normalizar los tamaños de mascota a las claves de precios
-const TAMAÑO_MAP = {
-    'pequeño': 'chico',
-    'mediano': 'mediano',
-    'grande': 'grande',
-};
+const TAMAÑO_PRECIOS_MAP = { 'pequeño': 'chico', 'mediano': 'mediano', 'grande': 'grande' };
 
 /**
- * Server Action para verificar la disponibilidad de horarios y traslado antes de confirmar.
- * Por ahora se enfoca en el traslado, asumiendo que la disponibilidad de horario de clínica
- * se valida principalmente en el cliente con una posterior verificación al crear el turno.
+ * Server Action para verificar la disponibilidad del vehículo de traslado.
+ * @param {{ fecha: string, nuevasMascotas: Array<{ tamaño: string }> }}
+ * @returns {Promise<{success: boolean, error?: string}>}
  */
-export async function verificarDisponibilidadDeTurnosyTraslados({ fecha, nuevasMascotas }) {
+export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMascotas }) {
     try {
         if (!fecha || !nuevasMascotas) {
             throw new Error('Faltan datos para la verificación del traslado.');
         }
 
-        // Firestore necesita la fecha en formato YYYY-MM-DD para la consulta.
-        // Aseguramos que la fecha que viene del cliente (que puede ser un objeto Date o un string) se formatea correctamente.
         const fechaObj = new Date(fecha);
         const fechaString = fechaObj.toISOString().split('T')[0];
 
@@ -34,7 +27,6 @@ export async function verificarDisponibilidadDeTurnosyTraslados({ fecha, nuevasM
             .where('necesitaTraslado', '==', true)
             .get();
 
-        // Extraemos los datos y nos aseguramos de que tengan el formato que espera la lógica de negocio
         const turnosDelDia = turnosSnap.docs.map(doc => ({
             mascota: { tamaño: doc.data().mascotaTamaño } 
         }));
@@ -53,87 +45,114 @@ export async function verificarDisponibilidadDeTurnosyTraslados({ fecha, nuevasM
     }
 }
 
-
-export async function crearTurnosPeluqueria(user, turnosData) {
-    const { 
-        selectedMascotas, 
-        serviciosPorMascota, 
-        serviciosPeluqueria, 
-        fecha,
-        turnoHorario,
-        necesitaTraslado, // Corregido de necesitaTransporte
-        metodoPago
-    } = turnosData;
+/**
+ * Server Action unificada para crear turnos de clínica y/o peluquería.
+ * @param {object} user - Objeto del usuario autenticado.
+ * @param {object} data - Datos del formulario del wizard.
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function crearTurnos(user, data) {
+    const {
+        selectedMascotas,
+        motivosPorMascota,
+        specificServices,
+        horarioClinica,
+        horarioPeluqueria,
+        necesitaTraslado,
+        metodoPago,
+        catalogoServicios
+    } = data;
 
     if (!user || !user.uid) {
         return { success: false, error: 'Usuario no autenticado.' };
     }
 
     const batch = firestore.batch();
-    const turnosCreados = [];
 
     try {
         for (const mascota of selectedMascotas) {
-            const servicioId = serviciosPorMascota[mascota.id];
-            if (!servicioId) {
-                throw new Error(`No se encontró servicio para ${mascota.nombre}`);
+            const motivos = motivosPorMascota[mascota.id] || {};
+            const serviciosSeleccionados = specificServices[mascota.id] || {};
+
+            // --- Crear Turno de Clínica ---
+            if (motivos.clinica && serviciosSeleccionados.clinica) {
+                const servicioId = serviciosSeleccionados.clinica;
+                const servicio = catalogoServicios.clinica.find(s => s.id === servicioId);
+                if (!servicio) throw new Error(`Servicio de clínica no encontrado para ${mascota.nombre}`);
+
+                const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
+                const nuevoTurno = {
+                    fecha: horarioClinica.fecha.toISOString().split('T')[0],
+                    horario: horarioClinica.hora,
+                    tipo: 'clinica',
+                    mascotaId: mascota.id,
+                    mascotaNombre: mascota.nombre,
+                    mascotaTamaño: mascota.tamaño,
+                    servicioId: servicio.id,
+                    servicioNombre: servicio.nombre,
+                    precio: servicio.precio_base || 0,
+                    metodoPago: metodoPago,
+                    estado: 'pendiente',
+                    creadoEn: new Date(),
+                };
+                batch.set(turnoRef, nuevoTurno);
             }
 
-            const servicio = serviciosPeluqueria.find(s => s.id === servicioId);
-            if (!servicio) {
-                throw new Error(`El servicio con ID ${servicioId} no es válido.`);
+            // --- Crear Turno de Peluquería ---
+            if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
+                const servicioId = serviciosSeleccionados.peluqueria;
+                const servicio = catalogoServicios.peluqueria.find(s => s.id === servicioId);
+                if (!servicio) throw new Error(`Servicio de peluquería no encontrado para ${mascota.nombre}`);
+                
+                const tamañoKey = TAMAÑO_PRECIOS_MAP[mascota.tamaño.toLowerCase()] || 'chico';
+                const precio = servicio.precios[tamañoKey] || 0;
+
+                const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
+                const nuevoTurno = {
+                    fecha: horarioPeluqueria.fecha.toISOString().split('T')[0],
+                    horario: horarioPeluqueria.turno, // 'mañana' o 'tarde'
+                    tipo: 'peluqueria',
+                    mascotaId: mascota.id,
+                    mascotaNombre: mascota.nombre,
+                    mascotaTamaño: mascota.tamaño,
+                    servicioId: servicio.id,
+                    servicioNombre: servicio.nombre,
+                    precio: precio,
+                    necesitaTraslado: necesitaTraslado,
+                    metodoPago: metodoPago,
+                    estado: 'pendiente',
+                    creadoEn: new Date(),
+                };
+                batch.set(turnoRef, nuevoTurno);
             }
-            
-            const tamañoNormalizado = TAMAÑO_MAP[mascota.tamaño.toLowerCase()];
-            const precio = servicio.precios[tamañoNormalizado] || 0;
-
-            const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
-
-            const nuevoTurno = {
-                fecha: fecha, // Asegurarse que se guarde como YYYY-MM-DD
-                horario: turnoHorario, 
-                tipo: 'peluqueria',
-                mascotaId: mascota.id,
-                mascotaNombre: mascota.nombre,
-                mascotaTamaño: mascota.tamaño, // ¡CAMBIO CLAVE! Guardamos el tamaño.
-                servicioId: servicio.id,
-                servicioNombre: servicio.nombre,
-                precio: precio,
-                necesitaTraslado: necesitaTraslado, // Corregido
-                metodoPago: metodoPago,
-                estado: 'pendiente', 
-                creadoEn: new Date(),
-            };
-
-            batch.set(turnoRef, nuevoTurno);
-            turnosCreados.push({ ...nuevoTurno, id: turnoRef.id });
         }
 
         await batch.commit();
 
-        revalidatePath('/turnos');
+        // Revalidar el path para que el usuario vea su nuevo turno en la lista.
+        revalidatePath('/turnos/mis-turnos');
 
-        return { success: true, turnos: turnosCreados };
+        return { success: true };
 
     } catch (error) {
-        console.error("Error al crear turnos de peluquería:", error);
-        return { success: false, error: error.message || 'Error al guardar los turnos en la base de datos.' };
+        console.error("Error al crear los turnos:", error);
+        return { success: false, error: error.message || 'No se pudo completar la creación de los turnos.' };
     }
 }
 
-// ... (El resto de las funciones como confirmarTurno, cancelarTurno, etc. se mantienen igual)
+
+// --- Otras acciones (confirmar, cancelar) se mantienen igual, pero podrían necesitar ajustes si la lógica de negocio cambia ---
 
 export async function confirmarTurno(turnoId) {
     if (!turnoId) {
         return { success: false, error: 'ID de turno no proporcionado.' };
     }
-
     try {
+        // Esta función podría necesitar saber la ruta completa del turno si no están en una colección raíz
+        // Por ahora, asumimos que se puede encontrar, pero puede requerir refactorización.
         const turnoRef = firestore.collection('turnos').doc(turnoId);
         await turnoRef.update({ estado: 'confirmado' });
-
-        revalidatePath('/admin/turnos'); 
-
+        revalidatePath('/admin/turnos');
         return { success: true };
     } catch (error) {
         console.error("Error al confirmar el turno:", error);
@@ -145,13 +164,10 @@ export async function cancelarTurno(turnoId) {
     if (!turnoId) {
         return { success: false, error: 'ID de turno no proporcionado.' };
     }
-
     try {
         const turnoRef = firestore.collection('turnos').doc(turnoId);
         await turnoRef.update({ estado: 'cancelado' });
-
         revalidatePath('/admin/turnos');
-
         return { success: true };
     } catch (error) {
         console.error("Error al cancelar el turno:", error);
@@ -163,14 +179,11 @@ export async function cancelarTurnoUsuario(turnoId) {
      if (!turnoId) {
         return { success: false, error: 'ID de turno no proporcionado.' };
     }
-
     try {
         const turnoRef = firestore.collection('turnos').doc(turnoId);
         await turnoRef.update({ estado: 'cancelado' });
-
         revalidatePath('/turnos/mis-turnos');
         revalidatePath('/admin/turnos');
-
         return { success: true };
     } catch (error) {
         console.error("Error al cancelar el turno por el usuario:", error);
@@ -182,14 +195,11 @@ export async function modificarTurno(turnoId, nuevosDatos) {
     if (!turnoId || !nuevosDatos) {
         return { success: false, error: 'Datos insuficientes para modificar el turno.' };
     }
-
     try {
         const turnoRef = firestore.collection('turnos').doc(turnoId);
         await turnoRef.update(nuevosDatos);
-
         revalidatePath('/admin/turnos');
         revalidatePath('/turnos/mis-turnos');
-
         return { success: true };
     } catch (error) {
         console.error("Error al modificar el turno:", error);

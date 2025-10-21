@@ -11,11 +11,11 @@ import 'react-day-picker/dist/style.css';
 import { es } from 'date-fns/locale';
 import { FaDog, FaCat, FaArrowLeft, FaCut, FaStethoscope, FaCalendarAlt, FaClock, FaSpinner, FaCheck, FaPlus, FaTruck, FaMoneyBillWave, FaCreditCard, FaSun, FaMoon } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
-import { verificarDisponibilidadDeTurnosyTraslados } from '@/lib/actions/turnos.actions';
+import { verificarDisponibilidadTrasladoAction, crearTurnos } from '@/lib/actions/turnos.actions';
 
 
 // --- CONFIG & CONSTANTS ---
-const VETERINARIOS_DISPONIBLES = 2;
+const VETERINARIOS_DISPONIBLES = 1; // Corregido a 1 según indicación
 const horariosConsulta = [
     '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
     '15:00', '15:30', '16:00'
@@ -80,7 +80,6 @@ const HorarioPeluqueriaSelector = ({ fecha, turno, onFechaChange, onTurnoChange 
     </div>
 );
 
-
 // --- MAIN PAGE COMPONENT ---
 
 export default function NuevoTurnoWizardPage() {
@@ -138,21 +137,53 @@ export default function NuevoTurnoWizardPage() {
     const handleNextStep = async () => {
         if (step === 4 && necesitaTraslado) {
             setIsSubmitting(true);
-            const fecha = necesitaHorarioPeluqueria ? horarioPeluqueria.fecha : horarioClinica.fecha;
-            const mascotasParaTraslado = selectedMascotas.filter(m => m.especie.toLowerCase() === 'perro');
+            const fechaPeluqueria = necesitaHorarioPeluqueria ? horarioPeluqueria.fecha : null;
+            const mascotasParaTraslado = selectedMascotas.filter(m => motivosPorMascota[m.id]?.peluqueria);
 
-            const result = await verificarDisponibilidadDeTurnosyTraslados({
-                fecha: fecha.toISOString().split('T')[0], // Enviar solo YYYY-MM-DD
-                nuevasMascotas: mascotasParaTraslado
-            });
-
-            setIsSubmitting(false);
-            if (!result.success) {
-                toast.error(result.error);
-                return; 
+            if (fechaPeluqueria && mascotasParaTraslado.length > 0) {
+                 const result = await verificarDisponibilidadTrasladoAction({
+                    fecha: fechaPeluqueria.toISOString().split('T')[0],
+                    nuevasMascotas: mascotasParaTraslado
+                });
+                
+                if (!result.success) {
+                    toast.error(result.error);
+                    setIsSubmitting(false);
+                    return; 
+                }
             }
+            setIsSubmitting(false);
         }
         setStep(p => p + 1);
+    };
+    
+    const handleConfirmarTurnos = async () => {
+        setIsSubmitting(true);
+        try {
+            const data = {
+                selectedMascotas,
+                motivosPorMascota,
+                specificServices,
+                horarioClinica,
+                horarioPeluqueria,
+                necesitaTraslado,
+                metodoPago,
+                catalogoServicios
+            };
+
+            const result = await crearTurnos(user, data);
+
+            if (result.success) {
+                toast.success('¡Turnos creados con éxito!');
+                router.push('/turnos/mis-turnos');
+            } else {
+                throw new Error(result.error || 'Ocurrió un error desconocido.');
+            }
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const prevStep = () => setStep(p => p - 1);
@@ -200,7 +231,7 @@ export default function NuevoTurnoWizardPage() {
 
             <div className="p-4 sm:p-6 border-t flex justify-end">
                  {step < 5 && <button onClick={handleNextStep} disabled={ (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete) || (step === 3 && !isStep3Complete) || (step === 4 && !isStep4Complete) || isSubmitting } className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50"> {isSubmitting ? <FaSpinner className="animate-spin"/> : 'Siguiente'} </button>}
-                 {step === 5 && <button onClick={() => {}} disabled={isSubmitting} className="px-8 py-3 w-full md:w-auto bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 disabled:opacity-50">Confirmar Turnos</button>}
+                 {step === 5 && <button onClick={handleConfirmarTurnos} disabled={isSubmitting} className="px-8 py-3 w-full md:w-auto bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 disabled:opacity-50">Confirmar Turnos</button>}
             </div>
         </section>
     );
