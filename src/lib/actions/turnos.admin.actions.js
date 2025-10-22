@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
  * @function getTurnsForAdminDashboard
  * @description Obtiene y clasifica todos los turnos para el panel de administración.
  * Clasifica los turnos en tres categorías: "hoy", "próximos" y "finalizados".
+ * Es robusto contra datos inconsistentes en Firestore.
  */
 export async function getTurnsForAdminDashboard() {
   try {
@@ -32,50 +33,63 @@ export async function getTurnsForAdminDashboard() {
     const cache = { users: new Map(), mascotas: new Map() };
 
     for (const turnoDoc of turnosSnapshot.docs) {
-      const turnoData = turnoDoc.data();
-      const fechaTurno = typeof turnoData.fecha.toDate === 'function' 
-        ? turnoData.fecha.toDate() 
-        : new Date(turnoData.fecha);
-
-      const enrichTurnoData = async () => {
-        const pathSegments = turnoDoc.ref.path.split('/');
-        const userId = pathSegments[1];
-        const mascotaId = pathSegments[3];
-
-        let user = cache.users.get(userId);
-        if (!user) {
-          const userDoc = await db.collection('users').doc(userId).get();
-          // FIX: .exists es una propiedad, no una función.
-          user = userDoc.exists ? userDoc.data() : { nombre: 'Usuario', apellido: 'Desc.' };
-          cache.users.set(userId, user);
+      // **INICIO DE LA MODIFICACIÓN**
+      try { 
+        const turnoData = turnoDoc.data();
+        if (!turnoData || !turnoData.fecha) {
+            console.warn(`Turno ${turnoDoc.id} omitido por datos incompletos.`);
+            continue; // Salta a la siguiente iteración si el turno no tiene datos o fecha
         }
 
-        let mascota = cache.mascotas.get(mascotaId);
-        if (!mascota) {
-          const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
-          // FIX: .exists es una propiedad, no una función.
-          mascota = mascotaDoc.exists ? mascotaDoc.data() : { nombre: 'Mascota Desc.' };
-          cache.mascotas.set(mascotaId, mascota);
-        }
-        
-        return {
-          id: turnoDoc.id,
-          ...turnoData,
-          fecha: fechaTurno.toISOString(),
-          userId, // importante para las acciones
-          mascotaId, // importante para las acciones
-          user: { nombre: user.nombre, apellido: user.apellido },
-          mascota: { nombre: mascota.nombre },
+        const fechaTurno = typeof turnoData.fecha.toDate === 'function' 
+          ? turnoData.fecha.toDate() 
+          : new Date(turnoData.fecha);
+
+        const enrichTurnoData = async () => {
+          const pathSegments = turnoDoc.ref.path.split('/');
+          const userId = pathSegments[1];
+          const mascotaId = pathSegments[3];
+
+          let user = cache.users.get(userId);
+          if (!user) {
+            const userDoc = await db.collection('users').doc(userId).get();
+            user = userDoc.exists ? userDoc.data() : null; // Guardar null si no existe
+            cache.users.set(userId, user);
+          }
+
+          let mascota = cache.mascotas.get(mascotaId);
+          if (!mascota) {
+            const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
+            mascota = mascotaDoc.exists ? mascotaDoc.data() : null; // Guardar null si no existe
+            cache.mascotas.set(mascotaId, mascota);
+          }
+          
+          return {
+            id: turnoDoc.id,
+            ...turnoData,
+            fecha: fechaTurno.toISOString(),
+            userId,
+            mascotaId,
+            // Usar optional chaining y valores por defecto para evitar errores
+            user: { nombre: user?.nombre || 'Usuario', apellido: user?.apellido || 'Eliminado' },
+            mascota: { nombre: mascota?.nombre || 'Mascota Eliminada' },
+          };
         };
-      };
 
-      if (turnoData.estado === 'finalizado' || turnoData.estado === 'cancelado') {
-        turnosFinalizados.push(await enrichTurnoData());
-      } else if (fechaTurno >= startOfToday && fechaTurno < endOfToday) {
-        turnosHoy.push(await enrichTurnoData());
-      } else if (fechaTurno > now && turnoData.estado === 'pendiente') {
-        turnosProximos.push(await enrichTurnoData());
+        const enrichedTurno = await enrichTurnoData();
+
+        if (enrichedTurno.estado === 'finalizado' || enrichedTurno.estado === 'cancelado') {
+          turnosFinalizados.push(enrichedTurno);
+        } else if (fechaTurno >= startOfToday && fechaTurno < endOfToday) {
+          turnosHoy.push(enrichedTurno);
+        } else if (fechaTurno > now && enrichedTurno.estado === 'pendiente') {
+          turnosProximos.push(enrichedTurno);
+        }
+      } catch (error) {
+        // Si un turno individual falla, lo registramos pero no detenemos toda la ejecución.
+        console.error(`Error procesando el turno con ID ${turnoDoc.id}:`, error);
       }
+      // **FIN DE LA MODIFICACIÓN**
     }
     
     return { 
@@ -88,14 +102,15 @@ export async function getTurnsForAdminDashboard() {
     };
 
   } catch (error) {
-    console.error("Error en getTurnsForAdminDashboard:", error);
+    // Este catch atrapa errores más generales, como problemas de conexión con Firestore.
+    console.error("Error general en getTurnsForAdminDashboard:", error);
     return { success: false, error: `Error del servidor: ${error.message}` };
   }
 }
 
 /**
  * @function updateTurnoStatus
- * @description Actualiza el estado de un turno específico (ej. 'confirmado', 'finalizado', 'cancelado').
+ * @description Actualiza el estado de un turno específico.
  */
 export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus }) {
   try {
