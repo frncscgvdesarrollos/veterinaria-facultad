@@ -1,7 +1,6 @@
 
 "use server";
 
-// 1. Importar 'admin' como exportación por defecto, que es lo correcto según tu archivo firebaseAdmin.js
 import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
 
@@ -12,10 +11,8 @@ import { revalidatePath } from 'next/cache';
  */
 export async function getAllTurnsForAdmin() {
   try {
-    // 2. Obtener la instancia de la base de datos DENTRO de la función para asegurar la inicialización.
     const db = admin.firestore();
     
-    // 3. La consulta ahora usará el índice que creaste (fecha DESC, tipo ASC).
     const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
     
     if (turnosSnapshot.empty) {
@@ -23,7 +20,6 @@ export async function getAllTurnsForAdmin() {
     }
 
     const turnsData = [];
-    // Usar un Map para el cache es ligeramente más eficiente
     const cache = { users: new Map(), mascotas: new Map() };
 
     for (const turnoDoc of turnosSnapshot.docs) {
@@ -59,7 +55,8 @@ export async function getAllTurnsForAdmin() {
       turnsData.push({
         id: turnoDoc.id,
         ...turnoData,
-        fecha: turnoData.fecha, // Se mantiene como string o timestamp de Firestore
+        // ¡CORRECCIÓN CRÍTICA! Convertir el Timestamp de Firestore a un string serializable.
+        fecha: turnoData.fecha.toDate().toISOString(),
         userId,
         mascotaId,
         user: user,
@@ -71,6 +68,7 @@ export async function getAllTurnsForAdmin() {
 
   } catch (error) {
     console.error("Error en getAllTurnsForAdmin:", error);
+    // Este error ahora será más claro si algo más falla.
     return { success: false, error: `Error del servidor: ${error.message}` };
   }
 }
