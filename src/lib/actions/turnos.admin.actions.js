@@ -13,7 +13,11 @@ export async function getAllTurnsForAdmin() {
   try {
     const db = admin.firestore();
     
-    const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
+    // CÓDIGO CORREGIDO: La consulta ahora coincide con el índice que creaste.
+    const turnosSnapshot = await db.collectionGroup('turnos')
+                                   .orderBy('fecha', 'desc')
+                                   .orderBy('necesitaTransporte', 'asc')
+                                   .get();
     
     if (turnosSnapshot.empty) {
       return { success: true, data: [] };
@@ -55,7 +59,6 @@ export async function getAllTurnsForAdmin() {
       turnsData.push({
         id: turnoDoc.id,
         ...turnoData,
-        // ¡CORRECCIÓN CRÍTICA! Convertir el Timestamp de Firestore a un string serializable.
         fecha: turnoData.fecha.toDate().toISOString(),
         userId,
         mascotaId,
@@ -68,7 +71,6 @@ export async function getAllTurnsForAdmin() {
 
   } catch (error) {
     console.error("Error en getAllTurnsForAdmin:", error);
-    // Este error ahora será más claro si algo más falla.
     return { success: false, error: `Error del servidor: ${error.message}` };
   }
 }
