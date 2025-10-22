@@ -33,7 +33,10 @@ export async function getTurnsForAdminDashboard() {
 
     for (const turnoDoc of turnosSnapshot.docs) {
       const turnoData = turnoDoc.data();
-      const fechaTurno = turnoData.fecha.toDate();
+      // FIX: Verificar si toDate es una función antes de llamarla para evitar errores.
+      const fechaTurno = typeof turnoData.fecha.toDate === 'function' 
+        ? turnoData.fecha.toDate() 
+        : new Date(turnoData.fecha);
 
       const enrichTurnoData = async () => {
         const pathSegments = turnoDoc.ref.path.split('/');
