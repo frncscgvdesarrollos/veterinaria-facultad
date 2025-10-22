@@ -1,10 +1,8 @@
 
 "use server";
 
-import { admin } from '@/lib/firebaseAdmin';
+import { firestore } from '@/lib/firebaseAdmin'; // Importar 'firestore' ya inicializado
 import { revalidatePath } from 'next/cache';
-
-const db = admin.firestore();
 
 /**
  * @function getAllTurnsForAdmin
@@ -13,6 +11,8 @@ const db = admin.firestore();
  */
 export async function getAllTurnsForAdmin() {
   try {
+    // Acceder a la db dentro de la función
+    const db = firestore;
     const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
     
     if (turnosSnapshot.empty) {
@@ -35,6 +35,8 @@ export async function getAllTurnsForAdmin() {
           const { nombre, apellido } = userDoc.data();
           user = { nombre, apellido };
           cache.users[userId] = user;
+        } else {
+          user = { nombre: 'Usuario', apellido: 'No encontrado' };
         }
       }
 
@@ -45,17 +47,19 @@ export async function getAllTurnsForAdmin() {
           const { nombre } = mascotaDoc.data();
           mascota = { nombre };
           cache.mascotas[mascotaId] = mascota;
+        } else {
+          mascota = { nombre: 'Mascota no encontrada' };
         }
       }
       
       turnsData.push({
         id: turnoDoc.id,
         ...turnoData,
-        fecha: turnoData.fecha,
+        fecha: turnoData.fecha, // Se mantiene como string o timestamp de Firestore
         userId,
         mascotaId,
-        user: user || { nombre: 'No encontrado', apellido: '' },
-        mascota: mascota || { nombre: 'No encontrada' },
+        user: user,
+        mascota: mascota,
       });
     }
     
@@ -63,6 +67,7 @@ export async function getAllTurnsForAdmin() {
 
   } catch (error) {
     console.error("Error en getAllTurnsForAdmin:", error);
-    return { success: false, error: "No se pudieron cargar los turnos." };
+    // Devolver un mensaje de error más específico si es posible
+    return { success: false, error: `Error del servidor: ${error.message}` };
   }
 }
