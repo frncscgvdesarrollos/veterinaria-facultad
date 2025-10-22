@@ -33,7 +33,6 @@ export async function getTurnsForAdminDashboard() {
 
     for (const turnoDoc of turnosSnapshot.docs) {
       const turnoData = turnoDoc.data();
-      // FIX: Verificar si toDate es una función antes de llamarla para evitar errores.
       const fechaTurno = typeof turnoData.fecha.toDate === 'function' 
         ? turnoData.fecha.toDate() 
         : new Date(turnoData.fecha);
@@ -46,14 +45,16 @@ export async function getTurnsForAdminDashboard() {
         let user = cache.users.get(userId);
         if (!user) {
           const userDoc = await db.collection('users').doc(userId).get();
-          user = userDoc.exists() ? userDoc.data() : { nombre: 'Usuario', apellido: 'Desc.' };
+          // FIX: .exists es una propiedad, no una función.
+          user = userDoc.exists ? userDoc.data() : { nombre: 'Usuario', apellido: 'Desc.' };
           cache.users.set(userId, user);
         }
 
         let mascota = cache.mascotas.get(mascotaId);
         if (!mascota) {
           const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
-          mascota = mascotaDoc.exists() ? mascotaDoc.data() : { nombre: 'Mascota Desc.' };
+          // FIX: .exists es una propiedad, no una función.
+          mascota = mascotaDoc.exists ? mascotaDoc.data() : { nombre: 'Mascota Desc.' };
           cache.mascotas.set(mascotaId, mascota);
         }
         
