@@ -13,7 +13,7 @@ La base de datos se estructura de la siguiente manera:
 *   **`users/{userId}`**: Colección que almacena la información de cada usuario registrado.
     *   **Subcolección `mascotas/{mascotaId}`**: Almacena la información de cada mascota (nombre, especie, raza, **tamaño**).
         *   **Subcolección `turnos/{turnoId}`**: Almacena cada turno reservado para esa mascota específica. Contiene detalles como el servicio, la fecha, el precio y el estado.
-            *   **Subcolección `medicamentos/{medicamentoId}`**: Almacena cualquier medicamento o tratamiento aplicado durante un turno específico, creando un historial clínico detallado.
+            *   **Subcolección `medicamentos/{medicamentoId}`**: Almacena any medicamento o tratamiento aplicado durante un turno específico, creando un historial clínico detallado.
 
 *   **`servicios/{servicioId}`**: Colección principal que actúa como catálogo de todos los servicios ofrecidos. Cada documento representa un servicio con su nombre, descripción, precio base y a qué categoría pertenece (`clinica`, `peluqueria`).
 
@@ -32,43 +32,40 @@ La base de datos se estructura de la siguiente manera:
 
 # Plan de Implementación Actual
 
-## Tarea: Re-arquitectura del Sistema de Turnos y Formulario de Peluquería Avanzado
+## Tarea: Rediseño del Panel de Administración de Turnos
 
-**Objetivo:** Implementar un flujo de reserva de turnos de peluquería detallado y migrar la estructura de datos de `turnos` para que esté anidada dentro de cada mascota, permitiendo un historial clínico más robusto.
+**Objetivo:** Mejorar drásticamente la experiencia de usuario de la dueña de la veterinaria, organizando los turnos en secciones lógicas y fáciles de gestionar, y aplicando un diseño visual moderno y atractivo.
 
-### 1. Modificación de Estructura de Datos y Formularios Existentes
+### 1. Re-estructuración de la Interfaz de Usuario (UI)
 
--   [ ] **Añadir Campo `tamaño` a Mascotas:**
-    -   Modificar el formulario de "Nueva Mascota" (`/mascotas/nueva`) para incluir un campo de selección para el tamaño (`Pequeño`, `Mediano`, `Grande`).
-    -   Actualizar la lógica de guardado para incluir este campo en el documento de la mascota.
--   [ ] **Actualizar Reglas de Seguridad de Firestore:**
-    -   Modificar `firestore.rules` para reflejar la nueva estructura anidada `users/{userId}/mascotas/{mascotaId}/turnos/{turnoId}`.
-    -   Asegurar que los usuarios solo puedan leer/escribir en sus propias subcolecciones y que los `admin` tengan acceso global.
+-   [ ] **Implementar Interfaz de Pestañas (Tabs):**
+    -   Crear una navegación principal con tres vistas claras:
+        1.  **Turnos del Día**
+        2.  **Turnos Próximos (por confirmar)**
+        3.  **Historial (Turnos finalizados)**
+-   [ ] **Sub-secciones por Tipo de Servicio:**
+    -   Dentro de cada pestaña, separar visualmente los turnos en dos listas distintas: **"Clínica"** y **"Peluquería"**.
 
-### 2. Diseño del Nuevo Formulario de Peluquería
+### 2. Lógica de Filtrado y Obtención de Datos
 
--   [ ] **Componente Principal del Formulario:**
-    -   Crear un nuevo componente de React para el flujo de peluquería.
-    -   El formulario permitirá la **selección de múltiples mascotas** de una lista (con checkboxes).
--   [ ] **Detalles por Mascota Seleccionada:**
-    -   Para cada mascota seleccionada, se mostrará una sección donde el usuario debe elegir el **servicio de peluquería específico** (ej. "Baño y Corte", "Solo Baño").
--   [ ] **Cálculo de Precio Dinámico:**
-    -   El sistema calculará el precio total en tiempo real.
-    -   `Precio Total = Suma(precio_servicio_mascota_1 + precio_servicio_mascota_2 + ...)`
-    -   El precio de cada servicio dependerá del **tamaño de la mascota**. Esto requiere tener una estructura de precios en los documentos de `servicios` (ej. `precio: {pequeno: 20, mediano: 25, grande: 30}`).
--   [ ] **Logística y Opciones Adicionales:**
-    -   Añadir un interruptor (toggle) para "Necesita Transporte" (Sí/No).
-    -   Añadir botones de selección para "Método de Pago" (Efectivo / Transferencia).
--   [ ] **Selector de Fecha y Turno (Calendario):**
-    -   Implementar un calendario donde el usuario elija el día.
-    -   Para el día seleccionado, se mostrarán los dos turnos fijos disponibles: "Turno Mañana (9:00)" y "Turno Tarde (14:00)".
-    -   La disponibilidad de estos turnos se consultará de la colección `turnos_peluqueria`.
+-   [ ] **Actualización de `turnos.admin.actions.js`:**
+    -   Modificar la función `getAllTurnsForAdmin` para que filtre los turnos según su estado y fecha.
+    -   Se crearán tres categorías de turnos:
+        -   **Turnos del Día:** Turnos cuya fecha coincide con el día actual.
+        -   **Turnos Próximos:** Turnos con fecha futura y estado `pendiente`.
+        -   **Turnos Finalizados:** Turnos con estado `finalizado`.
+-   [ ] **Optimización de Consultas a Firestore:**
+    -   Asegurar que las consultas a la base de datos sean eficientes para no cargar datos innecesarios en el cliente.
 
-### 3. Lógica de Creación de Turnos
+### 3. Diseño de Componentes y Estética
 
--   [ ] **Acción de Envío (`handleSubmit`):**
-    -   Al confirmar el formulario, la función recorrerá la lista de mascotas seleccionadas.
-    -   Para **cada mascota**, se creará un **documento de turno individual** en su correspondiente subcoleión: `users/USER_ID/mascotas/MASCOTA_ID/turnos/`.
-    -   Cada documento de turno guardará toda la información relevante: `servicioId`, `precioFinal`, `fecha`, `horarioTurno` ("Mañana" o "Tarde"), `necesitaTransporte`, `metodoPago`.
--   [ ] **Actualización de Disponibilidad:**
-    -   Después de crear los turnos, se actualizará el documento del día correspondiente en `turnos_peluqueria` para reducir la capacidad del turno (mañana/tarde) según la cantidad de mascotas añadidas.
+-   [ ] **Crear Componente `TurnoCardAdmin`:**
+    -   Diseñar una tarjeta visualmente atractiva para cada turno.
+    -   Mostrará la información clave: Nombre de la mascota, nombre del dueño, servicio, horario y estado.
+    -   Utilizará colores e íconos para diferenciar rápidamente el tipo de servicio (clínica/peluquería) y el estado del turno.
+-   [ ] **Diseño General y Estilo:**
+    -   Crear un layout limpio y espaciado para las pestañas y las listas.
+    -   Aplicar la paleta de colores y tipografía de la aplicación para una apariencia cohesiva y profesional.
+-   [ ] **Acciones del Administrador:**
+    -   Añadir botones o controles en cada tarjeta de turno para realizar acciones rápidas como "Confirmar", "Marcar como Finalizado" o "Cancelar".
+
