@@ -17,7 +17,7 @@ export async function getTurnsForAdminDashboard() {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 
-    const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
+    const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').orderBy('necesitaTransporte', 'asc').get();
 
     if (turnosSnapshot.empty) {
       return { 

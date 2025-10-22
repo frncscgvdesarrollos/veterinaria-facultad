@@ -25,130 +25,85 @@
  * - Capacidad máxima de perros CHICOS (usando todos los caniles): 10
  * - Capacidad máxima de perros MEDIANOS (usando sustitución): 2 (en el muy grande) + 3 (en los medianos) = 5
  *
- * -- ALGORITMO DE VERIFICACIÓN (A IMPLEMENTAR) --
- * 
- * La función `verificarDisponibilidadTraslado` recibirá dos argumentos:
- * 1. `turnosDelDia`: Un array de objetos, donde cada objeto representa un turno ya agendado con traslado para ese día.
- * 2. `nuevasMascotas`: Un array de objetos, representando las mascotas para las cuales se solicita el nuevo turno de traslado.
- *
- * La función seguirá los siguientes pasos:
- * 1. Contabilizar todos los perros (los ya agendados + los nuevos) y agruparlos por tamaño ("muy chiquito", "chico", "mediano", "grande", "muy grande").
- * 
- * 2. Iniciar con el inventario completo de caniles.
- * 
- * 3. Asignar los perros a los caniles en orden de prioridad (de más grande a más chico) para evitar que un perro grande se quede sin su canil específico.
- *    - Asignar perros "muy grandes" al canil "muy grande".
- *    - Asignar perros "grandes" al canil "grande".
- *    - Asignar perros "medianos" a los caniles "medianos".
- *    - Asignar perros "chicos" y "muy chiquitos" a sus respectivos caniles.
- *
- * 4. Para los perros que no encontraron lugar (si los hay), intentar reubicarlos usando las reglas de sustitución en los caniles más grandes que quedaron libres.
- *    - ¿Quedaron perros medianos? Ver si caben en el canil "muy grande" libre.
- *    - ¿Quedaron perros chicos? Ver si caben en el canil "grande" o "muy grande" libres.
- * 
- * 5. Si después de todo el proceso todos los perros tienen un lugar asignado, la función devolverá `true` (hay disponibilidad).
- * 
- * 6. Si a algún perro no se le pudo asignar un lugar, la función devolverá `false`.
  */
 
 /**
  * Verifica si hay disponibilidad de traslado para un grupo de nuevas mascotas,
  * considerando los turnos ya existentes en un día específico.
  * 
- * @param {Array<Object>} turnosDelDia - Lista de turnos con traslado ya agendados para el día. Se espera que cada turno tenga una propiedad `mascota` con la info del tamaño.
+ * @param {Array<Object>} turnosDelDia - Lista de turnos con traslado ya agendados para el día.
  * @param {Array<Object>} nuevasMascotas - Lista de mascotas para las que se solicita el nuevo traslado.
  * @returns {boolean} - Devuelve `true` si hay espacio, de lo contrario `false`.
  */
 export function verificarDisponibilidadTraslado(turnosDelDia, nuevasMascotas) {
-    // 1. Contabilizar todos los perros por tamaño.
-    // Se asume que los objetos en `turnosDelDia` tienen una propiedad `mascota` con el `tamaño`.
+    // 1. Contabilizar todas las mascotas por tamaño.
     const todasLasMascotas = [
         ...nuevasMascotas,
         ...(turnosDelDia || []).map(turno => turno.mascota) 
     ];
 
     const perrosPorTamaño = {
-        muy_grande: 0,
-        grande: 0,
-        mediano: 0,
-        chico: 0,
-        muy_chiquito: 0,
+        muy_grande: 0, grande: 0, mediano: 0, chico: 0, muy_chiquito: 0,
     };
 
     for (const mascota of todasLasMascotas) {
         if (mascota && mascota.tamaño) {
-            // Normalizar el tamaño, ej: 'pequeño' -> 'chico'
-            const tamaño = mascota.tamaño.toLowerCase().replace(' ', '_');
-            const tamañoNormalizado = tamaño === 'pequeño' ? 'chico' : tamaño;
-            
-            if (perrosPorTamaño.hasOwnProperty(tamañoNormalizado)) {
-                perrosPorTamaño[tamañoNormalizado]++;
+            const tamañoNorm = mascota.tamaño.toLowerCase().replace(' ', '_').replace('pequeño', 'chico');
+            if (perrosPorTamaño.hasOwnProperty(tamañoNorm)) {
+                perrosPorTamaño[tamañoNorm]++;
             }
         }
     }
 
-    // 2. Iniciar con el inventario de caniles.
-    let canilesLibres = {
-        muy_grande: 1,
-        grande: 1,
-        mediano: 3,
-        muy_chiquito: 1,
-    };
+    // 2. Inventario inicial de caniles.
+    let caniles = { muy_grande: 1, grande: 1, mediano: 3, muy_chiquito: 1 };
 
-    // 3. Asignar perros a caniles de su tamaño exacto (de mayor a menor).
-    
-    // Perros "muy grandes" no tienen sustitución.
-    if (perrosPorTamaño.muy_grande > canilesLibres.muy_grande) return false;
-    canilesLibres.muy_grande -= perrosPorTamaño.muy_grande;
+    // 3. Asignación directa (perros que no tienen sustitución).
+    // Perros "muy grandes"
+    if (perrosPorTamaño.muy_grande > caniles.muy_grande) return false;
+    caniles.muy_grande -= perrosPorTamaño.muy_grande;
+    perrosPorTamaño.muy_grande = 0;
 
-    // Perros "grandes" no tienen sustitución.
-    if (perrosPorTamaño.grande > canilesLibres.grande) return false;
-    canilesLibres.grande -= perrosPorTamaño.grande;
+    // Perros "grandes"
+    if (perrosPorTamaño.grande > caniles.grande) return false;
+    caniles.grande -= perrosPorTamaño.grande;
+    perrosPorTamaño.grande = 0;
 
-    // Perros "muy chiquitos" no tienen sustitución.
-    if (perrosPorTamaño.muy_chiquito > canilesLibres.muy_chiquito) return false;
-    canilesLibres.muy_chiquito -= perrosPorTamaño.muy_chiquito;
-    
-    // Asignar perros "medianos" a sus caniles y registrar los que no caben.
-    const medianosAsignadosDirecto = Math.min(perrosPorTamaño.mediano, canilesLibres.mediano);
-    let medianosSinLugar = perrosPorTamaño.mediano - medianosAsignadosDirecto;
-    canilesLibres.mediano -= medianosAsignadosDirecto;
-    
-    // Todos los perros "chicos" necesitan reubicación ya que no hay canil "chico" específico.
-    let chicosSinLugar = perrosPorTamaño.chico;
+    // Perros "muy chiquitos"
+    if (perrosPorTamaño.muy_chiquito > caniles.muy_chiquito) return false;
+    caniles.muy_chiquito -= perrosPorTamaño.muy_chiquito;
+    perrosPorTamaño.muy_chiquito = 0;
 
-    // 4. Intentar reubicar usando sustitución en caniles más grandes.
+    // 4. Asignación a caniles medianos (tienen sustitución pero solo para más chicos).
+    const medianosAsignados = Math.min(perrosPorTamaño.mediano, caniles.mediano);
+    caniles.mediano -= medianosAsignados;
+    perrosPorTamaño.mediano -= medianosAsignados;
 
-    // Reubicar medianos sin lugar en caniles "muy grandes" libres.
-    if (medianosSinLugar > 0) {
-        // Regla: 1 canil "muy grande" puede alojar 2 "medianos".
-        const canilesMGNecesarios = Math.ceil(medianosSinLugar / 2);
-        if (canilesMGNecesarios > canilesLibres.muy_grande) return false;
-        canilesLibres.muy_grande -= canilesMGNecesarios;
+    // 5. Reubicación de perros medianos restantes en caniles "muy grandes".
+    if (perrosPorTamaño.mediano > 0) {
+        const canilesMuyGrandesNecesarios = Math.ceil(perrosPorTamaño.mediano / 2); // 2 medianos por canil MG
+        if (canilesMuyGrandesNecesarios > caniles.muy_grande) return false;
+        caniles.muy_grande -= canilesMuyGrandesNecesarios;
+        perrosPorTamaño.mediano = 0;
     }
 
-    // Reubicar chicos sin lugar en caniles "grandes" y "muy grandes" libres.
-    if (chicosSinLugar > 0) {
-        // Prioridad 1: Usar caniles "grandes" libres.
-        // Regla: 1 canil "grande" puede alojar 3 "chicos".
-        if (canilesLibres.grande > 0) {
-            const capacidadEnCanilesGrandes = canilesLibres.grande * 3;
-            const chicosUbicadosEnGrandes = Math.min(chicosSinLugar, capacidadEnCanilesGrandes);
-            chicosSinLugar -= chicosUbicadosEnGrandes;
-        }
-        
-        // Prioridad 2: Usar caniles "muy grandes" si aún quedan chicos.
-        if (chicosSinLugar > 0) {
-            // Regla: 1 canil "muy grande" puede alojar 3 "chicos".
-             if (canilesLibres.muy_grande > 0) {
-                const capacidadEnCanilesMuyGrandes = canilesLibres.muy_grande * 3;
-                if (chicosSinLugar > capacidadEnCanilesMuyGrandes) return false; // No hay más opciones
-            } else {
-                 return false; // No quedan caniles grandes ni muy grandes
-            }
-        }
+    // 6. Reubicación de perros chicos restantes.
+    // No tienen canil propio, siempre usan sustitución.
+    // Prioridad 1: Caniles "grandes" libres.
+    if (perrosPorTamaño.chico > 0 && caniles.grande > 0) {
+        const capacidadEnGrandes = caniles.grande * 3; // 3 chicos por canil G
+        const chicosEnGrandes = Math.min(perrosPorTamaño.chico, capacidadEnGrandes);
+        perrosPorTamaño.chico -= chicosEnGrandes;
     }
 
-    // 5. Si no hemos retornado `false` hasta ahora, significa que todos cupieron.
-    return true;
+    // Prioridad 2: Caniles "muy grandes" libres.
+    if (perrosPorTamaño.chico > 0 && caniles.muy_grande > 0) {
+        const capacidadEnMuyGrandes = caniles.muy_grande * 3; // 3 chicos por canil MG
+        const chicosEnMuyGrandes = Math.min(perrosPorTamaño.chico, capacidadEnMuyGrandes);
+        perrosPorTamaño.chico -= chicosEnMuyGrandes;
+    }
+    
+    // 7. Verificación final.
+    // Si quedan perros de cualquier tamaño, significa que no hubo espacio.
+    return perrosPorTamaño.chico === 0 && perrosPorTamaño.mediano === 0;
 }
