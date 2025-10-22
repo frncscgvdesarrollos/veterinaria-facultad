@@ -59,7 +59,7 @@ export async function getAllTurnsForAdmin() {
       turnsData.push({
         id: turnoDoc.id,
         ...turnoData,
-        fecha: turnoData.fecha.toDate().toISOString(),
+        fecha: new Date(turnoData.fecha).toISOString(),
         userId,
         mascotaId,
         user: user,
