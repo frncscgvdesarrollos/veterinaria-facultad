@@ -9,7 +9,6 @@ const IconoPeluqueria = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 
 // --- Componente de Tarjeta para cada Turno ---
 function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
-  const esClinica = turno.tipo === 'clinica';
 
   const statusStyles = {
     pendiente: 'bg-yellow-200 text-yellow-800',
@@ -26,9 +25,23 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
   const handleAction = (newStatus) => {
     onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus);
   };
+  
+  const formattedDate = () => {
+    const date = new Date(turno.fecha);
+    if (currentView === 'hoy') {
+      return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + 'hs';
+    }
+    return date.toLocaleString('es-AR', { 
+        day: '2-digit', 
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit' 
+    }) + 'hs';
+  };
 
   return (
-    <div className={`bg-white shadow-lg rounded-lg p-4 mb-4 border-l-4 ${cardBorder[turno.tipo]}`}>
+    <div className={`bg-white shadow-lg rounded-lg p-4 mb-4 border-l-4 ${cardBorder[turno.tipo] || 'border-gray-300'}`}>
       <div className="flex justify-between items-start mb-2">
         <div>
           <p className="font-bold text-lg text-gray-800">{turno.mascota.nombre}</p>
@@ -38,7 +51,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
       </div>
       <p className="text-gray-700 mb-3"><span className="font-semibold">Servicio:</span> {turno.servicioNombre}</p>
       <div className="flex items-center justify-between text-sm text-gray-500">
-        <span>{new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}hs</span>
+        <span>{formattedDate()}</span>
         <div className="flex gap-2">
           {isUpdating && <span className="text-sm text-gray-500">Actualizando...</span>}
           {!isUpdating && (
@@ -141,7 +154,7 @@ export default function AdminTurnosDashboard() {
 
       {isUpdating && <div className='text-center mb-4'>Actualizando...</div>}
       
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         <TurnosList titulo="Turnos de Clínica" turnos={turnosClinica} tipoIcono="clinica" onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
         <TurnosList titulo="Turnos de Peluquería" turnos={turnosPeluqueria} tipoIcono="peluqueria" onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
       </div>

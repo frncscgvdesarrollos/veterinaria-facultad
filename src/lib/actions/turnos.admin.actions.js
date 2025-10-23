@@ -28,7 +28,7 @@ export async function getTurnsForAdminDashboard() {
     const startOfTodayUTC = startOfTodayInArgentina.utc().toDate();
     const endOfTodayUTC = endOfTodayInArgentina.utc().toDate();
 
-    const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').orderBy('necesitaTransporte', 'asc').get();
+    const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').orderBy('necesitaTraslado', 'asc').get();
 
     if (turnosSnapshot.empty) {
       return { 
