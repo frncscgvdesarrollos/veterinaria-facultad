@@ -1,10 +1,9 @@
-
-"use server";
+'use server';
 
 import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-// **MODIFICACIÓN: Importar la librería de zonas horarias**
-import { zonedTimeToUtc, utcToZonedTime, format } from 'date-fns-tz';
+// **MODIFICACIÓN: Corregir la importación de la librería**
+import * as dateFnsTz from 'date-fns-tz';
 
 /**
  * @function getTurnsForAdminDashboard
@@ -16,25 +15,20 @@ export async function getTurnsForAdminDashboard() {
   try {
     const db = admin.firestore();
     
-    // **INICIO DE LA MODIFICACIÓN: Lógica de Fechas con Zona Horaria**
     const timeZone = 'America/Argentina/Buenos_Aires';
     
-    // 1. Obtener la fecha y hora actual en la zona horaria de Argentina
-    const nowInArgentina = utcToZonedTime(new Date(), timeZone);
+    // **MODIFICACIÓN: Usar la sintaxis corregida**
+    const nowInArgentina = dateFnsTz.utcToZonedTime(new Date(), timeZone);
     
-    // 2. Calcular el inicio y el fin del día DE HOY en Argentina
     const startOfTodayInArgentina = new Date(nowInArgentina);
     startOfTodayInArgentina.setHours(0, 0, 0, 0);
 
     const endOfTodayInArgentina = new Date(startOfTodayInArgentina);
     endOfTodayInArgentina.setDate(endOfTodayInArgentina.getDate() + 1);
     
-    // 3. Convertir estos límites a Timestamps UTC para comparar con Firestore
-    const startOfTodayUTC = zonedTimeToUtc(startOfTodayInArgentina, timeZone);
-    const endOfTodayUTC = zonedTimeToUtc(endOfTodayInArgentina, timeZone);
-    // **FIN DE LA MODIFICACIÓN**
+    const startOfTodayUTC = dateFnsTz.zonedTimeToUtc(startOfTodayInArgentina, timeZone);
+    const endOfTodayUTC = dateFnsTz.zonedTimeToUtc(endOfTodayInArgentina, timeZone);
 
-    // La consulta a la DB no cambia, sigue siendo eficiente
     const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
 
     if (turnosSnapshot.empty) {
@@ -57,7 +51,6 @@ export async function getTurnsForAdminDashboard() {
             continue;
         }
 
-        // La fecha del turno viene como Timestamp UTC de Firestore, es correcto
         const fechaTurnoUTC = turnoData.fecha.toDate();
 
         const enrichTurnoData = async () => {
@@ -92,17 +85,14 @@ export async function getTurnsForAdminDashboard() {
 
         const enrichedTurno = await enrichTurnoData();
 
-        // **INICIO DE LA MODIFICACIÓN: Lógica de Clasificación con Zona Horaria**
         if (enrichedTurno.estado === 'finalizado' || enrichedTurno.estado === 'cancelado') {
           turnosFinalizados.push(enrichedTurno);
-        // Compara si la fecha del turno (en UTC) está dentro del rango de "hoy" en Argentina (también en UTC)
         } else if (fechaTurnoUTC >= startOfTodayUTC && fechaTurnoUTC < endOfTodayUTC) {
           turnosHoy.push(enrichedTurno);
-        // Compara si la fecha del turno es posterior al "ahora" de Argentina
-        } else if (fechaTurnoUTC > zonedTimeToUtc(nowInArgentina, timeZone) && enrichedTurno.estado === 'pendiente') {
+        // **MODIFICACIÓN: Usar la sintaxis corregida**
+        } else if (fechaTurnoUTC > dateFnsTz.zonedTimeToUtc(nowInArgentina, timeZone) && enrichedTurno.estado === 'pendiente') {
           turnosProximos.push(enrichedTurno);
         }
-        // **FIN DE LA MODIFICACIÓN**
 
       } catch (error) {
         console.error(`Error procesando el turno con ID ${turnoDoc.id}:`, error);
@@ -113,7 +103,7 @@ export async function getTurnsForAdminDashboard() {
       success: true, 
       data: { 
         hoy: turnosHoy, 
-        proximos: turnosProximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)), // Ordena los próximos por fecha
+        proximos: turnosProximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)),
         finalizados: turnosFinalizados 
       } 
     };
@@ -124,10 +114,6 @@ export async function getTurnsForAdminDashboard() {
   }
 }
 
-/**
- * @function updateTurnoStatus
- * @description Actualiza el estado de un turno específico.
- */
 export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
