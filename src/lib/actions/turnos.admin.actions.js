@@ -13,34 +13,32 @@ const db = admin.firestore();
 
 /**
  * Función robusta para obtener todos los turnos y enriquecerlos con datos del dueño y la mascota.
- * Esta función está diseñada para no fallar y devolver siempre una estructura de datos predecible.
  */
 export async function getTurnsForAdminDashboard() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
 
-    const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
+    // CORRECCIÓN: Se restaura la consulta con dos campos de ordenamiento para que coincida con el índice requerido.
+    const turnosSnapshot = await db.collectionGroup('turnos')
+                                 .orderBy('fecha', 'desc')
+                                 .orderBy('necesitaTraslado', 'asc')
+                                 .get();
 
     if (turnosSnapshot.empty) {
       return { success: true, data: { hoy: [], proximos: [], finalizados: [] } };
     }
 
-    // 1. Crear un mapa para cachear los datos de dueños y mascotas y evitar lecturas repetidas.
     const usersCache = new Map();
     const mascotasCache = new Map();
 
-    // 2. Procesar todos los turnos de forma asíncrona para enriquecerlos.
     const enrichedTurnosPromises = turnosSnapshot.docs.map(async (doc) => {
       const turnoData = doc.data();
-
-      // CORRECCIÓN: Usar clienteId y mascotaId directamente desde los datos del turno.
       const userId = turnoData.clienteId;
       const mascotaId = turnoData.mascotaId;
       
       let user = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', email: 'N/A' };
       let mascota = { id: mascotaId, nombre: 'Mascota Eliminada', especie: 'N/A' };
 
-      // Buscar datos del dueño si no está en caché.
       if (userId) {
         if (usersCache.has(userId)) {
           user = usersCache.get(userId);
@@ -48,12 +46,11 @@ export async function getTurnsForAdminDashboard() {
           const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
             user = { id: userDoc.id, ...userDoc.data() };
-            usersCache.set(userId, user); // Guardar en caché para la próxima vez.
+            usersCache.set(userId, user);
           }
         }
       }
       
-      // Buscar datos de la mascota si no está en caché.
       if (userId && mascotaId) {
           const mascotaCacheKey = `${userId}-${mascotaId}`;
           if(mascotasCache.has(mascotaCacheKey)){
@@ -71,16 +68,15 @@ export async function getTurnsForAdminDashboard() {
         ...turnoData,
         id: doc.id,
         fecha: typeof turnoData.fecha.toDate === 'function' ? turnoData.fecha.toDate().toISOString() : turnoData.fecha,
-        user, // Objeto completo del usuario.
-        mascota, // Objeto completo de la mascota.
-        userId, // Mantenemos IDs para compatibilidad con `updateTurnoStatus`
+        user,
+        mascota,
+        userId,
         mascotaId,
       };
     });
 
     const enrichedTurnos = await Promise.all(enrichedTurnosPromises);
 
-    // 3. Clasificar los turnos en las categorías correspondientes (hoy, próximos, finalizados).
     const nowInArgentina = dayjs().tz(timeZone);
     const startOfTodayInArgentina = nowInArgentina.startOf('day');
     const endOfTodayInArgentina = nowInArgentina.endOf('day');
@@ -103,11 +99,9 @@ export async function getTurnsForAdminDashboard() {
       }
     }
     
-    // Ordenar los próximos por fecha ascendente.
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     finalizados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     hoy.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
 
     return { 
       success: true, 
@@ -120,9 +114,6 @@ export async function getTurnsForAdminDashboard() {
   }
 }
 
-/**
- * Actualiza el estado de un turno específico.
- */
 export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
@@ -133,7 +124,7 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus 
 
     await turnoRef.update({ estado: newStatus });
 
-    revalidatePath('/admin/turnos'); // Revalida la página para que se actualice.
+    revalidatePath('/admin/turnos');
 
     return { success: true, message: `Turno actualizado a ${newStatus}.` };
   } catch (error) {
