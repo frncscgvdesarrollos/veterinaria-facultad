@@ -2,7 +2,12 @@
 
 import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-const { utcToZonedTime, zonedTimeToUtc } = require('date-fns-tz');
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 /**
  * @function getTurnsForAdminDashboard
@@ -16,16 +21,12 @@ export async function getTurnsForAdminDashboard() {
     
     const timeZone = 'America/Argentina/Buenos_Aires';
     
-    const nowInArgentina = utcToZonedTime(new Date(), timeZone);
-    
-    const startOfTodayInArgentina = new Date(nowInArgentina);
-    startOfTodayInArgentina.setHours(0, 0, 0, 0);
+    const nowInArgentina = dayjs().tz(timeZone);
+    const startOfTodayInArgentina = nowInArgentina.startOf('day');
+    const endOfTodayInArgentina = nowInArgentina.endOf('day');
 
-    const endOfTodayInArgentina = new Date(startOfTodayInArgentina);
-    endOfTodayInArgentina.setDate(endOfTodayInArgentina.getDate() + 1);
-    
-    const startOfTodayUTC = zonedTimeToUtc(startOfTodayInArgentina, timeZone);
-    const endOfTodayUTC = zonedTimeToUtc(endOfTodayInArgentina, timeZone);
+    const startOfTodayUTC = startOfTodayInArgentina.utc().toDate();
+    const endOfTodayUTC = endOfTodayInArgentina.utc().toDate();
 
     const turnosSnapshot = await db.collectionGroup('turnos').orderBy('fecha', 'desc').get();
 
@@ -87,7 +88,7 @@ export async function getTurnsForAdminDashboard() {
           turnosFinalizados.push(enrichedTurno);
         } else if (fechaTurnoUTC >= startOfTodayUTC && fechaTurnoUTC < endOfTodayUTC) {
           turnosHoy.push(enrichedTurno);
-        } else if (fechaTurnoUTC > zonedTimeToUtc(nowInArgentina, timeZone) && enrichedTurno.estado === 'pendiente') {
+        } else if (dayjs(fechaTurnoUTC).isAfter(nowInArgentina) && enrichedTurno.estado === 'pendiente') {
           turnosProximos.push(enrichedTurno);
         }
 
