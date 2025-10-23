@@ -128,6 +128,24 @@ async function updateUserTurno(userId, mascotaId, turnoId, updateData) {
     }
 }
 
+export async function cancelarTurnoUsuario(turnoId) {
+    if (!turnoId) {
+        return { success: false, error: 'ID del turno no proporcionado.' };
+    }
+    try {
+        const turnoRef = firestore.collection('turnos').doc(turnoId);
+        await turnoRef.update({ estado: 'cancelado' });
+
+        revalidatePath('/turnos/mis-turnos');
+        revalidatePath('/admin/turnos');
+
+        return { success: true };
+    } catch (error) {
+        console.error(`Error al cancelar el turno del usuario ${turnoId}:`, error);
+        return { success: false, error: 'No se pudo cancelar el turno.' };
+    }
+}
+
 export async function confirmarTurno({ userId, mascotaId, turnoId }) {
     return updateUserTurno(userId, mascotaId, turnoId, { estado: 'confirmado' });
 }
