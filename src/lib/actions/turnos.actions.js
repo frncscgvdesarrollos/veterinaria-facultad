@@ -46,7 +46,7 @@ export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMasco
 
 /**
  * @action crearTurnos
- * @description (VERSIÓN ATÓMICA Y VALIDADA) Usa un batch para "todo o nada" y añade validación estricta del formato de hora.
+ * @description (VERSIÓN DE DIAGNÓSTICO) Modifica el mensaje de error para confirmar que el nuevo código se está ejecutando.
  */
 export async function crearTurnos(user, data) {
     const { selectedMascotas, motivosPorMascota, specificServices, horarioClinica, horarioPeluqueria, necesitaTraslado, metodoPago, catalogoServicios } = data;
@@ -63,7 +63,6 @@ export async function crearTurnos(user, data) {
 
             // --- Preparar Turno de Clínica ---
             if (motivos.clinica && serviciosSeleccionados.clinica) {
-                // VALIDACIÓN ESTRICTA DE HORARIO
                 if (!horarioClinica || !horarioClinica.fecha || !horarioClinica.hora) {
                     throw new Error('Falta seleccionar la fecha o la hora para el turno de clínica.');
                 }
@@ -112,7 +111,6 @@ export async function crearTurnos(user, data) {
             }
         }
 
-        // Si todo está bien, se compromete el lote.
         await batch.commit();
 
         revalidatePath('/turnos/mis-turnos');
@@ -121,18 +119,15 @@ export async function crearTurnos(user, data) {
         return { success: true, message: '¡Todos los turnos se guardaron con éxito!' };
 
     } catch (error) {
-        // Si algo falla, el batch no se guarda y se lanza el error.
-        console.error("Error al crear los turnos (operación cancelada):", error);
-        return { success: false, error: error.message || 'No se pudo completar la creación de los turnos.' };
+        console.error("Error al crear los turnos (VERSIÓN DE DIAGNÓSTICO):", error);
+        // Mensaje de error modificado para diagnóstico
+        return { success: false, error: `ERROR DE DIAGNÓSTICO: ${error.message}` || 'Falló la operación atómica.' };
     }
 }
-
-// --- Las demás acciones se mantienen sin cambios, con la corrección del typo ---
 
 async function updateUserTurno(userId, mascotaId, turnoId, updateData) {
     if (!userId || !mascotaId || !turnoId) return { success: false, error: 'Faltan IDs para localizar el turno.' };
     try {
-        // CORRECCIÓN DEL TYPO: mascotaId en lugar de mascotasId
         const turnoRef = firestore.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
         await turnoRef.update(updateData);
         revalidatePath('/admin/turnos');
