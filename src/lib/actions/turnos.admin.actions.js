@@ -15,8 +15,6 @@ export async function getTurnsForAdminDashboard() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
 
-    // SOLUCIÓN REAL: Usar un segundo campo de ordenamiento que SÍ existe en todos los documentos, como 'tipo'.
-    // Esto satisface la necesidad de un índice compuesto sin fallar.
     const turnosSnapshot = await db.collectionGroup('turnos')
                                  .orderBy('fecha', 'desc')
                                  .orderBy('tipo', 'asc')
@@ -62,14 +60,24 @@ export async function getTurnsForAdminDashboard() {
           }
       }
 
+      // SOLUCIÓN DEFINITIVA: Construir un objeto explícito y serializable.
+      // No usar `...turnoData` para evitar pasar Timestamps de Firestore al cliente.
+      let fechaISO = null;
+      if (turnoData.fecha && typeof turnoData.fecha.toDate === 'function') {
+        fechaISO = turnoData.fecha.toDate().toISOString();
+      }
+
       return {
-        ...turnoData,
         id: doc.id,
-        fecha: typeof turnoData.fecha.toDate === 'function' ? turnoData.fecha.toDate().toISOString() : turnoData.fecha,
-        user,
-        mascota,
-        userId,
-        mascotaId,
+        userId: turnoData.clienteId,
+        mascotaId: turnoData.mascotaId,
+        tipo: turnoData.tipo,
+        servicioNombre: turnoData.servicioNombre,
+        estado: turnoData.estado,
+        necesitaTraslado: turnoData.necesitaTraslado || false, // Asegurar valor por defecto
+        fecha: fechaISO, // Enviar siempre un string ISO o null
+        user: user,
+        mascota: mascota,
       };
     });
 
@@ -84,6 +92,9 @@ export async function getTurnsForAdminDashboard() {
     const finalizados = [];
 
     for (const turno of enrichedTurnos) {
+      // Filtrar turnos sin fecha válida que podrían causar errores
+      if (!turno.fecha) continue;
+
       const fechaTurno = dayjs(turno.fecha);
 
       if (turno.estado === 'finalizado' || turno.estado === 'cancelado') {
@@ -94,6 +105,9 @@ export async function getTurnsForAdminDashboard() {
         proximos.push(turno);
       } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
         finalizados.push(turno);
+      } else {
+        // Opcional: registrar turnos que no caen en ninguna categoría para depuración
+        // console.log('Turno no clasificado:', turno);
       }
     }
     
@@ -107,8 +121,9 @@ export async function getTurnsForAdminDashboard() {
     };
 
   } catch (error) {
-    console.error("Error REAL en getTurnsForAdminDashboard:", error);
-    return { success: false, error: `Error del servidor: ${error.message}. Es probable que falte un índice de Firestore. Revisa las instrucciones.` };
+    console.error("Error definitivo en getTurnsForAdminDashboard:", error);
+    // Devolver un error claro que se mostrará en la UI
+    return { success: false, error: `Error del servidor al procesar los datos: ${error.message}` };
   }
 }
 
