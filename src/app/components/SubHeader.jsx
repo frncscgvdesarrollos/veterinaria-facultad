@@ -27,7 +27,7 @@ export default function SubHeader() {
                            </span>
                         </Link>
                         <Link href="/mis-turnos">
-                            <span className={pathname === '/mis-turnos' ? activeStyle : baseStyle}>
+                            <span className={pathname === '/turnos/mis-turnos' ? activeStyle : baseStyle}>
                                 Mis Turnos
                             </span>
                         </Link>
