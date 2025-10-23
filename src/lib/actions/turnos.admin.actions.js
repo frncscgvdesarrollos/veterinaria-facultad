@@ -2,7 +2,7 @@
 
 import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz/utc';
 
 /**
  * @function getTurnsForAdminDashboard
