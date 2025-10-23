@@ -1,139 +1,158 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
-import AccionesTurnoUsuario from '@/app/components/AccionesTurnoUsuario';
-import { FiClock, FiCheckCircle, FiXCircle, FiCalendar, FiSun, FiMoon, FiScissors } from 'react-icons/fi';
+import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
+import Link from 'next/link';
+import { FaPlus, FaCalendarCheck, FaHistory, FaDog, FaCat } from 'react-icons/fa';
 
-function EstadoBadge({ estado }) {
-    const baseClasses = "px-3 py-1 text-sm font-semibold rounded-full inline-flex items-center shadow-sm";
-    const styles = {
-        pendiente: { icon: <FiClock className="mr-2" />, classes: "bg-yellow-100 text-yellow-800" },
-        confirmado: { icon: <FiCheckCircle className="mr-2" />, classes: "bg-green-100 text-green-800" },
-        cancelado: { icon: <FiXCircle className="mr-2" />, classes: "bg-red-100 text-red-800" },
-        completado: { icon: <FiCheckCircle className="mr-2" />, classes: "bg-blue-100 text-blue-800" },
+// --- Componente de Tarjeta para cada Turno ---
+const TurnoCard = ({ turno }) => {
+    const statusStyles = {
+        pendiente: 'bg-yellow-100 text-yellow-800',
+        confirmado: 'bg-blue-100 text-blue-800',
+        finalizado: 'bg-green-100 text-green-800',
+        cancelado: 'bg-red-100 text-red-800',
     };
-    const style = styles[estado?.toLowerCase()] || styles.pendiente;
+
+    const tipoIcono = {
+        clinica: <FaCat className="text-blue-500" size={24} />,
+        peluqueria: <FaDog className="text-pink-500" size={24} />
+    };
+
+    const formattedDate = turno.fecha
+        ? new Date(turno.fecha).toLocaleString('es-AR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }) + ' hs'
+        : 'Fecha no especificada';
 
     return (
-        <div className={`${baseClasses} ${style.classes}`}>
-            {style.icon}
-            {estado ? estado.charAt(0).toUpperCase() + estado.slice(1) : 'Pendiente'}
+        <div className="bg-white shadow-md rounded-lg p-5 border-l-4 border-gray-200 hover:border-blue-500 transition-all duration-300">
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center">
+                    {tipoIcono[turno.tipo] || <FaDog className="text-gray-500" size={24} />}
+                    <div className="ml-4">
+                        <h3 className="font-bold text-lg text-gray-800">{turno.servicioNombre}</h3>
+                        <p className="text-md text-gray-600 font-semibold">Para: {turno.mascota.nombre}</p>
+                    </div>
+                </div>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${statusStyles[turno.estado] || 'bg-gray-100'}`}>
+                    {turno.estado}
+                </span>
+            </div>
+            <div className="text-right text-sm text-gray-500">
+                <p>{formattedDate}</p>
+            </div>
         </div>
     );
-}
+};
 
-const MisTurnosContent = () => {
+// --- Página Principal de "Mis Turnos" ---
+export default function MisTurnosPage() {
     const { user } = useAuth();
-    const [turnos, setTurnos] = useState([]);
+    const [turnos, setTurnos] = useState({ proximos: [], historial: [] });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!user) return;
-
-        const fetchTurnos = async () => {
-            try {
-                const turnosRef = collection(db, 'turnos');
-                const q = query(turnosRef, where('clienteId', '==', user.uid), orderBy('fecha', 'desc'));
-                const turnosSnap = await getDocs(q);
-                
-                const turnosData = await Promise.all(turnosSnap.docs.map(async (d) => {
-                    const turno = { id: d.id, ...d.data() };
-                    let mascotaNombre = 'Mascota desconocida';
-                    if (turno.mascotaId) {
-                        const mascotaRef = doc(db, 'users', user.uid, 'mascotas', turno.mascotaId);
-                        const mascotaSnap = await getDoc(mascotaRef);
-                        if (mascotaSnap.exists()) {
-                            mascotaNombre = mascotaSnap.data().nombre;
-                        }
+        if (user) {
+            const fetchTurnos = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const result = await getTurnosByUserId({ userId: user.uid });
+                    if (result.success) {
+                        setTurnos(result.data);
+                    } else {
+                        setError(result.error);
                     }
-                    return {
-                        ...turno,
-                        mascotaNombre,
-                        fechaFormateada: new Date(turno.fecha + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
-                    };
-                }));
-
-                setTurnos(turnosData);
-            } catch (error) {
-                console.error("Error al obtener los turnos:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTurnos();
+                } catch (err) {
+                    setError('No se pudo establecer conexión con el servidor. Inténtalo de nuevo.');
+                    console.error("Error de conexión al buscar turnos:", err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchTurnos();
+        } else if (user === null) {
+            // Si el usuario no está logueado, dejamos de cargar.
+            setLoading(false);
+        }
     }, [user]);
 
-    if (loading) {
+    const renderContent = () => {
+        if (loading) {
+            return <div className="text-center text-gray-500 py-10">Cargando tus turnos...</div>;
+        }
+
+        if (error) {
+            return <div className="text-center text-red-500 bg-red-100 p-4 rounded-lg">Error: {error}</div>;
+        }
+
+        if (!user) {
+            return (
+                <div className="text-center text-gray-600 py-10">
+                    <p className="mb-4">Necesitas iniciar sesión para ver tus turnos.</p>
+                    <Link href="/login" className="bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-blue-600 transition">
+                        Iniciar Sesión
+                    </Link>
+                </div>
+            );
+        }
+
+        if (turnos.proximos.length === 0 && turnos.historial.length === 0) {
+            return (
+                 <div className="text-center text-gray-500 mt-10 p-8 bg-white rounded-lg shadow-md">
+                    <h2 className="text-2xl font-semibold mb-4">Aún no tienes turnos registrados</h2>
+                    <p className="mb-6">¡Es un buen momento para cuidar a tu mascota!</p>
+                    <Link href="/turnos" className="flex items-center justify-center w-max mx-auto bg-green-500 text-white py-2 px-5 rounded-lg hover:bg-green-600 transition shadow-lg">
+                        <FaPlus className="mr-2" />
+                        Solicitar un Nuevo Turno
+                    </Link>
+                </div>
+            );
+        }
+
         return (
-            <div className="flex justify-center items-center h-screen bg-gray-50">
-                 <div className="loader"></div>
-                 <style jsx>{`
-                    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                `}</style>
-            </div>
-        );
-    }
-
-    return (
-        <div className="bg-gray-50 p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
-                     <div className="flex items-center mb-8">
-                        <Link href="/" legacyBehavior>
-                            <a className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mr-6">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                <span className="ml-1 font-medium">Volver</span>
-                            </a>
-                        </Link>
-                        <h1 className="text-2xl font-bold text-gray-800 whitespace-nowrap">Mis Turnos</h1>
-                        <div className="w-full ml-6 border-b-2 border-dotted border-gray-300"></div>
-                    </div>
-
-                    {turnos.length === 0 ? (
-                        <div className="text-center py-12">
-                            <FiCalendar className="mx-auto text-6xl text-violet-300 mb-4"/>
-                            <h2 className="text-2xl font-semibold text-gray-700 mb-2">Sin Turnos Solicitados</h2>
-                            <p className="text-gray-500 mb-6">Parece que tus mascotas aún no tienen citas. ¡Vamos a solucionarlo!</p>
-                            <Link href="/" className="mt-6 inline-block bg-violet-600 text-white font-bold py-3 px-8 rounded-full hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
-                                Pedir un Turno
-                            </Link>
+            <div className="space-y-12">
+                <section>
+                    <h2 className="flex items-center text-2xl font-bold text-gray-700 mb-4"><FaCalendarCheck className="mr-3 text-blue-500"/>Próximos Turnos</h2>
+                    {turnos.proximos.length > 0 ? (
+                        <div className="space-y-4">
+                            {turnos.proximos.map(turno => <TurnoCard key={turno.id} turno={turno} />)}
                         </div>
                     ) : (
-                        <div className="space-y-6">
-                            {turnos.map(turno => (
-                                <div key={turno.id} className={`bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80 transition-opacity duration-500 ${turno.estado === 'cancelado' ? 'opacity-60' : ''}`}>
-                                    <div className="flex flex-col sm:flex-row justify-between">
-                                        <div className="flex-grow mb-4 sm:mb-0">
-                                            <div className="flex items-center mb-3">
-                                                <h2 className="text-2xl font-bold text-gray-900 mr-4">{turno.mascotaNombre}</h2>
-                                                <EstadoBadge estado={turno.estado} />
-                                            </div>
-                                            <div className="text-sm text-gray-600 space-y-2 pl-1">
-                                                <p className="flex items-center"><FiCalendar className="mr-3 text-violet-500" /> {turno.fechaFormateada}</p>
-                                                <p className="flex items-center capitalize"><FiSun className="mr-3 text-yellow-500"/> Turno {turno.turno}</p>
-                                                {turno.servicios && <p className="flex items-center capitalize"><FiScissors className="mr-3 text-gray-500"/> Servicios: {turno.servicios.join(', ')}</p>}
-                                            </div>
-                                        </div>
-                                        <AccionesTurnoUsuario turno={turno} />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <p className="text-gray-500 italic">No tienes turnos próximos.</p>
                     )}
-                </div>
+                </section>
+                <section>
+                     <h2 className="flex items-center text-2xl font-bold text-gray-700 mb-4"><FaHistory className="mr-3 text-gray-500"/>Historial</h2>
+                    {turnos.historial.length > 0 ? (
+                        <div className="space-y-4">
+                            {turnos.historial.map(turno => <TurnoCard key={turno.id} turno={turno} />)}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 italic">No hay turnos en tu historial.</p>
+                    )}
+                </section>
             </div>
-        </div>
-    );
-}
+        );
+    };
 
-export default function MisTurnosPage() {
     return (
-            <MisTurnosContent />
+        <main className="max-w-4xl mx-auto p-4 md:p-8">
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-800">Mis Turnos</h1>
+                {user && <Link href="/turnos" className="flex items-center bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition shadow-md">
+                    <FaPlus className="mr-2" />
+                    Nuevo Turno
+                </Link>}
+            </div>
+            {renderContent()}
+        </main>
     );
 }
