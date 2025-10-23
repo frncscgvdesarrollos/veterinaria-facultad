@@ -9,18 +9,11 @@ import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-/**
- * @function getTurnsForAdminDashboard
- * @description (VERSIÓN OPTIMIZADA) Obtiene y clasifica todos los turnos para el panel de administración.
- * Esta versión evita el problema N+1 al obtener usuarios y mascotas en lotes,
- * mejorando drásticamente el rendimiento.
- */
 export async function getTurnsForAdminDashboard() {
   try {
     const db = admin.firestore();
     const timeZone = 'America/Argentina/Buenos_Aires';
 
-    // --- 1. Obtener todos los turnos con una única consulta ---
     const turnosSnapshot = await db.collectionGroup('turnos')
                                  .orderBy('fecha', 'desc')
                                  .orderBy('necesitaTraslado', 'asc')
@@ -30,9 +23,8 @@ export async function getTurnsForAdminDashboard() {
       return { success: true, data: { hoy: [], proximos: [], finalizados: [] } };
     }
 
-    // --- 2. Recolectar IDs únicos de usuarios y mascotas ---
     const userIds = new Set();
-    const petIds = new Map(); // Mapa de petId -> userId para la búsqueda
+    const petIds = new Map(); 
 
     const allTurnos = turnosSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -48,13 +40,12 @@ export async function getTurnsForAdminDashboard() {
       return {
         id: doc.id,
         ...data,
-        fecha: data.fecha.toDate().toISOString(), // Convertir a string ISO
+        fecha: typeof data.fecha.toDate === 'function' ? data.fecha.toDate().toISOString() : data.fecha,
         userId,
         mascotaId,
       };
     });
 
-    // --- 3. Obtener datos de usuarios y mascotas en lotes ---
     const usersCache = new Map();
     if (userIds.size > 0) {
       const userDocs = await db.collection('users').where(admin.firestore.FieldPath.documentId(), 'in', [...userIds]).get();
@@ -63,9 +54,6 @@ export async function getTurnsForAdminDashboard() {
 
     const mascotasCache = new Map();
     if (petIds.size > 0) {
-      // Firestore no tiene una forma nativa de "obtener todos estos documentos de estas subcolecciones".
-      // Se debe hacer una promesa por cada mascota. Es menos eficiente que el lookup de usuarios, pero
-      // sigue siendo mucho mejor que hacerlo dentro del bucle principal.
       const petPromises = Array.from(petIds.entries()).map(([petId, userId]) => 
         db.collection('users').doc(userId).collection('mascotas').doc(petId).get()
       );
@@ -77,7 +65,6 @@ export async function getTurnsForAdminDashboard() {
       });
     }
 
-    // --- 4. Enriquecer los datos del turno con los datos cacheados ---
     const enrichedTurnos = allTurnos.map(turno => {
       const user = usersCache.get(turno.userId);
       const mascota = mascotasCache.get(turno.mascotaId);
@@ -88,7 +75,6 @@ export async function getTurnsForAdminDashboard() {
       };
     });
 
-    // --- 5. Clasificar los turnos ---
     const nowInArgentina = dayjs().tz(timeZone);
     const startOfTodayInArgentina = nowInArgentina.startOf('day');
     const endOfTodayInArgentina = nowInArgentina.endOf('day');
@@ -107,12 +93,10 @@ export async function getTurnsForAdminDashboard() {
       } else if (fechaTurno.isAfter(nowInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
         proximos.push(turno);
       } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')){
-        // Si el turno es de un día anterior y no está finalizado/cancelado, lo movemos a finalizados como "vencido".
         finalizados.push(turno);
       }
     }
     
-    // Ordenar 'próximos' por fecha ascendente
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     return { 
@@ -122,7 +106,6 @@ export async function getTurnsForAdminDashboard() {
 
   } catch (error) {
     console.error("Error general en getTurnsForAdminDashboard:", error);
-    // Devuelve el mensaje de error para que se pueda ver en los logs de Vercel
     return { success: false, error: `Error del servidor: ${error.message}` };
   }
 }

@@ -44,10 +44,6 @@ export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMasco
     }
 }
 
-/**
- * @action crearTurnos
- * @description (VERSIÓN DE DIAGNÓSTICO) Modifica el mensaje de error para confirmar que el nuevo código se está ejecutando.
- */
 export async function crearTurnos(user, data) {
     const { selectedMascotas, motivosPorMascota, specificServices, horarioClinica, horarioPeluqueria, necesitaTraslado, metodoPago, catalogoServicios } = data;
 
@@ -61,19 +57,11 @@ export async function crearTurnos(user, data) {
             const motivos = motivosPorMascota[mascota.id] || {};
             const serviciosSeleccionados = specificServices[mascota.id] || {};
 
-            // --- Preparar Turno de Clínica ---
             if (motivos.clinica && serviciosSeleccionados.clinica) {
                 if (!horarioClinica || !horarioClinica.fecha || !horarioClinica.hora) {
                     throw new Error('Falta seleccionar la fecha o la hora para el turno de clínica.');
                 }
-                if (typeof horarioClinica.hora !== 'string' || !horarioClinica.hora.includes(':')) {
-                    throw new Error(`El formato de la hora de clínica es inválido. Se recibió: "${horarioClinica.hora}"`);
-                }
                 const [hours, minutes] = horarioClinica.hora.split(':').map(Number);
-                if (isNaN(hours) || isNaN(minutes)) {
-                    throw new Error(`La hora de clínica contiene caracteres inválidos: "${horarioClinica.hora}"`);
-                }
-
                 const servicioId = serviciosSeleccionados.clinica;
                 const servicioData = catalogoServicios.clinica.find(s => s.id === servicioId);
                 if (!servicioData) throw new Error(`Servicio de clínica ID=${servicioId} no encontrado.`);
@@ -89,8 +77,10 @@ export async function crearTurnos(user, data) {
                 });
             }
 
-            // --- Preparar Turno de Peluquería ---
             if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
+                if (!horarioPeluqueria || !horarioPeluqueria.fecha || !horarioPeluqueria.turno) {
+                    throw new Error('Falta seleccionar la fecha o el turno para el servicio de peluquería.');
+                }
                 const servicioId = serviciosSeleccionados.peluqueria;
                 const servicioData = catalogoServicios.peluqueria.find(s => s.id === servicioId);
                 if (!servicioData) throw new Error(`Servicio de peluquería ID=${servicioId} no encontrado.`);
@@ -119,9 +109,8 @@ export async function crearTurnos(user, data) {
         return { success: true, message: '¡Todos los turnos se guardaron con éxito!' };
 
     } catch (error) {
-        console.error("Error al crear los turnos (VERSIÓN DE DIAGNÓSTICO):", error);
-        // Mensaje de error modificado para diagnóstico
-        return { success: false, error: `ERROR DE DIAGNÓSTICO: ${error.message}` || 'Falló la operación atómica.' };
+        console.error("Error al crear los turnos:", error);
+        return { success: false, error: error.message || 'Falló la operación atómica.' };
     }
 }
 
