@@ -11,6 +11,14 @@ dayjs.extend(timezone);
 
 const db = admin.firestore();
 
+// Función auxiliar para convertir Timestamps a strings ISO de forma segura
+const toISOStringOrNull = (timestamp) => {
+  if (timestamp && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate().toISOString();
+  }
+  return null;
+};
+
 export async function getTurnsForAdminDashboard() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
@@ -32,39 +40,48 @@ export async function getTurnsForAdminDashboard() {
       const userId = turnoData.clienteId;
       const mascotaId = turnoData.mascotaId;
       
-      let user = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', email: 'N/A' };
-      let mascota = { id: mascotaId, nombre: 'Mascota Eliminada', especie: 'N/A' };
+      let serializableUser = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', email: 'N/A' };
+      let serializableMascota = { id: mascotaId, nombre: 'Mascota Eliminada', especie: 'N/A', fechaNacimiento: null };
 
       if (userId) {
         if (usersCache.has(userId)) {
-          user = usersCache.get(userId);
+          serializableUser = usersCache.get(userId);
         } else {
           const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
-            user = { id: userDoc.id, ...userDoc.data() };
-            usersCache.set(userId, user);
+            const userData = userDoc.data();
+            // Construir objeto de usuario 100% serializable
+            serializableUser = {
+              id: userDoc.id,
+              nombre: userData.nombre || 'N/A',
+              apellido: userData.apellido || 'N/A',
+              email: userData.email || 'N/A',
+            };
+            usersCache.set(userId, serializableUser);
           }
         }
       }
       
       if (userId && mascotaId) {
-          const mascotaCacheKey = `${userId}-${mascotaId}`;
-          if(mascotasCache.has(mascotaCacheKey)){
-              mascota = mascotasCache.get(mascotaCacheKey);
-          } else {
-              const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
-              if(mascotaDoc.exists){
-                  mascota = {id: mascotaDoc.id, ...mascotaDoc.data()};
-                  mascotasCache.set(mascotaCacheKey, mascota);
-              }
-          }
-      }
-
-      // SOLUCIÓN DEFINITIVA: Construir un objeto explícito y serializable.
-      // No usar `...turnoData` para evitar pasar Timestamps de Firestore al cliente.
-      let fechaISO = null;
-      if (turnoData.fecha && typeof turnoData.fecha.toDate === 'function') {
-        fechaISO = turnoData.fecha.toDate().toISOString();
+        const mascotaCacheKey = `${userId}-${mascotaId}`;
+        if (mascotasCache.has(mascotaCacheKey)) {
+            serializableMascota = mascotasCache.get(mascotaCacheKey);
+        } else {
+            const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
+            if (mascotaDoc.exists) {
+                const mascotaData = mascotaDoc.data();
+                // Construir objeto de mascota 100% serializable
+                serializableMascota = {
+                  id: mascotaDoc.id,
+                  nombre: mascotaData.nombre || 'N/A',
+                  especie: mascotaData.especie || 'N/A',
+                  raza: mascotaData.raza || 'N/A',
+                  // Convertir Timestamp de fechaNacimiento a ISO String
+                  fechaNacimiento: toISOStringOrNull(mascotaData.fechaNacimiento),
+                };
+                mascotasCache.set(mascotaCacheKey, serializableMascota);
+            }
+        }
       }
 
       return {
@@ -74,10 +91,10 @@ export async function getTurnsForAdminDashboard() {
         tipo: turnoData.tipo,
         servicioNombre: turnoData.servicioNombre,
         estado: turnoData.estado,
-        necesitaTraslado: turnoData.necesitaTraslado || false, // Asegurar valor por defecto
-        fecha: fechaISO, // Enviar siempre un string ISO o null
-        user: user,
-        mascota: mascota,
+        necesitaTraslado: turnoData.necesitaTraslado || false,
+        fecha: toISOStringOrNull(turnoData.fecha),
+        user: serializableUser, // Objeto de usuario limpio
+        mascota: serializableMascota, // Objeto de mascota limpio
       };
     });
 
@@ -92,9 +109,7 @@ export async function getTurnsForAdminDashboard() {
     const finalizados = [];
 
     for (const turno of enrichedTurnos) {
-      // Filtrar turnos sin fecha válida que podrían causar errores
       if (!turno.fecha) continue;
-
       const fechaTurno = dayjs(turno.fecha);
 
       if (turno.estado === 'finalizado' || turno.estado === 'cancelado') {
@@ -105,9 +120,6 @@ export async function getTurnsForAdminDashboard() {
         proximos.push(turno);
       } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
         finalizados.push(turno);
-      } else {
-        // Opcional: registrar turnos que no caen en ninguna categoría para depuración
-        // console.log('Turno no clasificado:', turno);
       }
     }
     
@@ -115,33 +127,25 @@ export async function getTurnsForAdminDashboard() {
     finalizados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     hoy.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-    return { 
-      success: true, 
-      data: { hoy, proximos, finalizados } 
-    };
+    return { success: true, data: { hoy, proximos, finalizados } };
 
   } catch (error) {
-    console.error("Error definitivo en getTurnsForAdminDashboard:", error);
-    // Devolver un error claro que se mostrará en la UI
-    return { success: false, error: `Error del servidor al procesar los datos: ${error.message}` };
+    console.error("Error REAL en getTurnsForAdminDashboard:", error);
+    return { success: false, error: `Error del servidor: ${error.message}.` };
   }
 }
 
 export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
-      throw new Error("Faltan parámetros requeridos para actualizar el turno.");
+      throw new Error("Faltan parámetros requeridos.");
     }
-
     const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
-
     await turnoRef.update({ estado: newStatus });
-
     revalidatePath('/admin/turnos');
-
-    return { success: true, message: `Turno actualizado a ${newStatus}.` };
+    return { success: true, message: `Turno actualizado.` };
   } catch (error) {
     console.error("Error en updateTurnoStatus:", error);
-    return { success: false, error: `Error al actualizar el turno: ${error.message}` };
+    return { success: false, error: `Error al actualizar: ${error.message}` };
   }
 }
