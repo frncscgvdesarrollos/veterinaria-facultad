@@ -19,13 +19,24 @@ export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMasco
             throw new Error('Faltan datos para la verificación del traslado.');
         }
 
-        const fechaObj = new Date(fecha);
-        const fechaString = fechaObj.toISOString().split('T')[0];
+        // **INICIO DE LA MODIFICACIÓN**
+        // Crear rango de Timestamps para consultar un día completo
+        const startOfDay = new Date(fecha);
+        startOfDay.setUTCHours(0, 0, 0, 0);
 
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+
+        const startOfDayTimestamp = admin.firestore.Timestamp.fromDate(startOfDay);
+        const endOfDayTimestamp = admin.firestore.Timestamp.fromDate(endOfDay);
+        
+        // Consulta por rango de Timestamps (requiere nuevo índice)
         const turnosSnap = await firestore.collectionGroup('turnos')
-            .where('fecha', '==', fechaString)
             .where('necesitaTraslado', '==', true)
+            .where('fecha', '>=', startOfDayTimestamp)
+            .where('fecha', '<', endOfDayTimestamp)
             .get();
+        // **FIN DE LA MODIFICACIÓN**
 
         const turnosDelDia = turnosSnap.docs.map(doc => ({
             mascota: { tamaño: doc.data().mascotaTamaño } 
@@ -80,9 +91,15 @@ export async function crearTurnos(user, data) {
                 const servicio = catalogoServicios.clinica.find(s => s.id === servicioId);
                 if (!servicio) throw new Error(`Servicio de clínica no encontrado para ${mascota.nombre}`);
 
+                // **INICIO DE LA MODIFICACIÓN**
+                // Combinar fecha y hora, y convertir a Timestamp
+                const fechaClinica = new Date(horarioClinica.fecha);
+                const [hours, minutes] = horarioClinica.hora.split(':').map(Number);
+                fechaClinica.setHours(hours, minutes, 0, 0);
+
                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
                 const nuevoTurno = {
-                    fecha: horarioClinica.fecha.toISOString().split('T')[0],
+                    fecha: admin.firestore.Timestamp.fromDate(fechaClinica), // GUARDADO COMO TIMESTAMP
                     horario: horarioClinica.hora,
                     tipo: 'clinica',
                     mascotaId: mascota.id,
@@ -93,8 +110,9 @@ export async function crearTurnos(user, data) {
                     precio: servicio.precio_base || 0,
                     metodoPago: metodoPago,
                     estado: 'pendiente',
-                    creadoEn: new Date(),
+                    creadoEn: admin.firestore.FieldValue.serverTimestamp(),
                 };
+                // **FIN DE LA MODIFICACIÓN**
                 batch.set(turnoRef, nuevoTurno);
             }
 
@@ -107,10 +125,15 @@ export async function crearTurnos(user, data) {
                 const tamañoKey = TAMAÑO_PRECIOS_MAP[mascota.tamaño.toLowerCase()] || 'chico';
                 const precio = servicio.precios[tamañoKey] || 0;
 
+                // **INICIO DE LA MODIFICACIÓN**
+                // Convertir fecha a Timestamp (inicio del día)
+                const fechaPeluqueria = new Date(horarioPeluqueria.fecha);
+                fechaPeluqueria.setHours(0, 0, 0, 0);
+
                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
                 const nuevoTurno = {
-                    fecha: horarioPeluqueria.fecha.toISOString().split('T')[0],
-                    horario: horarioPeluqueria.turno, // 'mañana' o 'tarde'
+                    fecha: admin.firestore.Timestamp.fromDate(fechaPeluqueria), // GUARDADO COMO TIMESTAMP
+                    horario: horarioPeluqueria.turno,
                     tipo: 'peluqueria',
                     mascotaId: mascota.id,
                     mascotaNombre: mascota.nombre,
@@ -121,16 +144,17 @@ export async function crearTurnos(user, data) {
                     necesitaTraslado: necesitaTraslado,
                     metodoPago: metodoPago,
                     estado: 'pendiente',
-                    creadoEn: new Date(),
+                    creadoEn: admin.firestore.FieldValue.serverTimestamp(),
                 };
+                // **FIN DE LA MODIFICACIÓN**
                 batch.set(turnoRef, nuevoTurno);
             }
         }
 
         await batch.commit();
 
-        // Revalidar el path para que el usuario vea su nuevo turno en la lista.
         revalidatePath('/turnos/mis-turnos');
+        revalidatePath('/admin/turnos');
 
         return { success: true };
 

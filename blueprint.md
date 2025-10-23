@@ -27,45 +27,43 @@ La base de datos se estructura de la siguiente manera:
 *   **Gestión de Perfiles y Mascotas:** Los usuarios pueden gestionar su información personal y añadir/editar/ver sus mascotas.
 *   **Formularios de Turnos (Rediseñados):** Formularios con diseño mejorado, siguiendo el estilo general de la aplicación.
 *   **Panel de Administración (Básico):** Funcionalidades para que los administradores gestionen servicios y productos.
+*   **Panel de Administración de Turnos (Rediseñado):** Una interfaz de usuario moderna y funcional que clasifica los turnos por estado y permite a los administradores gestionar el flujo de trabajo de manera eficiente.
 
 ---
 
 # Plan de Implementación Actual
 
-## Tarea: Rediseño del Panel de Administración de Turnos
+## Tarea: Rediseño del Panel de Administración de Turnos [COMPLETADO]
 
 **Objetivo:** Mejorar drásticamente la experiencia de usuario de la dueña de la veterinaria, organizando los turnos en secciones lógicas y fáciles de gestionar, y aplicando un diseño visual moderno y atractivo.
 
 ### 1. Re-estructuración de la Interfaz de Usuario (UI)
 
--   [ ] **Implementar Interfaz de Pestañas (Tabs):**
-    -   Crear una navegación principal con tres vistas claras:
+-   [x] **Implementar Interfaz de Pestañas (Tabs):**
+    -   Se ha creado una navegación principal con tres vistas claras:
         1.  **Turnos del Día**
         2.  **Turnos Próximos (por confirmar)**
-        3.  **Historial (Turnos finalizados)**
--   [ ] **Sub-secciones por Tipo de Servicio:**
-    -   Dentro de cada pestaña, separar visualmente los turnos en dos listas distintas: **"Clínica"** y **"Peluquería"**.
+        3.  **Historial (Turnos finalizados y cancelados)**
+-   [x] **Sub-secciones por Tipo de Servicio:**
+    -   Dentro de cada pestaña, los turnos se separan visualmente en dos listas: **"Clínica"** y **"Peluquería"**.
 
 ### 2. Lógica de Filtrado y Obtención de Datos
 
--   [ ] **Actualización de `turnos.admin.actions.js`:**
-    -   Modificar la función `getAllTurnsForAdmin` para que filtre los turnos según su estado y fecha.
-    -   Se crearán tres categorías de turnos:
-        -   **Turnos del Día:** Turnos cuya fecha coincide con el día actual.
-        -   **Turnos Próximos:** Turnos con fecha futura y estado `pendiente`.
-        -   **Turnos Finalizados:** Turnos con estado `finalizado`.
--   [ ] **Optimización de Consultas a Firestore:**
-    -   Asegurar que las consultas a la base de datos sean eficientes para no cargar datos innecesarios en el cliente.
+-   [x] **Actualización de `turnos.admin.actions.js`:**
+    -   Se ha modificado la función `getTurnsForAdminDashboard` para obtener y clasificar los turnos en las categorías correspondientes (`hoy`, `proximos`, `finalizados`).
+    -   La función ha sido robustecida para manejar datos inconsistentes en Firestore sin bloquear la aplicación.
+-   [x] **Optimización de Consultas a Firestore:**
+    -   Las consultas a la base de datos se han optimizado para ser eficientes y seguras.
 
 ### 3. Diseño de Componentes y Estética
 
--   [ ] **Crear Componente `TurnoCardAdmin`:**
-    -   Diseñar una tarjeta visualmente atractiva para cada turno.
-    -   Mostrará la información clave: Nombre de la mascota, nombre del dueño, servicio, horario y estado.
-    -   Utilizará colores e íconos para diferenciar rápidamente el tipo de servicio (clínica/peluquería) y el estado del turno.
--   [ ] **Diseño General y Estilo:**
-    -   Crear un layout limpio y espaciado para las pestañas y las listas.
-    -   Aplicar la paleta de colores y tipografía de la aplicación para una apariencia cohesiva y profesional.
--   [ ] **Acciones del Administrador:**
-    -   Añadir botones o controles en cada tarjeta de turno para realizar acciones rápidas como "Confirmar", "Marcar como Finalizado" o "Cancelar".
-
+-   [x] **Crear Componente `TurnoCard`:**
+    -   Se ha diseñado e implementado una tarjeta visualmente atractiva para cada turno.
+    -   Muestra la información clave: Nombre de la mascota, nombre del dueño, servicio, horario y estado.
+    -   Utiliza colores e íconos para diferenciar el tipo de servicio y el estado del turno.
+-   [x] **Diseño General y Estilo:**
+    -   Se ha aplicado un layout limpio y profesional con una paleta de colores y tipografía cohesiva.
+-   [x] **Acciones del Administrador:**
+    -   **Funcionalidad Implementada:** En la pestaña "Próximos Turnos", cada turno con estado `pendiente` ahora muestra botones funcionales para **"Confirmar"** y **"Cancelar"**.
+    -   **Funcionalidad Implementada:** En la pestaña "Turnos del Día", cada turno `confirmado` muestra un botón para **"Finalizar"**.
+    -   Estas acciones están conectadas a la lógica del servidor y actualizan el estado del turno en tiempo real.
