@@ -4,20 +4,13 @@ import admin from '@/lib/firebaseAdmin';
 
 const db = admin.firestore();
 
-// Función auxiliar para convertir Timestamps de forma segura
-const safeToLocaleDateString = (timestamp) => {
-  if (timestamp && typeof timestamp.toDate === 'function') {
-    return timestamp.toDate().toLocaleDateString();
-  }
-  // Si ya es un string o un valor no válido, lo devuelve o devuelve N/A
-  return (typeof timestamp === 'string') ? timestamp : 'N/A'; 
-};
-
+// Función auxiliar para convertir Timestamps a un formato serializable (ISO string)
 const safeToISOString = (timestamp) => {
   if (timestamp && typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toISOString();
   }
-  return (typeof timestamp === 'string') ? timestamp : 'N/A';
+  // Si ya es un string, lo devuelve. Si no, devuelve null para evitar errores.
+  return (typeof timestamp === 'string') ? timestamp : null;
 };
 
 export async function getAllUsers() {
@@ -35,7 +28,7 @@ export async function getAllUsers() {
     return users;
   } catch (error) {
     console.error("Error al obtener los usuarios:", error);
-    return { error: "No se pudo cargar la lista de clientes." };
+    return []; // Devolver array vacío en caso de error para no romper la UI
   }
 }
 
@@ -61,7 +54,8 @@ export async function getUserByIdAndPets(userId) {
       mascotas.push({
         id: doc.id,
         ...mascotaData,
-        fechaNacimiento: safeToLocaleDateString(mascotaData.fechaNacimiento),
+        // Convertir a ISO string para consistencia
+        fechaNacimiento: safeToISOString(mascotaData.fechaNacimiento),
         createdAt: safeToISOString(mascotaData.createdAt),
       });
     });
@@ -85,12 +79,19 @@ export async function getAllAppointmentsWithDetails() {
     }
 
     const appointments = [];
-    const ownersCache = {};
+    const ownersCache = {}; // Cache para no buscar el mismo usuario varias veces
 
     for (const turnoDoc of turnosSnapshot.docs) {
       const turnoData = turnoDoc.data();
-      const turnoPath = turnoDoc.ref.path.split('/');
-      const userId = turnoPath[1];
+      
+      // CORRECCIÓN: Usar el campo `clienteId` que es más robusto
+      const userId = turnoData.clienteId;
+
+      // Si no hay un clienteId en el turno, lo saltamos para evitar errores
+      if (!userId) {
+        console.warn(`Turno con ID ${turnoDoc.id} no tiene clienteId. Saltando...`);
+        continue;
+      }
 
       let ownerData;
       if (ownersCache[userId]) {
@@ -99,16 +100,18 @@ export async function getAllAppointmentsWithDetails() {
         const userDoc = await db.collection('users').doc(userId).get();
         if (userDoc.exists) {
           ownerData = userDoc.data();
-          ownersCache[userId] = ownerData;
+          ownersCache[userId] = ownerData; // Guardar en cache
         } else {
-          ownerData = { nombre: 'Usuario no encontrado', apellido: '' };
+          // Si el usuario no se encuentra, usamos datos por defecto
+          ownerData = { nombre: 'Usuario Desconocido', apellido: '' };
         }
       }
       
       appointments.push({
         id: turnoDoc.id,
         ...turnoData,
-        fecha: turnoData.fecha,
+        // CORRECCIÓN: Estandarizar la serialización de todas las fechas
+        fecha: safeToISOString(turnoData.fecha),
         creadoEn: safeToISOString(turnoData.creadoEn),
         owner: {
           id: userId,
@@ -116,6 +119,10 @@ export async function getAllAppointmentsWithDetails() {
           apellido: ownerData.apellido,
           email: ownerData.email,
         },
+        // Incluimos los IDs originales para las acciones de admin
+        userId: userId, 
+        mascotaId: turnoData.mascotaId,
+        turnoId: turnoDoc.id
       });
     }
 
@@ -123,6 +130,7 @@ export async function getAllAppointmentsWithDetails() {
 
   } catch (error) {
     console.error("Error al obtener todos los turnos:", error);
-    return { error: "No se pudo cargar la lista de turnos." };
+    // CORRECIÓN: Devolver un array vacío para que la página no crashee
+    return [];
   }
 }
