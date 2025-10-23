@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState, useTransition } from 'react';
 import { getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
@@ -100,14 +100,26 @@ export default function AdminTurnosDashboard() {
   const [isUpdating, startTransition] = useTransition();
 
   const cargarTurnos = async () => {
+      // CORRECCIÓN: Envolver la lógica en un bloque try/catch/finally
+      // para garantizar que el estado `loading` siempre se actualice.
+      setError(null); // Limpiar errores previos
       setLoading(true);
-      const resultado = await getTurnsForAdminDashboard();
-      if (resultado.success) {
-        setTurnos(resultado.data);
-      } else {
-        setError(resultado.error);
+      try {
+        const resultado = await getTurnsForAdminDashboard();
+        if (resultado.success) {
+          setTurnos(resultado.data);
+        } else {
+          // Si la acción del servidor devuelve un error controlado, lo mostramos.
+          setError(resultado.error || "Ocurrió un error desconocido.");
+        }
+      } catch (err) {
+        // Si la promesa de la acción del servidor se rompe, capturamos el error aquí.
+        console.error("Error catastrófico al cargar turnos:", err);
+        setError("No se pudo establecer conexión con el servidor. Inténtalo de nuevo.");
+      } finally {
+        // Esto se ejecutará SIEMPRE, garantizando que el estado de carga termine.
+        setLoading(false);
       }
-      setLoading(false);
     };
 
   useEffect(() => {
@@ -118,7 +130,6 @@ export default function AdminTurnosDashboard() {
     startTransition(async () => {
       const result = await updateTurnoStatus({ userId, mascotaId, turnoId, newStatus });
       if (result.success) {
-        // Recargar los datos para reflejar el cambio de estado
         await cargarTurnos(); 
       } else {
         setError(result.error);
@@ -126,12 +137,13 @@ export default function AdminTurnosDashboard() {
     });
   };
 
+  // El estado de carga inicial ahora se maneja de forma segura.
   if (loading && !isUpdating) {
-    return <div className="text-center p-10">Cargando turnos...</div>;
+    return <div className="text-center p-10 font-semibold text-lg text-gray-600">Cargando turnos...</div>;
   }
 
   if (error) {
-    return <div className="text-center p-10 text-red-500">Error: {error}</div>;
+    return <div className="text-center p-10 text-red-600 bg-red-100 rounded-lg shadow-md"><strong>Error:</strong> {error}</div>;
   }
 
   const turnosSeleccionados = turnos[vistaActual] || [];
@@ -152,7 +164,7 @@ export default function AdminTurnosDashboard() {
         <button className={getTabStyle('finalizados')} onClick={() => setVistaActual('finalizados')}>Historial</button>
       </div>
 
-      {isUpdating && <div className='text-center mb-4'>Actualizando...</div>}
+      {isUpdating && <div className='text-center mb-4 text-blue-600 font-semibold'>Actualizando...</div>}
       
       <div className="flex flex-col md:flex-row gap-6">
         <TurnosList titulo="Turnos de Clínica" turnos={turnosClinica} tipoIcono="clinica" onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
