@@ -47,16 +47,19 @@ export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMasco
 export async function crearTurnos(user, data) {
     const { selectedMascotas, motivosPorMascota, specificServices, horarioClinica, horarioPeluqueria, necesitaTraslado, metodoPago, catalogoServicios } = data;
 
-    if (!user || !user.uid) return { success: false, error: 'Usuario no autenticado.' };
+    if (!user || !user.uid) {
+        return { success: false, error: 'Usuario no autenticado.' };
+    }
 
-    const batch = firestore.batch();
     const timeZone = 'America/Argentina/Buenos_Aires';
+    const writePromises = []; // Array para guardar cada promesa de escritura
 
     try {
         for (const mascota of selectedMascotas) {
             const motivos = motivosPorMascota[mascota.id] || {};
             const serviciosSeleccionados = specificServices[mascota.id] || {};
 
+            // --- Preparar turno de Clínica ---
             if (motivos.clinica && serviciosSeleccionados.clinica) {
                 if (!horarioClinica || !horarioClinica.fecha || !horarioClinica.hora) {
                     throw new Error('Falta seleccionar la fecha o la hora para el turno de clínica.');
@@ -67,16 +70,19 @@ export async function crearTurnos(user, data) {
                 if (!servicioData) throw new Error(`Servicio de clínica ID=${servicioId} no encontrado.`);
 
                 const fechaTurnoClinica = dayjs.tz(horarioClinica.fecha, timeZone).hour(hours).minute(minutes).second(0);
+
                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
-                
-                batch.set(turnoRef, {
+                const turnoClinicaData = {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoClinica.toDate()),
                     horario: horarioClinica.hora, tipo: 'clinica', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: servicioData.precio_base || 0,
                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(), necesitaTraslado: false,
-                });
+                    clienteId: user.uid // Campo clave para búsquedas de admin y usuario
+                };
+                writePromises.push(turnoRef.set(turnoClinicaData));
             }
 
+            // --- Preparar turno de Peluquería ---
             if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
                 if (!horarioPeluqueria || !horarioPeluqueria.fecha || !horarioPeluqueria.turno) {
                     throw new Error('Falta seleccionar la fecha o el turno para el servicio de peluquería.');
@@ -92,16 +98,23 @@ export async function crearTurnos(user, data) {
                 fechaTurnoPeluqueria = fechaTurnoPeluqueria.hour(horarioPeluqueria.turno === 'mañana' ? 9 : 14).minute(0).second(0);
 
                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
-                batch.set(turnoRef, {
+                const turnoPeluqueriaData = {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoPeluqueria.toDate()),
                     horario: horarioPeluqueria.turno, tipo: 'peluqueria', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: precio, necesitaTraslado: necesitaTraslado,
                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(),
-                });
+                    clienteId: user.uid // Campo clave para búsquedas de admin y usuario
+                };
+                writePromises.push(turnoRef.set(turnoPeluqueriaData));
             }
         }
+        
+        if (writePromises.length === 0) {
+            return { success: false, error: 'No se preparó ningún turno para guardar.' };
+        }
 
-        await batch.commit();
+        // Ejecutar TODAS las promesas de escritura a la vez
+        await Promise.all(writePromises);
 
         revalidatePath('/turnos/mis-turnos');
         revalidatePath('/admin/turnos');
@@ -110,11 +123,14 @@ export async function crearTurnos(user, data) {
 
     } catch (error) {
         console.error("Error al crear los turnos:", error);
-        return { success: false, error: error.message || 'Falló la operación atómica.' };
+        return { success: false, error: error.message || 'Falló la operación de guardado.' };
     }
 }
 
 async function updateUserTurno(userId, mascotaId, turnoId, updateData) {
+    // Esta función parece ser para el admin, la dejamos como está por ahora
+    // ya que el admin usa collectionGroup y puede encontrar los turnos en subcolecciones.
+    // Pero para consistencia a futuro, debería probablemente apuntar a la colección raíz también.
     if (!userId || !mascotaId || !turnoId) return { success: false, error: 'Faltan IDs para localizar el turno.' };
     try {
         const turnoRef = firestore.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
@@ -146,6 +162,7 @@ export async function cancelarTurnoUsuario(turnoId) {
     }
 }
 
+// Funciones de admin
 export async function confirmarTurno({ userId, mascotaId, turnoId }) {
     return updateUserTurno(userId, mascotaId, turnoId, { estado: 'confirmado' });
 }
