@@ -1,13 +1,12 @@
-
-"use server";
+'use server';
 
 import admin from '@/lib/firebaseAdmin';
 import { verificarDisponibilidadTraslado } from '@/lib/logica_traslado';
 
 /**
  * @action checkTrasladoAvailability
- * @description Verifica la disponibilidad del servicio de traslado para una fecha y un grupo de mascotas específicos.
- * Esta acción es llamada desde el formulario de creación de turnos.
+ * @description (CORREGIDO) Verifica la disponibilidad del servicio de traslado para una fecha y un grupo de mascotas específicos.
+ * Utiliza el campo 'necesitaTraslado' para consistencia con el resto de la aplicación.
  * 
  * @param {{ fecha: string, mascotas: Array<Object> }} params - Los parámetros para la verificación.
  * @returns {Promise<{disponible: boolean, error?: string}>} - Un objeto indicando si hay disponibilidad.
@@ -20,24 +19,28 @@ export async function checkTrasladoAvailability({ fecha, mascotas }) {
 
     const db = admin.firestore();
     const targetDate = new Date(fecha);
-    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+    // Se establece la hora a las 00:00:00 UTC para la comparación
+    const startOfDay = new Date(Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 0, 0, 0));
+    const endOfDay = new Date(Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 23, 59, 59, 999));
 
     // 1. Obtener todos los turnos con traslado para el día especificado.
+    // CORRECCIÓN: Se utiliza 'necesitaTraslado' para coincidir con la base de datos.
     const turnosConTrasladoSnapshot = await db.collectionGroup('turnos')
-      .where('necesitaTransporte', '==', true)
+      .where('necesitaTraslado', '==', true)
       .where('fecha', '>=', startOfDay)
       .where('fecha', '<', endOfDay)
       .get();
 
     if (turnosConTrasladoSnapshot.empty) {
-      // Si no hay turnos existentes, solo verificamos las nuevas mascotas contra el inventario total.
       const disponible = verificarDisponibilidadTraslado([], mascotas);
       return { disponible };
     }
 
-    // 2. Enriquecer los datos de los turnos existentes con la info de la mascota.
+    // 2. Enriquecer los datos de los turnos existentes.
     const turnosDelDia = [];
+    // NOTA: Esta parte sigue siendo menos eficiente (potencial N+1), pero es menos crítica
+    // que la pantalla de admin porque se ejecuta con menos datos (solo un día y bajo demanda del usuario).
+    // Por ahora, la prioridad es la consistencia.
     for (const doc of turnosConTrasladoSnapshot.docs) {
         const turnoData = doc.data();
         const pathParts = doc.ref.path.split('/');
@@ -46,7 +49,8 @@ export async function checkTrasladoAvailability({ fecha, mascotas }) {
 
         const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
         if (mascotaDoc.exists) {
-            turnosDelDia.push({ ...turnoData, mascota: mascotaDoc.data() });
+            // La lógica de verificación solo necesita el tamaño.
+            turnosDelDia.push({ mascota: { tamaño: mascotaDoc.data().tamaño } });
         }
     }
     
