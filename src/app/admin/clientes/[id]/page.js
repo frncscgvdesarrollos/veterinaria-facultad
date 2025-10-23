@@ -13,19 +13,23 @@ const ArrowLeftIcon = (props) => (
 // Página de detalles del cliente (Componente de Servidor)
 export default async function ClienteDetallePage({ params }) {
   const { id } = params;
-  const { user, mascotas, error } = await getUserByIdAndPets(id);
+  const data = await getUserByIdAndPets(id);
 
-  if (error) {
+  // CORRECCIÓN: Comprobación robusta de errores y datos
+  // Si hay un error explícito O si no se devolvió el objeto 'user', mostramos error.
+  if (data.error || !data.user) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-        <p className="text-gray-700">{error}</p>
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Error al Cargar Cliente</h2>
+        <p className="text-gray-700">{data.error || "No se pudieron encontrar los datos del cliente. Es posible que haya sido eliminado."}</p>
         <Link href="/admin/clientes" className="mt-6 inline-block bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700">
           Volver a la lista de clientes
         </Link>
       </div>
     );
   }
+
+  const { user, mascotas } = data;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
@@ -78,7 +82,7 @@ export default async function ClienteDetallePage({ params }) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mascota.nombre}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.especie}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.raza}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.fechaNacimiento}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.fechaNacimiento ? new Date(mascota.fechaNacimiento).toLocaleDateString() : 'N/A'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.tamaño}</td>
                     </tr>
                   ))}

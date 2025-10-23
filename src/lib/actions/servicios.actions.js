@@ -7,41 +7,46 @@ const firestore = admin.firestore();
 const serviciosRef = firestore.collection('servicios').doc('catalogo');
 const configRef = firestore.collection('configuracion').doc('servicios');
 
+const initialServiceData = { peluqueria: {}, clinica: {}, medicamentos: {} };
+const initialConfigData = { peluqueria_activa: false, clinica_activa: false };
+
 /**
  * Obtiene el objeto completo de servicios desde Firestore.
+ * NUNCA LANZA ERROR. En caso de fallo, devuelve un objeto de servicios vacío.
  * @returns {Promise<object>} El objeto de servicios con todas las categorías.
  */
 export async function obtenerServicios() {
     try {
         const doc = await serviciosRef.get();
         if (!doc.exists) {
-            const initialData = { peluqueria: {}, clinica: {}, medicamentos: {} };
-            await serviciosRef.set(initialData);
-            return initialData;
+            await serviciosRef.set(initialServiceData); // Crea el documento si no existe
+            return initialServiceData;
         }
-        return doc.data();
+        return doc.data() || initialServiceData; // Devuelve datos o el objeto vacío si está corrupto
     } catch (error) {
         console.error("Error al obtener los servicios:", error);
-        throw new Error('No se pudieron cargar los datos de los servicios.');
+        // CORRECCIÓN: Devolver un objeto vacío en lugar de lanzar error
+        return initialServiceData;
     }
 }
 
 /**
  * Obtiene la configuración de activación de las categorías de servicio.
+ * NUNCA LANZA ERROR. En caso de fallo, devuelve un objeto de configuración por defecto.
  * @returns {Promise<{peluqueria_activa: boolean, clinica_activa: boolean}>}
  */
 export async function obtenerConfiguracionServicios() {
     try {
         const doc = await configRef.get();
         if (!doc.exists) {
-            const initialData = { peluqueria_activa: true, clinica_activa: true };
-            await configRef.set(initialData);
-            return initialData;
+            await configRef.set(initialConfigData); // Crea el documento si no existe
+            return initialConfigData;
         }
-        return doc.data();
+        return doc.data() || initialConfigData; // Devuelve datos o el objeto por defecto si está corrupto
     } catch (error) {
         console.error("Error al obtener la configuración de servicios:", error);
-        throw new Error('No se pudo cargar la configuración.');
+        // CORRECCIÓN: Devolver una configuración por defecto en lugar de lanzar error
+        return initialConfigData;
     }
 }
 
@@ -56,7 +61,6 @@ export async function toggleCategoriaActiva(categoria, estadoActual) {
         const campo = `${categoria}_activa`; // ej. peluqueria_activa
         await configRef.update({ [campo]: !estadoActual });
 
-        // Revalidar los paths para que el cambio se refleje inmediatamente en la UI
         revalidatePath('/admin/servicios');
         revalidatePath('/turnos/nuevo');
 
@@ -76,9 +80,8 @@ export async function toggleCategoriaActiva(categoria, estadoActual) {
  */
 export async function guardarServicio(categoria, servicioId, data) {
     try {
-        const { activo, ...restData } = data;
         const updateData = {};
-        updateData[`${categoria}.${servicioId}`] = restData;
+        updateData[`${categoria}.${servicioId}`] = data;
         
         await serviciosRef.update(updateData);
 
