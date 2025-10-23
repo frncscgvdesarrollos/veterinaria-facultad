@@ -11,17 +11,15 @@ dayjs.extend(timezone);
 
 const db = admin.firestore();
 
-/**
- * Función robusta para obtener todos los turnos y enriquecerlos con datos del dueño y la mascota.
- */
 export async function getTurnsForAdminDashboard() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
 
-    // CORRECCIÓN: Se restaura la consulta con dos campos de ordenamiento para que coincida con el índice requerido.
+    // SOLUCIÓN REAL: Usar un segundo campo de ordenamiento que SÍ existe en todos los documentos, como 'tipo'.
+    // Esto satisface la necesidad de un índice compuesto sin fallar.
     const turnosSnapshot = await db.collectionGroup('turnos')
                                  .orderBy('fecha', 'desc')
-                                 .orderBy('necesitaTraslado', 'asc')
+                                 .orderBy('tipo', 'asc')
                                  .get();
 
     if (turnosSnapshot.empty) {
@@ -109,8 +107,8 @@ export async function getTurnsForAdminDashboard() {
     };
 
   } catch (error) {
-    console.error("Error general en getTurnsForAdminDashboard:", error);
-    return { success: false, error: `Error del servidor: ${error.message}` };
+    console.error("Error REAL en getTurnsForAdminDashboard:", error);
+    return { success: false, error: `Error del servidor: ${error.message}. Es probable que falte un índice de Firestore. Revisa las instrucciones.` };
   }
 }
 
