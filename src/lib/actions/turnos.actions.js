@@ -13,7 +13,6 @@ dayjs.extend(timezone);
 const firestore = admin.firestore();
 const TAMAÑO_PRECIOS_MAP = { 'pequeño': 'chico', 'mediano': 'mediano', 'grande': 'grande' };
 
-// La función de verificación se mantiene como estaba.
 export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMascotas }) {
     try {
         if (!fecha || !nuevasMascotas) {
@@ -47,45 +46,53 @@ export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMasco
 
 /**
  * @action crearTurnos
- * @description (VERSIÓN CORREGIDA FINAL) Revierte el error de búsqueda de servicio y mantiene el guardado individual.
+ * @description (VERSIÓN ATÓMICA Y VALIDADA) Usa un batch para "todo o nada" y añade validación estricta del formato de hora.
  */
 export async function crearTurnos(user, data) {
     const { selectedMascotas, motivosPorMascota, specificServices, horarioClinica, horarioPeluqueria, necesitaTraslado, metodoPago, catalogoServicios } = data;
 
     if (!user || !user.uid) return { success: false, error: 'Usuario no autenticado.' };
 
+    const batch = firestore.batch();
     const timeZone = 'America/Argentina/Buenos_Aires';
-    const resultados = [];
 
-    for (const mascota of selectedMascotas) {
-        try {
+    try {
+        for (const mascota of selectedMascotas) {
             const motivos = motivosPorMascota[mascota.id] || {};
             const serviciosSeleccionados = specificServices[mascota.id] || {};
 
-            // --- Crear Turno de Clínica ---
+            // --- Preparar Turno de Clínica ---
             if (motivos.clinica && serviciosSeleccionados.clinica) {
+                // VALIDACIÓN ESTRICTA DE HORARIO
+                if (!horarioClinica || !horarioClinica.fecha || !horarioClinica.hora) {
+                    throw new Error('Falta seleccionar la fecha o la hora para el turno de clínica.');
+                }
+                if (typeof horarioClinica.hora !== 'string' || !horarioClinica.hora.includes(':')) {
+                    throw new Error(`El formato de la hora de clínica es inválido. Se recibió: "${horarioClinica.hora}"`);
+                }
+                const [hours, minutes] = horarioClinica.hora.split(':').map(Number);
+                if (isNaN(hours) || isNaN(minutes)) {
+                    throw new Error(`La hora de clínica contiene caracteres inválidos: "${horarioClinica.hora}"`);
+                }
+
                 const servicioId = serviciosSeleccionados.clinica;
-                // LÓGICA DE BÚSQUEDA CORREGIDA (REVERTIDA AL .find() ORIGINAL)
                 const servicioData = catalogoServicios.clinica.find(s => s.id === servicioId);
                 if (!servicioData) throw new Error(`Servicio de clínica ID=${servicioId} no encontrado.`);
 
-                const [hours, minutes] = horarioClinica.hora.split(':').map(Number);
                 const fechaTurnoClinica = dayjs.tz(horarioClinica.fecha, timeZone).hour(hours).minute(minutes).second(0);
                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
                 
-                await turnoRef.set({
+                batch.set(turnoRef, {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoClinica.toDate()),
                     horario: horarioClinica.hora, tipo: 'clinica', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: servicioData.precio_base || 0,
                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(), necesitaTraslado: false,
                 });
-                resultados.push({ mascota: mascota.nombre, tipo: 'clínica', status: 'éxito' });
             }
 
-            // --- Crear Turno de Peluquería ---
+            // --- Preparar Turno de Peluquería ---
             if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
                 const servicioId = serviciosSeleccionados.peluqueria;
-                // LÓGICA DE BÚSQUEDA CORREGIDA (REVERTIDA AL .find() ORIGINAL)
                 const servicioData = catalogoServicios.peluqueria.find(s => s.id === servicioId);
                 if (!servicioData) throw new Error(`Servicio de peluquería ID=${servicioId} no encontrado.`);
                 
@@ -96,40 +103,36 @@ export async function crearTurnos(user, data) {
                 fechaTurnoPeluqueria = fechaTurnoPeluqueria.hour(horarioPeluqueria.turno === 'mañana' ? 9 : 14).minute(0).second(0);
 
                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
-                await turnoRef.set({
+                batch.set(turnoRef, {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoPeluqueria.toDate()),
                     horario: horarioPeluqueria.turno, tipo: 'peluqueria', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: precio, necesitaTraslado: necesitaTraslado,
                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(),
                 });
-                resultados.push({ mascota: mascota.nombre, tipo: 'peluquería', status: 'éxito' });
             }
-        } catch (error) {
-            console.error(`Error al procesar turno para la mascota ${mascota.nombre}:`, error);
-            resultados.push({ mascota: mascota.nombre, status: 'fallido', error: error.message });
         }
+
+        // Si todo está bien, se compromete el lote.
+        await batch.commit();
+
+        revalidatePath('/turnos/mis-turnos');
+        revalidatePath('/admin/turnos');
+
+        return { success: true, message: '¡Todos los turnos se guardaron con éxito!' };
+
+    } catch (error) {
+        // Si algo falla, el batch no se guarda y se lanza el error.
+        console.error("Error al crear los turnos (operación cancelada):", error);
+        return { success: false, error: error.message || 'No se pudo completar la creación de los turnos.' };
     }
-
-    revalidatePath('/turnos/mis-turnos');
-    revalidatePath('/admin/turnos');
-
-    const fallidos = resultados.filter(r => r.status === 'fallido');
-    const exitosos = resultados.length - fallidos.length;
-
-    if (exitosos === 0 && fallidos.length > 0) {
-        return { success: false, error: `No se pudo guardar ningún turno. Fallaron ${fallidos.length}.`, detalles: fallidos };
-    } else if (fallidos.length > 0) {
-        return { success: false, error: `Se guardaron ${exitosos} turnos, pero fallaron ${fallidos.length}.`, detalles: fallidos };
-    }
-
-    return { success: true, message: '¡Todos los turnos se guardaron con éxito!' };
 }
 
-// --- Las demás acciones se mantienen sin cambios ---
+// --- Las demás acciones se mantienen sin cambios, con la corrección del typo ---
 
 async function updateUserTurno(userId, mascotaId, turnoId, updateData) {
     if (!userId || !mascotaId || !turnoId) return { success: false, error: 'Faltan IDs para localizar el turno.' };
     try {
+        // CORRECCIÓN DEL TYPO: mascotaId en lugar de mascotasId
         const turnoRef = firestore.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
         await turnoRef.update(updateData);
         revalidatePath('/admin/turnos');
