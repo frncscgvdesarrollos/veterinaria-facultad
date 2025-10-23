@@ -47,8 +47,7 @@ export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMasco
 
 /**
  * @action crearTurnos
- * @description (VERSIÓN ROBUSTA) Guarda cada turno individualmente para evitar que un fallo
- * cancele toda la operación. También corrige la búsqueda de datos del servicio.
+ * @description (VERSIÓN CORREGIDA FINAL) Revierte el error de búsqueda de servicio y mantiene el guardado individual.
  */
 export async function crearTurnos(user, data) {
     const { selectedMascotas, motivosPorMascota, specificServices, horarioClinica, horarioPeluqueria, necesitaTraslado, metodoPago, catalogoServicios } = data;
@@ -66,8 +65,9 @@ export async function crearTurnos(user, data) {
             // --- Crear Turno de Clínica ---
             if (motivos.clinica && serviciosSeleccionados.clinica) {
                 const servicioId = serviciosSeleccionados.clinica;
-                const servicioData = catalogoServicios.clinica[servicioId]; // Búsqueda directa por ID
-                if (!servicioData) throw new Error(`Servicio de clínica ID=${servicioId} no encontrado para ${mascota.nombre}`);
+                // LÓGICA DE BÚSQUEDA CORREGIDA (REVERTIDA AL .find() ORIGINAL)
+                const servicioData = catalogoServicios.clinica.find(s => s.id === servicioId);
+                if (!servicioData) throw new Error(`Servicio de clínica ID=${servicioId} no encontrado.`);
 
                 const [hours, minutes] = horarioClinica.hora.split(':').map(Number);
                 const fechaTurnoClinica = dayjs.tz(horarioClinica.fecha, timeZone).hour(hours).minute(minutes).second(0);
@@ -85,8 +85,9 @@ export async function crearTurnos(user, data) {
             // --- Crear Turno de Peluquería ---
             if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
                 const servicioId = serviciosSeleccionados.peluqueria;
-                const servicioData = catalogoServicios.peluqueria[servicioId]; // Búsqueda directa por ID
-                if (!servicioData) throw new Error(`Servicio de peluquería ID=${servicioId} no encontrado para ${mascota.nombre}`);
+                // LÓGICA DE BÚSQUEDA CORREGIDA (REVERTIDA AL .find() ORIGINAL)
+                const servicioData = catalogoServicios.peluqueria.find(s => s.id === servicioId);
+                if (!servicioData) throw new Error(`Servicio de peluquería ID=${servicioId} no encontrado.`);
                 
                 const tamañoKey = TAMAÑO_PRECIOS_MAP[mascota.tamaño.toLowerCase()] || 'chico';
                 const precio = servicioData.precios[tamañoKey] || 0;
@@ -113,8 +114,12 @@ export async function crearTurnos(user, data) {
     revalidatePath('/admin/turnos');
 
     const fallidos = resultados.filter(r => r.status === 'fallido');
-    if (fallidos.length > 0) {
-        return { success: false, error: `Se guardaron ${resultados.length - fallidos.length} turnos, pero fallaron ${fallidos.length}.`, detalles: fallidos };
+    const exitosos = resultados.length - fallidos.length;
+
+    if (exitosos === 0 && fallidos.length > 0) {
+        return { success: false, error: `No se pudo guardar ningún turno. Fallaron ${fallidos.length}.`, detalles: fallidos };
+    } else if (fallidos.length > 0) {
+        return { success: false, error: `Se guardaron ${exitosos} turnos, pero fallaron ${fallidos.length}.`, detalles: fallidos };
     }
 
     return { success: true, message: '¡Todos los turnos se guardaron con éxito!' };
