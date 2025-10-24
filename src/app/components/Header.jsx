@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 
 const getInitial = (name) => {
   if (!name) return '?';
@@ -13,6 +15,13 @@ const getInitial = (name) => {
 export default function Header() {
     const { user, isLoggedIn, logout } = useAuth(); 
     const router = useRouter();
+    const pathname = usePathname();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Cierra el menú móvil cada vez que cambia la ruta
+    useEffect(() => {
+        setIsMenuOpen(false);
+    }, [pathname]);
 
     const cerrarsesion = async () => {
         try {
@@ -25,65 +34,87 @@ export default function Header() {
 
     let displayIdentifier = 'Usuario';
     if (user) {
-        if (user.displayName) {
+        if (user.displayName && user.displayName !== 'Sin Nombre') {
             displayIdentifier = user.displayName.split(' ')[0];
-        } 
-        else if (user.email) {
+        } else if (user.email) {
             displayIdentifier = user.email.split('@')[0];
         }
     }
 
     return (
-        <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
-            <nav className="max-w-screen-xl mx-auto px-6 lg:px-8">
-                <div className="flex items-center justify-between h-24">
+        <header className="bg-white shadow-md sticky top-0 z-50 w-full">
+            <nav className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-20">
                     
+                    {/* Logo */}
                     <div className="flex-shrink-0">
-                        <Link href="/">
+                        <Link href="/" onClick={() => setIsMenuOpen(false)}>
                             <Image 
                                 src="/LOGO.svg" 
-                                alt="Logo de Veterinaria Magali Martin"
-                                width={200}
-                                height={55}
+                                alt="Logo Veterinaria Magali Martin"
+                                width={180} // Tamaño reducido
+                                height={50}
                                 priority
                             />
                         </Link>
                     </div>
                     
+                    {/* Navegación para Desktop */}
                     {isLoggedIn && (
-                         <nav className="hidden md:flex items-center gap-8">
-                            <Link href="/mis-datos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Datos</Link>
-                            <Link href="/mascotas" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Mascotas</Link>
-                            <Link href="/turnos/mis-turnos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Turnos</Link>
-                         </nav>
+                         <div className="hidden md:flex items-center gap-8">
+                            <Link href="/mis-datos" className="text-md font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Datos</Link>
+                            <Link href="/mascotas" className="text-md font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Mascotas</Link>
+                            <Link href="/turnos/mis-turnos" className="text-md font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Turnos</Link>
+                         </div>
                     )}
 
-                    <div className="flex-grow md:hidden"></div>
-
-                    <div className="flex items-center gap-4 min-w-[250px] justify-end">
+                    {/* Elementos de la derecha */}
+                    <div className="flex items-center justify-end gap-3">
                         {isLoggedIn && user ? (
-                            <div className="flex items-center gap-4">
-                                <span className="hidden lg:inline text-md font-medium text-gray-700 capitalize">Hola, {displayIdentifier}</span>
-                                <div className="flex items-center justify-center bg-violet-100 rounded-full h-14 w-14 text-violet-700 font-bold text-xl overflow-hidden">
-                                    {user.photoURL ? (
-                                        <Image src={user.photoURL} alt="Avatar del usuario" width={56} height={56} />
-                                    ) : (
-                                        <span>{getInitial(displayIdentifier)}</span>
-                                    )}
+                            <>
+                                {/* Avatar e Info de Usuario */}
+                                <div className="flex items-center gap-3">
+                                    <span className="hidden sm:inline text-sm font-medium text-gray-700 capitalize">Hola, {displayIdentifier}</span>
+                                    <div className="flex items-center justify-center bg-violet-100 rounded-full h-11 w-11 text-violet-700 font-bold text-lg overflow-hidden">
+                                        {user.photoURL ? (
+                                            <Image src={user.photoURL} alt="Avatar" width={44} height={44} />
+                                        ) : (
+                                            <span>{getInitial(displayIdentifier)}</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <button onClick={cerrarsesion} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-colors text-base">
-                                    Logout
+
+                                {/* Botón de Logout para Desktop */}
+                                <button onClick={cerrarsesion} className="hidden md:flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">
+                                    Salir
                                 </button>
-                            </div>
+                                
+                                {/* Botón de Menú Hamburguesa para Móvil */}
+                                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-2xl text-gray-700 hover:text-violet-700">
+                                    {isMenuOpen ? <FaTimes /> : <FaBars />}
+                                </button>
+                            </>
                         ) : (
-                            <div className="flex items-center gap-4">
-                                 <Link href="/login">
-                                    <span className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base">Iniciar Sesión</span>
-                                </Link>
-                            </div>
+                            // No se muestra nada si el usuario no está logueado, como solicitaste.
+                            <div className="h-11"></div> // Placeholder para mantener la altura
                         )}
                     </div>
                 </div>
+
+                {/* Panel del Menú Móvil */}
+                {isMenuOpen && isLoggedIn && (
+                    <div className="md:hidden py-4 border-t border-gray-200">
+                        <div className="flex flex-col gap-4">
+                            <Link href="/mis-datos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Datos</pre>
+                            <Link href="/mascotas" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Mascotas</pre>
+                            <Link href="/turnos/mis-turnos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Turnos</pre>
+                            <button onClick={cerrarsesion} className="flex items-center gap-3 w-full text-left bg-red-100 text-red-700 font-bold p-3 rounded-lg transition-colors text-md">
+                                <FaSignOutAlt />
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
+                )}
             </nav>
         </header>
     );
