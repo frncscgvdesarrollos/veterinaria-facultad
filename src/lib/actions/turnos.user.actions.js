@@ -64,3 +64,67 @@ export async function checkTrasladoAvailability({ fecha, mascotas }) {
     return { disponible: false, error: `Error del servidor: ${error.message}` };
   }
 }
+
+/**
+ * @action getTurnosByUserId
+ * @description Obtiene y clasifica todos los turnos para un usuario específico desde Firestore.
+ * 
+ * @param {{ userId: string }} params - El ID del usuario para el cual buscar los turnos.
+ * @returns {Promise<{success: boolean, data?: {proximos: Array, historial: Array}, error?: string}>}
+ */
+export async function getTurnosByUserId({ userId }) {
+  if (!userId) {
+    return { success: false, error: 'ID de usuario no proporcionado.' };
+  }
+
+  try {
+    const db = admin.firestore();
+    // Usamos collectionGroup para buscar en todas las subcolecciones de 'turnos'
+    const turnosSnapshot = await db.collectionGroup('turnos')
+                                   .where('clienteId', '==', userId)
+                                   .orderBy('fecha', 'desc') // Ordenamos por fecha descendente
+                                   .get();
+
+    if (turnosSnapshot.empty) {
+      // Si no hay turnos, devolvemos arrays vacíos. Esto es un éxito, no un error.
+      return { success: true, data: { proximos: [], historial: [] } };
+    }
+
+    const ahora = new Date();
+    const proximos = [];
+    const historial = [];
+
+    turnosSnapshot.forEach(doc => {
+      const turno = doc.data();
+      const fechaTurno = turno.fecha.toDate();
+
+      const turnoProcesado = {
+        id: doc.id,
+        ...turno,
+        // Serializamos la fecha a un formato estándar (ISO string) para el cliente.
+        fecha: fechaTurno.toISOString(), 
+        // El componente cliente espera un objeto mascota, nos aseguramos que exista.
+        mascota: {
+            nombre: turno.mascotaNombre || 'Nombre no disponible'
+        }
+      };
+
+      // Clasificamos el turno en 'historial' o 'próximos'
+      if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || fechaTurno < ahora) {
+        historial.push(turnoProcesado);
+      } else {
+        proximos.push(turnoProcesado);
+      }
+    });
+
+    // Los turnos próximos deben mostrarse del más cercano al más lejano.
+    // Como la consulta inicial los trajo descendentes, los invertimos.
+    proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+    return { success: true, data: { proximos, historial } };
+
+  } catch (error) {
+    console.error(`Error al obtener los turnos para el usuario ${userId}:`, error);
+    return { success: false, error: 'Error del servidor al buscar los turnos.' };
+  }
+}
