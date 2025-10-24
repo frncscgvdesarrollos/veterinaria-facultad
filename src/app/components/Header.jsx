@@ -54,7 +54,7 @@ export default function Header() {
                          <nav className="hidden md:flex items-center gap-8">
                             <Link href="/mis-datos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Datos</Link>
                             <Link href="/mascotas" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Mascotas</Link>
-                            <Link href="/mis-turnos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Turnos</Link>
+                            <Link href="/turnos/mis-turnos" className="text-lg font-medium text-gray-600 hover:text-violet-700 transition-colors">Turnos</Link>
                          </nav>
                     )}
 
