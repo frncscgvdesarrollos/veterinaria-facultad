@@ -105,9 +105,9 @@ export default function Header() {
                 {isMenuOpen && isLoggedIn && (
                     <div className="md:hidden py-4 border-t border-gray-200">
                         <div className="flex flex-col gap-4">
-                            <Link href="/mis-datos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Datos</pre>
-                            <Link href="/mascotas" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Mascotas</pre>
-                            <Link href="/turnos/mis-turnos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Turnos</pre>
+                            <Link href="/mis-datos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Datos</Link>
+                            <Link href="/mascotas" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Mascotas</Link>
+                            <Link href="/turnos/mis-turnos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Turnos</Link>
                             <button onClick={cerrarsesion} className="flex items-center gap-3 w-full text-left bg-red-100 text-red-700 font-bold p-3 rounded-lg transition-colors text-md">
                                 <FaSignOutAlt />
                                 Cerrar Sesión
