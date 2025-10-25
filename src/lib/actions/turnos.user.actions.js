@@ -314,7 +314,8 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
       } else if (tipo === 'peluqueria') {
           const cuposPeluqueriaRef = db.collection('turnos_peluqueria').doc(targetDate.format('YYYY-MM-DD'));
           const cuposDoc = await cuposPeluqueriaRef.get();
-          const cuposData = cuposDoc.exists() ? cuposDoc.data() : { cuposManana: 4, cuposTarde: 4 };
+          const cuposData = cuposDoc.exists ? cuposDoc.data() : { cuposManana: 4, cuposTarde: 4 };
+
 
           const countManana = horariosOcupados.filter(h => h === 'mañana').length;
           const countTarde = horariosOcupados.filter(h => h === 'tarde').length;
