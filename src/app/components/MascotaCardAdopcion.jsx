@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { postularseParaAdopcion } from '@/lib/actions/adopciones.actions.js';
 
 export default function MascotaCardAdopcion({ mascota }) {
-    const { user } = useAuth();
+    const { user, isLoggedIn } = useAuth(); // Usamos isLoggedIn para una verificación más robusta
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -15,8 +15,9 @@ export default function MascotaCardAdopcion({ mascota }) {
     const imageUrl = mascota.fotos && mascota.fotos.length > 0 ? mascota.fotos[0] : '/img/placeholder-dog.jpg';
 
     const handlePostulacion = async () => {
-        if (!user) {
-            setError('Debes iniciar sesión para postularte.');
+        // 1. Verificación inicial de sesión
+        if (!isLoggedIn || !user) {
+            setError('Debes iniciar sesión para postularte. Por favor, inicia sesión y vuelve a intentarlo.');
             return;
         }
 
@@ -25,19 +26,23 @@ export default function MascotaCardAdopcion({ mascota }) {
         setMessage('');
 
         try {
+            // 2. Llamada a la Server Action
             const result = await postularseParaAdopcion(mascota.path, {
                 uid: user.uid,
                 nombre: user.displayName || 'Usuario anónimo',
                 email: user.email,
             });
 
+            // 3. Manejo de la respuesta
             if (result.success) {
                 setMessage(result.message);
             } else {
-                setError(result.message);
+                setError(result.message || 'Ocurrió un error desconocido.');
             }
         } catch (e) {
-            setError('Ocurrió un error inesperado. Inténtalo de nuevo.');
+            // 4. Manejo de errores inesperados en el cliente
+            console.error("Error en handlePostulacion:", e);
+            setError('Ocurrió un error inesperado al contactar el servidor. Inténtalo de nuevo.');
         }
 
         setLoading(false);
@@ -75,13 +80,13 @@ export default function MascotaCardAdopcion({ mascota }) {
                 <div className="mt-5">
                     <button
                         onClick={handlePostulacion}
-                        disabled={loading || message}
+                        disabled={loading || !!message} // Deshabilitar si está cargando o si ya se envió
                         className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Enviando postulación...' : (message ? 'Postulación enviada' : 'Me quiero postular')}
                     </button>
-                    {error && <p className="mt-2 text-sm text-center text-red-600">{error}</p>}
-                    {message && !error && <p className="mt-2 text-sm text-center text-green-600">{message}</p>}
+                    {error && <p className="mt-2 text-sm text-center text-red-600 font-semibold">{error}</p>}
+                    {message && !error && <p className="mt-2 text-sm text-center text-green-600 font-semibold">{message}</p>}
                 </div>
             </div>
         </div>
