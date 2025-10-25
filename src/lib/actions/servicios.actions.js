@@ -167,3 +167,18 @@ export async function desbloquearDia(fecha) {
         return { success: false, error: 'No se pudo desbloquear la fecha.' };
     }
 }
+
+
+export async function actualizarServicio(categoria, servicioId, data) {
+    try {
+        const updateData = {};
+        updateData[`${categoria}.${servicioId}`] = data;
+        await serviciosRef.update(updateData);
+        revalidatePath('/admin/servicios');
+        return { success: true };
+    } catch (error) {
+        console.error("Error al actualizar el servicio:", error);
+        return { success: false, error: 'No se pudo actualizar el servicio.' };
+    }
+}
+

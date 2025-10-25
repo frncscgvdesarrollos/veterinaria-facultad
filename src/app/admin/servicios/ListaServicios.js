@@ -1,12 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { FaEdit, FaTrash, FaInfoCircle } from 'react-icons/fa';
 import { eliminarServicio } from '@/lib/actions/servicios.actions.js';
+import Modal from '@/app/components/Modal'; // Importamos Modal
+import FormularioEditarServicio from './FormularioEditarServicio'; // Importamos el nuevo formulario
 
-// Componente para la tabla de una categoría específica
 const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva }) => {
-    const esPeluqueria = categoria === 'peluqueria';
-    const esMedicamento = categoria === 'medicamentos';
+    const [servicioAEditar, setServicioAEditar] = useState(null);
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Estás seguro de que quieres eliminar este servicio permanentemente?')) {
@@ -14,8 +15,20 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva
             onUpdate(); // Refresca los datos
         }
     };
+    
+    const handleEdit = (id, servicio) => {
+        setServicioAEditar({ id, ...servicio });
+    };
 
-    // Función para obtener el rango de precios en peluquería
+    const handleCloseModal = () => {
+        setServicioAEditar(null);
+    };
+
+    const handleServiceUpdated = () => {
+        handleCloseModal();
+        onUpdate();
+    };
+
     const getPriceRange = (precios) => {
         const priceValues = Object.values(precios).filter(p => p > 0);
         if (priceValues.length === 0) return 'N/A';
@@ -25,9 +38,7 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva
     };
 
     const serviceEntries = Object.entries(servicios || {});
-
-    // Los medicamentos no tienen un estado global, siempre se muestran como activos.
-    const isCurrentlyActive = esMedicamento ? true : CategoriaActiva;
+    const isCurrentlyActive = categoria === 'medicamentos' ? true : CategoriaActiva;
 
     return (
         <div className={`relative bg-white p-6 rounded-2xl shadow-lg mb-8 transition-opacity duration-300 ${isCurrentlyActive ? 'opacity-100' : 'opacity-50'}`}>
@@ -36,7 +47,7 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva
                     <div className="text-center p-4 bg-white rounded-lg shadow-xl">
                          <FaInfoCircle className="mx-auto text-4xl text-blue-500 mb-2"/>
                          <p className="font-bold text-gray-700">Categoría Desactivada</p>
-                         <p className="text-sm text-gray-500">Actívala desde el panel de control para usar estos servicios.</p>
+                         <p className="text-sm text-gray-500">Actívala desde el panel para usar estos servicios.</p>
                     </div>
                 </div>
             )}
@@ -44,11 +55,11 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva
             {serviceEntries.length > 0 ? (
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                                {esMedicamento && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frecuencia</th>}
+                                {categoria === 'medicamentos' && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frecuencia</th>}
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
@@ -60,11 +71,11 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva
                                         <p className='text-xs text-gray-500 max-w-xs truncate'>{servicio.descripcion}</p>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {esPeluqueria ? getPriceRange(servicio.precios) : `$${servicio.precio}`}
+                                        {categoria === 'peluqueria' ? getPriceRange(servicio.precios) : `$${servicio.precio}`}
                                     </td>
-                                    {esMedicamento && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{servicio.se_aplica_cada_dias} días</td>}
+                                    {categoria === 'medicamentos' && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{servicio.se_aplica_cada_dias} días</td>}
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-indigo-600 hover:text-indigo-900 mr-3"><FaEdit /></button>
+                                        <button onClick={() => handleEdit(id, servicio)} className="text-indigo-600 hover:text-indigo-900 mr-3"><FaEdit /></button>
                                         <button onClick={() => handleDelete(id)} className="text-red-600 hover:text-red-900"><FaTrash /></button>
                                     </td>
                                 </tr>
@@ -75,14 +86,26 @@ const TablaServicio = ({ titulo, categoria, servicios, onUpdate, CategoriaActiva
             ) : (
                 <p className="text-gray-500 italic">No hay servicios de este tipo definidos.</p>
             )}
+            
+            {/* Modal para editar servicio */}
+            {servicioAEditar && (
+                <Modal isOpen={!!servicioAEditar} onClose={handleCloseModal} title={`Editar Servicio: ${servicioAEditar.nombre}`}>
+                    <FormularioEditarServicio 
+                        servicio={servicioAEditar}
+                        categoria={categoria}
+                        servicioId={servicioAEditar.id}
+                        onServiceUpdated={handleServiceUpdated}
+                        onClose={handleCloseModal}
+                    />
+                </Modal>
+            )}
         </div>
     );
 };
 
-// El componente principal ahora solo recibe las props y las distribuye
 export default function ListaServicios({ servicios, config, onUpdate }) {
     if (!servicios || !config) {
-        return null; // O un loader más simple si se prefiere
+        return null;
     }
 
     return (
@@ -101,7 +124,6 @@ export default function ListaServicios({ servicios, config, onUpdate }) {
                 onUpdate={onUpdate} 
                 CategoriaActiva={config.clinica_activa}
             />
-            {/* Los medicamentos no tienen un interruptor global, siempre están "activos" */}
             <TablaServicio 
                 titulo="Medicamentos" 
                 categoria="medicamentos" 
