@@ -6,7 +6,6 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import es from 'date-fns/locale/es';
 import dayjs from 'dayjs';
-// --- ¡NUEVAS IMPORTACIONES! ---
 import { reprogramarTurnoPorUsuario, getTurnoDetailsForReprogramming, getAvailableSlotsForReprogramming } from '@/lib/actions/turnos.user.actions.js';
 import { getDiasNoLaborales } from '@/lib/actions/config.actions.js';
 
@@ -100,7 +99,9 @@ function ReprogramarTurnoComponent() {
             tipo: turnoDetails.tipo,
             necesitaTraslado: turnoDetails.necesitaTraslado,
             mascota: turnoDetails.mascota,
+            turnoId: turnoInfo.turnoId,
         });
+        
         
         if (result.success) {
             setAvailableSlots(result.data.horarios);

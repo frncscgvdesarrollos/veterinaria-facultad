@@ -9,15 +9,8 @@ import timezone from 'dayjs/plugin/timezone';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-/**
- * @action checkTrasladoAvailability
- * @description (CORREGIDO) Verifica la disponibilidad del servicio de traslado para una fecha y un grupo de mascotas específicos.
- * Utiliza el campo 'necesitaTraslado' para consistencia con el resto de la aplicación.
- * 
- * @param {{ fecha: string, mascotas: Array<Object> }} params - Los parámetros para la verificación.
- * @returns {Promise<{disponible: boolean, error?: string}>} - Un objeto indicando si hay disponibilidad.
- */
-export async function checkTrasladoAvailability({ fecha, mascotas }) {
+
+export async function checkTrasladoAvailability({ fecha, mascotas, turnoIdAIgnorar }) {
   try {
     if (!fecha || !mascotas || mascotas.length === 0) {
       throw new Error("La fecha y la lista de mascotas son requeridas.");
@@ -25,59 +18,45 @@ export async function checkTrasladoAvailability({ fecha, mascotas }) {
 
     const db = admin.firestore();
     const targetDate = new Date(fecha);
-    // Se establece la hora a las 00:00:00 UTC para la comparación
     const startOfDay = new Date(Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 0, 0, 0));
     const endOfDay = new Date(Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 23, 59, 59, 999));
 
-    // 1. Obtener todos los turnos con traslado para el día especificado.
-    // CORRECCIÓN: Se utiliza 'necesitaTraslado' para coincidir con la base de datos.
-    const turnosConTrasladoSnapshot = await db.collectionGroup('turnos')
+    let turnosQuery = db.collectionGroup('turnos')
       .where('necesitaTraslado', '==', true)
       .where('fecha', '>=', startOfDay)
-      .where('fecha', '<', endOfDay)
-      .get();
+      .where('fecha', '<', endOfDay);
+      
+    const turnosConTrasladoSnapshot = await turnosQuery.get();
 
     if (turnosConTrasladoSnapshot.empty) {
       const disponible = verificarDisponibilidadTraslado([], mascotas);
       return { disponible };
     }
 
-    // 2. Enriquecer los datos de los turnos existentes.
     const turnosDelDia = [];
-    // NOTA: Esta parte sigue siendo menos eficiente (potencial N+1), pero es menos crítica
-    // que la pantalla de admin porque se ejecuta con menos datos (solo un día y bajo demanda del usuario).
-    // Por ahora, la prioridad es la consistencia.
     for (const doc of turnosConTrasladoSnapshot.docs) {
-        const turnoData = doc.data();
+        if(doc.id === turnoIdAIgnorar){
+            continue;
+        }
         const pathParts = doc.ref.path.split('/');
         const userId = pathParts[1];
         const mascotaId = pathParts[3];
 
         const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
         if (mascotaDoc.exists) {
-            // La lógica de verificación solo necesita el tamaño.
             turnosDelDia.push({ mascota: { tamaño: mascotaDoc.data().tamaño } });
         }
     }
     
-    // 3. Llamar a la lógica de verificación.
     const disponible = verificarDisponibilidadTraslado(turnosDelDia, mascotas);
 
     return { disponible };
 
   } catch (error) {
-    console.error("Error en checkTrasladoAvailability:", error);
     return { disponible: false, error: `Error del servidor: ${error.message}` };
   }
 }
-/**
- * @action getTurnosByUserId
- * @description Obtiene y clasifica todos los turnos para un usuario específico desde Firestore.
- * Esta función requiere un índice de Grupo de Colección en Firestore: (clienteId ASC, fecha DESC, tipo DESC).
- * 
- * @param {{ userId: string }} params - El ID del usuario (uid) para el cual buscar los turnos.
- * @returns {Promise<{success: boolean, data?: {proximos: Array, historial: Array}, error?: string}>}
- */
+
 export async function getTurnosByUserId({ userId }) {
   if (!userId) {
     return { success: false, error: 'ID de usuario no proporcionado.' };
@@ -103,15 +82,11 @@ export async function getTurnosByUserId({ userId }) {
       const turno = doc.data();
 
       if (!turno.fecha || typeof turno.fecha.toDate !== 'function') {
-        console.warn(`Turno ${doc.id} para el usuario ${userId} ha sido ignorado por tener una fecha inválida.`);
         return null;
       }
       
       const fechaTurno = turno.fecha.toDate();
-      
-      // --- INICIO DE LA CORRECCIÓN ---
       const pathParts = doc.ref.path.split('/');
-      // La ruta es 'users/{userId}/mascotas/{mascotaId}/turnos/{turnoId}'
       const mascotaId = pathParts[3];
       
       let mascotaNombre = turno.mascotaNombre || 'Mascota no registrada';
@@ -124,15 +99,14 @@ export async function getTurnosByUserId({ userId }) {
 
       const turnoProcesado = {
         id: doc.id,
-        userId: userId, // ID del usuario añadido para la reprogramación
-        mascotaId: mascotaId, // ID de la mascota añadido para la reprogramación
+        userId: userId, 
+        mascotaId: mascotaId, 
         servicioNombre: turno.servicioNombre || 'Servicio no especificado',
         estado: turno.estado || 'desconocido',
         tipo: turno.tipo || 'general',
         fecha: fechaTurno.toISOString(),
         mascota: { nombre: mascotaNombre }
       };
-      // --- FIN DE LA CORRECCIÓN ---
 
       return turnoProcesado;
     });
@@ -142,7 +116,7 @@ export async function getTurnosByUserId({ userId }) {
 
     for (const turno of turnosValidos) {
         const fechaTurno = new Date(turno.fecha);
-        if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || (fechaTurno < ahora && turno.estado !== 'reprogramado')) {
+        if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || (fechaTurno < ahora && turno.estado !== 'reprogramar')) {
             historial.push(turno);
         } else {
             proximos.push(turno);
@@ -150,80 +124,44 @@ export async function getTurnosByUserId({ userId }) {
     }
 
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
     return { success: true, data: { proximos, historial } };
 
   } catch (error) {
-    console.error(`Error al obtener los turnos para el usuario ${userId}:`, error);
-    return { success: false, error: 'Error del servidor al buscar los turnos.' };
+    return { success: false, error: `Error del servidor al buscar los turnos: ${error.message}` };
   }
 }
 
-
-/**
- * @action reprogramarTurnoPorUsuario
- * @description Permite a un usuario reprogramar un turno que fue marcado para reprogramación por un admin.
- * Busca el turno original por su ID y actualiza la fecha y el estado.
- * 
- * @param {object} params
- * @param {string} params.turnoId - El ID del documento del turno a reprogramar.
- * @param {string} params.userId - El ID del dueño de la mascota (para la ruta del documento).
- * @param {string} params.mascotaId - El ID de la mascota (para la ruta del documento).
- * @param {string | Date} params.nuevaFecha - La nueva fecha y hora seleccionada por el usuario.
- * @returns {Promise<{success: boolean, error?: string}>}
- */
 export async function reprogramarTurnoPorUsuario({ turnoId, userId, mascotaId, nuevaFecha }) {
-  // Verificación de que todos los datos necesarios están presentes.
   if (!turnoId || !userId || !mascotaId || !nuevaFecha) {
-    return { success: false, error: 'Faltan datos esenciales para completar la reprogramación.' };
+    return { success: false, error: 'Faltan datos esenciales para la reprogramación.' };
   }
 
   try {
     const db = admin.firestore();
-    
-    // 1. Construimos la ruta exacta al documento del turno que queremos modificar.
     const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
-
     const turnoDoc = await turnoRef.get();
 
-    // 2. Doble chequeo de seguridad: nos aseguramos que el turno exista y que esté en el estado correcto.
     if (!turnoDoc.exists) {
       return { success: false, error: 'El turno que intentas modificar ya no existe.' };
     }
-    if (turnoDoc.data().estado !== 'reprogramado') {
+    if (turnoDoc.data().estado !== 'reprogramar') {
       return { success: false, error: 'Este turno no puede ser reprogramado en este momento.' };
     }
 
-    // 3. Actualizamos el documento del turno con la nueva información.
     await turnoRef.update({
-      fecha: new Date(nuevaFecha), // Guardamos la nueva fecha.
-      estado: 'pendiente'         // Devolvemos el turno al estado 'pendiente' para que el admin lo confirme.
+      fecha: new Date(nuevaFecha), 
+      estado: 'pendiente'
     });
 
-    // 4. Revalidamos las rutas clave para que el cambio se refleje inmediatamente en la UI.
-    revalidatePath('/turnos/mis-turnos'); // Actualiza la lista de turnos del usuario.
-    revalidatePath('/admin/turnos');       // Actualiza el panel del administrador.
-
-    console.log(`El turno ${turnoId} ha sido reprogramado exitosamente por el usuario ${userId}.`);
-
+    revalidatePath('/turnos/mis-turnos');
+    revalidatePath('/admin/turnos');
     return { success: true };
 
   } catch (error) {
-    console.error(`Error crítico al reprogramar el turno ${turnoId} por el usuario:`, error);
-    return { success: false, error: 'Ocurrió un error en el servidor. Por favor, intenta más tarde.' };
+    return { success: false, error: `Ocurrió un error en el servidor: ${error.message}` };
   }
 }
 
-/**
- * @action getTurnoDetailsForReprogramming
- * @description Obtiene los detalles esenciales de un turno para iniciar el proceso de reprogramación.
- * 
- * @param {object} params
- * @param {string} params.turnoId - El ID del documento del turno.
- * @param {string} params.userId - El ID del dueño de la mascota.
- * @param {string} params.mascotaId - El ID de la mascota.
- * @returns {Promise<{success: boolean, data?: {tipo: string, necesitaTraslado: boolean, mascota: object}, error?: string}>}
- */
 export async function getTurnoDetailsForReprogramming({ turnoId, userId, mascotaId }) {
   if (!turnoId || !userId || !mascotaId) {
     return { success: false, error: 'Faltan datos para obtener los detalles del turno.' };
@@ -261,18 +199,11 @@ export async function getTurnoDetailsForReprogramming({ turnoId, userId, mascota
     };
 
   } catch (error) {
-    console.error(`Error al obtener detalles del turno ${turnoId}:`, error);
-    return { success: false, error: 'Error del servidor al buscar los detalles del turno.' };
+    return { success: false, error: `Error del servidor al buscar los detalles del turno: ${error.message}` };
   }
 }
 
-
-
-/**
- * @action getAvailableSlotsForReprogramming
- * @description Obtiene los horarios disponibles para un día, considerando tipo, cupos y traslado.
- */
-export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaTraslado, mascota }) {
+export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaTraslado, mascota, turnoId }) {
   if (!fecha || !tipo || !mascota) {
       return { success: false, error: "Datos insuficientes para verificar la disponibilidad." };
   }
@@ -283,7 +214,7 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
       const targetDate = dayjs.tz(fecha, timeZone);
 
       if (necesitaTraslado) {
-          const disponibilidadTraslado = await checkTrasladoAvailability({ fecha: targetDate.format('YYYY-MM-DD'), mascotas: [mascota] });
+          const disponibilidadTraslado = await checkTrasladoAvailability({ fecha: targetDate.format('YYYY-MM-DD'), mascotas: [mascota], turnoIdAIgnorar: turnoId });
           if (disponibilidadTraslado.error) {
                throw new Error(`La verificación de traslado falló: ${disponibilidadTraslado.error}`);
           }
@@ -295,13 +226,19 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
       const startOfDay = targetDate.startOf('day').toDate();
       const endOfDay = targetDate.endOf('day').toDate();
 
-      const turnosSnapshot = await db.collectionGroup('turnos')
+      let turnosQuery = db.collectionGroup('turnos')
           .where('tipo', '==', tipo)
           .where('fecha', '>=', startOfDay)
-          .where('fecha', '<=', endOfDay)
-          .get();
+          .where('fecha', '<=', endOfDay);
 
-      const horariosOcupados = turnosSnapshot.docs.map(doc => doc.data().horario);
+      const turnosSnapshot = await turnosQuery.get();
+
+      const horariosOcupados = turnosSnapshot.docs.map(doc => {
+          if(doc.id === turnoId){
+              return null;
+          }
+          return doc.data().horario;
+      }).filter(h => h !== null);
       
       let horariosDisponibles = [];
       if (tipo === 'clinica') {
@@ -316,7 +253,6 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
           const cuposDoc = await cuposPeluqueriaRef.get();
           const cuposData = cuposDoc.exists ? cuposDoc.data() : { cuposManana: 4, cuposTarde: 4 };
 
-
           const countManana = horariosOcupados.filter(h => h === 'mañana').length;
           const countTarde = horariosOcupados.filter(h => h === 'tarde').length;
           
@@ -327,7 +263,6 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
       return { success: true, data: { horarios: horariosDisponibles } };
 
   } catch (error) {
-      console.error(`Error al obtener horarios disponibles para ${fecha}:`, error);
       return { success: false, error: `Error del servidor: ${error.message}` };
   }
 }
