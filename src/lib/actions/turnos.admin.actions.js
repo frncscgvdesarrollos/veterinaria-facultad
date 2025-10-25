@@ -22,14 +22,19 @@ export async function getTurnsForAdminDashboard() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
 
+    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+    // Se restaura la consulta original con ambos orderBy para usar el índice existente.
     const turnosSnapshot = await db.collectionGroup('turnos')
                                  .orderBy('fecha', 'desc')
+                                 .orderBy('tipo', 'asc')
                                  .get();
 
     if (turnosSnapshot.empty) {
       return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [] } };
     }
 
+    // El resto del código para enriquecer y clasificar los datos permanece igual,
+    // ya que la lógica es correcta.
     const usersCache = new Map();
     const mascotasCache = new Map();
 
@@ -102,14 +107,12 @@ export async function getTurnsForAdminDashboard() {
     const hoy = [];
     const proximos = [];
     const finalizados = [];
-    const reprogramar = []; // Array para los turnos a reprogramar
+    const reprogramar = [];
 
     for (const turno of enrichedTurnos) {
       if (!turno.fecha) continue;
       const fechaTurno = dayjs(turno.fecha);
 
-      // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-      // Se prioriza el estado 'reprogramado' para que aparezca en su propia lista.
       if (turno.estado === 'reprogramar') {
         reprogramar.push(turno);
       } else if (turno.estado === 'finalizado' || turno.estado === 'cancelado') {
@@ -119,7 +122,6 @@ export async function getTurnsForAdminDashboard() {
       } else if (fechaTurno.isAfter(nowInArgentina) && turno.estado === 'pendiente') {
         proximos.push(turno);
       } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
-        // Turnos pasados que no se finalizaron se mueven a historial.
         finalizados.push(turno);
       }
     }
@@ -127,7 +129,7 @@ export async function getTurnsForAdminDashboard() {
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     finalizados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     hoy.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    reprogramar.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha ascendente
+    reprogramar.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     return { success: true, data: { hoy, proximos, finalizados, reprogramar } };
 
