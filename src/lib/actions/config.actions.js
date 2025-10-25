@@ -13,8 +13,9 @@ export async function getDiasNoLaborales() {
     const configRef = db.collection('configuracion').doc('disponibilidad');
     const docSnap = await configRef.get();
 
-    if (!docSnap.exists()) {
-      console.log("El documento 'disponibilidad' no existe en la colección 'configuracion'.");
+    // CORRECCIÓN: .exists es una propiedad booleana en el Admin SDK del servidor, no una función.
+    if (!docSnap.exists) {
+      console.log("El documento 'disponibilidad' no existe en la colección 'configuracion'. Se retorna un array vacío.");
       return { success: true, data: [] };
     }
 
@@ -29,9 +30,7 @@ export async function getDiasNoLaborales() {
     return { success: true, data: dates };
 
   } catch (error) {
-    // --- MODIFICACIÓN PARA DEBUGGING ---
-    console.error("ERROR DETALLADO en getDiasNoLaborales:", error);
-    return { success: false, error: `Error del servidor: ${error.message}` };
-    // --- FIN DE LA MODIFICACIÓN ---
+    console.error("Error definitivo en getDiasNoLaborales:", error);
+    return { success: false, error: 'No se pudieron cargar las configuraciones de días festivos desde el servidor.' };
   }
 }
