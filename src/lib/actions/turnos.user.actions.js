@@ -276,7 +276,6 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
       const timeZone = 'America/Argentina/Buenos_Aires';
       const targetDate = dayjs.tz(fecha, timeZone);
 
-      // 1. Verificación de traslado con manejo de errores mejorado.
       if (necesitaTraslado) {
           const disponibilidadTraslado = await checkTrasladoAvailability({ fecha: targetDate.format('YYYY-MM-DD'), mascotas: [mascota] });
           if (disponibilidadTraslado.error) {
@@ -287,7 +286,6 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
           }
       }
 
-      // 2. Obtener los horarios ya ocupados para ese día y tipo de turno.
       const startOfDay = targetDate.startOf('day').toDate();
       const endOfDay = targetDate.endOf('day').toDate();
 
@@ -299,7 +297,6 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
 
       const horariosOcupados = turnosSnapshot.docs.map(doc => doc.data().horario);
       
-      // 3. Calcular los horarios disponibles.
       let horariosDisponibles = [];
       if (tipo === 'clinica') {
           const todosLosHorarios = [];
@@ -324,7 +321,6 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
 
   } catch (error) {
       console.error(`Error al obtener horarios disponibles para ${fecha}:`, error);
-      // ¡CAMBIO CLAVE! Ahora devolvemos el error específico.
       return { success: false, error: `Error del servidor: ${error.message}` };
   }
 }
