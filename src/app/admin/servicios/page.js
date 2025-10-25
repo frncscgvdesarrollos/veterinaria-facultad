@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { FaArrowLeft, FaPlus, FaSpinner } from 'react-icons/fa';
 import Modal from '@/app/components/Modal';
 import FormularioNuevoServicio from './FormularioNuevoServicio';
 import ListaServicios from './ListaServicios';
-import DisponibilidadCalendario from './DisponibilidadCalendario'; // Importamos el nuevo componente
+import DisponibilidadCalendario from './DisponibilidadCalendario';
 import { obtenerServicios, obtenerConfiguracionServicios, toggleCategoriaActiva, obtenerDiasBloqueados } from '@/lib/actions/servicios.actions.js';
-import { FaPlus, FaSpinner } from 'react-icons/fa';
 
-// Componente para un único interruptor de categoría (sin cambios)
 const InterruptorCategoria = ({ nombre, categoria, activo, onToggle }) => {
     return (
         <div className={`p-4 rounded-lg flex items-center justify-between transition-colors ${activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -31,14 +31,13 @@ export default function ServiciosPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [servicios, setServicios] = useState(null);
     const [config, setConfig] = useState(null);
-    const [diasBloqueados, setDiasBloqueados] = useState([]); // Nuevo estado para los días bloqueados
+    const [diasBloqueados, setDiasBloqueados] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            // Cargamos todos los datos en paralelo para mayor eficiencia
             const [serviciosData, configData, diasBloqueadosData] = await Promise.all([
                 obtenerServicios(),
                 obtenerConfiguracionServicios(),
@@ -77,6 +76,15 @@ export default function ServiciosPage() {
     return (
         <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
             <div className="max-w-6xl mx-auto">
+                <div className="mb-6">
+                    <Link href="/admin">
+                        <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+                            <FaArrowLeft className="mr-2" />
+                            Volver al Panel Principal
+                        </span>
+                    </Link>
+                </div>
+
                 <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Gestión de Servicios</h1>
@@ -100,7 +108,6 @@ export default function ServiciosPage() {
                 
                 {!loading && !error && (
                     <>
-                        {/* Panel de Control Global */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             {config && (
                                 <>
@@ -120,10 +127,8 @@ export default function ServiciosPage() {
                             )}
                         </div>
 
-                        {/* Calendario de Disponibilidad */}
                         <DisponibilidadCalendario diasBloqueados={diasBloqueados} />
 
-                        {/* Lista de Servicios */}
                         <ListaServicios servicios={servicios} config={config} onUpdate={fetchData} />
                     </>
                 )}
