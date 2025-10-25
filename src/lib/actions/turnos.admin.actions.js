@@ -22,8 +22,6 @@ export async function getTurnsForAdminDashboard() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
 
-    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-    // Se restaura la consulta original con ambos orderBy para usar el índice existente.
     const turnosSnapshot = await db.collectionGroup('turnos')
                                  .orderBy('fecha', 'desc')
                                  .orderBy('tipo', 'asc')
@@ -33,8 +31,6 @@ export async function getTurnsForAdminDashboard() {
       return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [] } };
     }
 
-    // El resto del código para enriquecer y clasificar los datos permanece igual,
-    // ya que la lógica es correcta.
     const usersCache = new Map();
     const mascotasCache = new Map();
 
@@ -139,15 +135,34 @@ export async function getTurnsForAdminDashboard() {
   }
 }
 
-export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus }) {
+// --- ¡AQUÍ ESTÁ LA MODIFICACIÓN! ---
+// La función ahora acepta un parámetro opcional 'newDate' para manejar la reprogramación.
+export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus, newDate }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
       throw new Error("Faltan parámetros requeridos.");
     }
+    
     const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
-    await turnoRef.update({ estado: newStatus });
+    
+    // Construimos el objeto de actualización dinámicamente.
+    const updateData = {
+      estado: newStatus
+    };
+
+    // Si se proporciona una nueva fecha (al reprogramar), la añadimos a la actualización.
+    if (newDate) {
+      // Convertimos la fecha (que probablemente viene como string) a un Timestamp de Firestore.
+      updateData.fecha = admin.firestore.Timestamp.fromDate(new Date(newDate));
+    }
+
+    await turnoRef.update(updateData);
+    
+    // Revalidamos la ruta para que el dashboard se actualice inmediatamente.
     revalidatePath('/admin/turnos');
+    
     return { success: true, message: `Turno actualizado.` };
+
   } catch (error) {
     console.error("Error en updateTurnoStatus:", error);
     return { success: false, error: `Error al actualizar: ${error.message}` };

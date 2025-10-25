@@ -207,3 +207,133 @@ export async function reprogramarTurnoPorUsuario({ turnoId, userId, mascotaId, n
     return { success: false, error: 'Ocurrió un error en el servidor. Por favor, intenta más tarde.' };
   }
 }
+
+/**
+ * @action getTurnoDetailsForReprogramming
+ * @description Obtiene los detalles esenciales de un turno para iniciar el proceso de reprogramación.
+ * 
+ * @param {object} params
+ * @param {string} params.turnoId - El ID del documento del turno.
+ * @param {string} params.userId - El ID del dueño de la mascota.
+ * @param {string} params.mascotaId - El ID de la mascota.
+ * @returns {Promise<{success: boolean, data?: {tipo: string, necesitaTraslado: boolean, mascota: object}, error?: string}>}
+ */
+export async function getTurnoDetailsForReprogramming({ turnoId, userId, mascotaId }) {
+  if (!turnoId || !userId || !mascotaId) {
+    return { success: false, error: 'Faltan datos para obtener los detalles del turno.' };
+  }
+
+  try {
+    const db = admin.firestore();
+    const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
+    const turnoDoc = await turnoRef.get();
+
+    if (!turnoDoc.exists) {
+      return { success: false, error: 'No se encontró el turno especificado.' };
+    }
+    
+    const mascotaRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId);
+    const mascotaDoc = await mascotaRef.get();
+     if (!mascotaDoc.exists) {
+      return { success: false, error: 'No se encontró la mascota asociada al turno.' };
+    }
+
+    const turnoData = turnoDoc.data();
+    const mascotaData = mascotaDoc.data();
+
+    return {
+      success: true,
+      data: {
+        tipo: turnoData.tipo,
+        necesitaTraslado: turnoData.necesitaTraslado || false,
+        mascota: {
+            id: mascotaDoc.id,
+            nombre: mascotaData.nombre,
+            tamaño: mascotaData.tamaño
+        }
+      }
+    };
+
+  } catch (error) {
+    console.error(`Error al obtener detalles del turno ${turnoId}:`, error);
+    return { success: false, error: 'Error del servidor al buscar los detalles del turno.' };
+  }
+}
+
+
+/**
+ * @action getAvailableSlotsForReprogramming
+ * @description Obtiene los horarios disponibles para un día, considerando tipo, cupos y traslado.
+ * 
+ * @param {object} params
+ * @param {string} params.fecha - La fecha seleccionada en formato ISO (YYYY-MM-DD).
+ * @param {string} params.tipo - 'clinica' o 'peluqueria'.
+ * @param {boolean} params.necesitaTraslado - Si el turno original requería traslado.
+ * @param {object} params.mascota - El objeto mascota, que debe contener 'tamaño'.
+ * @returns {Promise<{success: boolean, data?: { horarios: Array<string> }, error?: string}>}
+ */
+export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaTraslado, mascota }) {
+    if (!fecha || !tipo || !mascota) {
+        return { success: false, error: "Datos insuficientes para verificar la disponibilidad." };
+    }
+
+    try {
+        const db = admin.firestore();
+        const timeZone = 'America/Argentina/Buenos_Aires';
+        const targetDate = dayjs.tz(fecha, timeZone);
+
+        // 1. Verificación CRÍTICA de traslado ANTES de hacer cualquier otra cosa.
+        if (necesitaTraslado) {
+            const disponibilidadTraslado = await checkTrasladoAvailability({ fecha: targetDate.format('YYYY-MM-DD'), mascotas: [mascota] });
+            if (!disponibilidadTraslado.disponible) {
+                // Si no hay traslado, no devolvemos ningún horario.
+                return { success: true, data: { horarios: [] }, error: "No hay espacio en el vehículo de traslado para este día." };
+            }
+        }
+
+        // 2. Obtener los horarios ya ocupados para ese día y tipo de turno.
+        const startOfDay = targetDate.startOf('day').toDate();
+        const endOfDay = targetDate.endOf('day').toDate();
+
+        const turnosSnapshot = await db.collectionGroup('turnos')
+            .where('tipo', '==', tipo)
+            .where('fecha', '>=', startOfDay)
+            .where('fecha', '<=', endOfDay)
+            .get();
+
+        const horariosOcupados = turnosSnapshot.docs.map(doc => doc.data().horario);
+        
+        // 3. Calcular los horarios disponibles según el tipo de turno.
+        let horariosDisponibles = [];
+        if (tipo === 'clinica') {
+            const todosLosHorarios = [];
+            for (let h = 9; h < 18; h++) { // Horario de 9:00 a 17:30
+                todosLosHorarios.push(`${h.toString().padStart(2, '0')}:00`);
+                todosLosHorarios.push(`${h.toString().padStart(2, '0')}:30`);
+            }
+            horariosDisponibles = todosLosHorarios.filter(h => !horariosOcupados.includes(h));
+
+        } else if (tipo === 'peluqueria') {
+            const cuposPeluqueriaRef = db.collection('turnos_peluqueria').doc(targetDate.format('YYYY-MM-DD'));
+            const cuposDoc = await cuposPeluqueriaRef.get();
+            // Usamos 4 como valor por defecto si el documento del día no existe.
+            const cuposData = cuposDoc.exists() ? cuposDoc.data() : { cuposManana: 4, cuposTarde: 4 };
+
+            const countManana = horariosOcupados.filter(h => h === 'mañana').length;
+            const countTarde = horariosOcupados.filter(h => h === 'tarde').length;
+            
+            if (cuposData.cuposManana > countManana) {
+                horariosDisponibles.push('mañana');
+            }
+            if (cuposData.cuposTarde > countTarde) {
+                horariosDisponibles.push('tarde');
+            }
+        }
+
+        return { success: true, data: { horarios: horariosDisponibles } };
+
+    } catch (error) {
+        console.error(`Error al obtener horarios disponibles para ${fecha}:`, error);
+        return { success: false, error: 'Error del servidor al calcular la disponibilidad.' };
+    }
+}
