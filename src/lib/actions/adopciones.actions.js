@@ -10,29 +10,51 @@ import admin from '@/lib/firebaseAdmin';
 export async function getMascotasEnAdopcion() {
   const firestore = admin.firestore();
   try {
-    // CORRECCIÓN FINAL: Se utiliza el campo 'fechaNacimiento' para ordenar, coincidiendo
-    // con el índice compuesto que ya existe en Firestore.
     const snapshot = await firestore
                           .collectionGroup('mascotas')
                           .where('enAdopcion', '==', true)
-                          .orderBy('fechaNacimiento', 'desc') // Usando el campo correcto del índice.
+                          .orderBy('fechaNacimiento', 'desc')
                           .get();
 
     if (snapshot.empty) {
-      return []; // No hay mascotas en adopción, devuelve un array vacío.
+      return [];
     }
 
     const mascotas = snapshot.docs.map(doc => ({
       id: doc.id,
+      path: doc.ref.path, // Devolvemos la ruta completa para la postulación
       ...doc.data(),
     }));
 
     return mascotas;
 
   } catch (error) {
-    // Este error es importante para depuración en el servidor.
     console.error('Error inesperado al obtener las mascotas en adopción:', error);
-    // Devuelve un array vacío para que la UI no se rompa en caso de error.
     return [];
+  }
+}
+
+/**
+ * @function postularseParaAdopcion
+ * @description Registra a un usuario como candidato para adoptar una mascota.
+ * @param {string} mascotaPath - La ruta completa del documento de la mascota.
+ * @param {object} datosUsuario - Los datos del usuario que se postula.
+ */
+export async function postularseParaAdopcion(mascotaPath, datosUsuario) {
+  const firestore = admin.firestore();
+  try {
+    const mascotaRef = firestore.doc(mascotaPath);
+    const candidatoRef = mascotaRef.collection('candidatos').doc(datosUsuario.uid);
+
+    await candidatoRef.set({
+      nombre: datosUsuario.nombre,
+      email: datosUsuario.email,
+      fechaPostulacion: new Date(),
+    });
+
+    return { success: true, message: 'Te has postulado correctamente.' };
+  } catch (error) {
+    console.error('Error al postularse para adopción:', error);
+    return { success: false, message: 'Hubo un error al procesar tu postulación.' };
   }
 }
