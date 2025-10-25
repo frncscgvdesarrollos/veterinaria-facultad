@@ -81,7 +81,7 @@ export async function getTurnosByUserId({ userId }) {
     const db = admin.firestore();
     const turnosSnapshot = await db.collectionGroup('turnos')
                                    .where('clienteId', '==', userId)
-                                   .orderBy('fecha', 'desc')
+                                   .orderBy('fecha', 'asc')
                                    .get();
 
     if (turnosSnapshot.empty) {
