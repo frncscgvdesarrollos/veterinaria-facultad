@@ -1,18 +1,15 @@
 
-import { FaBell, FaBoxOpen, FaCog } from 'react-icons/fa';
+'use client'
+import Link from 'next/link';
+import { FaBell, FaBoxOpen, FaCog, FaTachometerAlt, FaCalendarAlt, FaUsers, FaConciergeBell } from 'react-icons/fa';
 
-const Card = ({ title, children }) => (
-    <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">{title}</h2>
-        {children}
-    </div>
-);
-
-const InfoLink = ({ text, icon: Icon }) => (
-    <div className="flex items-center p-3 my-1 rounded-lg text-gray-600">
-        <Icon className="text-xl text-gray-400" />
-        <span className="ml-4 font-medium">{text}</span>
-    </div>
+const DashboardCard = ({ title, description, href }) => (
+    <Link href={href}>
+        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+            <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+            <p className="text-gray-500 mt-2">{description}</p>
+        </div>
+    </Link>
 );
 
 export default function AdminDashboardPage() {
@@ -24,15 +21,26 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card title="Próximas Secciones">
-                <div className="space-y-2">
-                    <InfoLink icon={FaBell} text="Notificaciones" />
-                    <InfoLink icon={FaBoxOpen} text="Caja" />
-                    <InfoLink icon={FaCog} text="Configuración" />
-                </div>
-                <p className="text-gray-400 mt-4 text-sm">Estas secciones estarán disponibles próximamente.</p>
-            </Card>
-            {/* Aquí se pueden añadir más cards para el dashboard */}
+            <DashboardCard title="Turnos" description="Gestionar todas las citas" href="/admin/turnos" />
+            <DashboardCard title="Clientes" description="Ver y administrar clientes" href="/admin/clientes" />
+            <DashboardCard title="Servicios" description="Configurar los servicios ofrecidos" href="/admin/servicios" />
+        </div>
+
+        <div className="mt-10 bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Próximas Secciones</h2>
+            <div className="flex items-center text-gray-500 my-2">
+                <FaBell className="text-xl mr-4" />
+                <span>Notificaciones</span>
+            </div>
+            <div className="flex items-center text-gray-500 my-2">
+                <FaBoxOpen className="text-xl mr-4" />
+                <span>Caja</span>
+            </div>
+            <div className="flex items-center text-gray-500 my-2">
+                <FaCog className="text-xl mr-4" />
+                <span>Configuración</span>
+            </div>
+            <p className="text-gray-400 mt-4 text-sm">Estas secciones estarán disponibles próximamente.</p>
         </div>
     </div>
   );
