@@ -42,7 +42,7 @@ const ServicioDetalleSelector = ({ mascota, motivo, catalogo, specificServices, 
     const valorActual = specificServices[mascota.id]?.[motivo] || '';
     if (serviciosDisponibles.length === 0) return <p className="text-sm text-gray-500">No hay servicios de {motivo} disponibles.</p>;
     const getPrecio = (servicio) => {
-        if (motivo === 'clinica') return servicio.precio_base || 0;
+        if (motivo === 'clinica') return servicio.precio || 0;
         if (motivo === 'peluqueria') { const tamañoKey = TAMAÑO_PRECIOS_MAP[mascota.tamaño.toLowerCase()] || 'chico'; return servicio.precios[tamañoKey] || 0; }
         return 0;
     };
