@@ -28,7 +28,7 @@ export async function getTurnsForAdminDashboard() {
                                  .get();
 
     if (turnosSnapshot.empty) {
-      return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [] } };
+      return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [] } };
     }
 
     const usersCache = new Map();
@@ -99,11 +99,14 @@ export async function getTurnsForAdminDashboard() {
     const nowInArgentina = dayjs().tz(timeZone);
     const startOfTodayInArgentina = nowInArgentina.startOf('day');
     const endOfTodayInArgentina = nowInArgentina.endOf('day');
+    const startOfMonthInArgentina = nowInArgentina.startOf('month');
+    const endOfMonthInArgentina = nowInArgentina.endOf('month');
 
     const hoy = [];
     const proximos = [];
     const finalizados = [];
     const reprogramar = [];
+    const mensual = [];
 
     for (const turno of enrichedTurnos) {
       if (!turno.fecha) continue;
@@ -117,6 +120,13 @@ export async function getTurnsForAdminDashboard() {
         hoy.push(turno);
       } else if (fechaTurno.isAfter(nowInArgentina) && turno.estado === 'pendiente') {
         proximos.push(turno);
+      } else if (
+        (turno.estado === 'confirmado' || turno.estado === 'pendiente') &&
+        fechaTurno.isAfter(endOfTodayInArgentina) && 
+        fechaTurno.isAfter(startOfMonthInArgentina) && 
+        fechaTurno.isBefore(endOfMonthInArgentina)
+      ) {
+        mensual.push(turno);
       } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
         finalizados.push(turno);
       }
@@ -126,8 +136,9 @@ export async function getTurnsForAdminDashboard() {
     finalizados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     hoy.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     reprogramar.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    mensual.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-    return { success: true, data: { hoy, proximos, finalizados, reprogramar } };
+    return { success: true, data: { hoy, proximos, finalizados, reprogramar, mensual } };
 
   } catch (error) {
     console.error("Error en getTurnsForAdminDashboard:", error);
@@ -135,8 +146,7 @@ export async function getTurnsForAdminDashboard() {
   }
 }
 
-// --- ¡AQUÍ ESTÁ LA MODIFICACIÓN! ---
-// La función ahora acepta un parámetro opcional 'newDate' para manejar la reprogramación.
+
 export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus, newDate }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
@@ -145,20 +155,16 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus,
     
     const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
     
-    // Construimos el objeto de actualización dinámicamente.
     const updateData = {
       estado: newStatus
     };
 
-    // Si se proporciona una nueva fecha (al reprogramar), la añadimos a la actualización.
     if (newDate) {
-      // Convertimos la fecha (que probablemente viene como string) a un Timestamp de Firestore.
       updateData.fecha = admin.firestore.Timestamp.fromDate(new Date(newDate));
     }
 
     await turnoRef.update(updateData);
     
-    // Revalidamos la ruta para que el dashboard se actualice inmediatamente.
     revalidatePath('/admin/turnos');
     
     return { success: true, message: `Turno actualizado.` };
