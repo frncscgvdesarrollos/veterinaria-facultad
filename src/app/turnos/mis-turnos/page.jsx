@@ -4,21 +4,16 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
 import Link from 'next/link';
-import { FaPlus, FaCalendarCheck, FaHistory, FaDog, FaCat, FaExclamationTriangle, FaArrowRight } from 'react-icons/fa';
+import { FaDog, FaCat, FaPlus, FaCalendarCheck, FaHistory, FaDog, FaCat, FaExclamationTriangle, FaArrowRight } from 'react-icons/fa';
+
 
 const TurnoCard = ({ turno }) => {
-    // CORRECCIÓN: Se ajusta el nombre del estado para que coincida con la base de datos.
     const statusStyles = {
         pendiente: 'bg-yellow-100 text-yellow-800',
         confirmado: 'bg-blue-100 text-blue-800',
         finalizado: 'bg-green-100 text-green-800',
         cancelado: 'bg-red-100 text-red-800',
-        reprogramar: 'bg-orange-100 text-orange-800', // Clave corregida
-    };
-
-    const tipoIcono = {
-        clinica: <FaCat className="text-blue-500" size={24} />,
-        peluqueria: <FaDog className="text-pink-500" size={24} />
+        reprogramar: 'bg-orange-100 text-orange-800',
     };
 
     const formattedDate = turno.fecha
@@ -30,16 +25,26 @@ const TurnoCard = ({ turno }) => {
             minute: '2-digit',
         }) + ' hs'
         : 'Fecha no especificada';
-    
-    // CORRECCIÓN: La condición ahora usa 'reprogramar' en lugar de 'reprogramado'.
+
     const necesitaReprogramacion = turno.estado === 'reprogramar';
+    
+    // Determina el color del ícono según el tipo de servicio
+    const iconColor = turno.tipo === 'peluqueria' ? 'text-pink-500' : 'text-blue-500';
 
     return (
         <div className={`bg-white shadow-md rounded-lg p-5 border-l-4 ${necesitaReprogramacion ? 'border-orange-500' : 'border-gray-200 hover:border-blue-500'} transition-all duration-300`}>
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center">
-                    {tipoIcono[turno.tipo] || <FaDog className="text-gray-500" size={24} />}
-                    <div className="ml-4">
+                    {/* --- CORRECCIÓN APLICADA AQUÍ --- */}
+                    {/* Muestra el ícono según la especie, pero usa el color del servicio */}
+                    <div className="w-6 mr-4"> {/* Contenedor para alinear el ícono */}
+                        {turno.mascota?.especie?.toLowerCase() === 'perro' 
+                            ? <FaDog className={iconColor} size={24} />
+                            : <FaCat className={iconColor} size={24} />
+                        }
+                    </div>
+
+                    <div className="ml-0"> {/* Eliminado ml-4 ya que el contenedor del ícono lo gestiona */}
                         <h3 className="font-bold text-lg text-gray-800">{turno.servicioNombre}</h3>
                         <p className="text-md text-gray-600 font-semibold">Para: {turno.mascota.nombre}</p>
                     </div>
