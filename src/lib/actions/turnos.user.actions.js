@@ -79,14 +79,12 @@ export async function getTurnosByUserId({ userId }) {
 
   try {
     const db = admin.firestore();
-    // Usamos collectionGroup para buscar en todas las subcolecciones de 'turnos'
     const turnosSnapshot = await db.collectionGroup('turnos')
                                    .where('clienteId', '==', userId)
-                                   .orderBy('fecha', 'desc') // Ordenamos por fecha descendente
+                                   .orderBy('fecha', 'desc')
                                    .get();
 
     if (turnosSnapshot.empty) {
-      // Si no hay turnos, devolvemos arrays vacíos. Esto es un éxito, no un error.
       return { success: true, data: { proximos: [], historial: [] } };
     }
 
@@ -96,35 +94,46 @@ export async function getTurnosByUserId({ userId }) {
 
     turnosSnapshot.forEach(doc => {
       const turno = doc.data();
+
+      // --- CORRECCIÓN CLAVE: Verificación de seguridad ---
+      // Si el turno no tiene fecha o esta es inválida, lo ignoramos para evitar que la página falle.
+      if (!turno.fecha || typeof turno.fecha.toDate !== 'function') {
+        console.warn(`Turno ${doc.id} se ha ignorado por tener una fecha inválida o corrupta.`);
+        return; // Esto previene el "crash" del servidor.
+      }
+      
       const fechaTurno = turno.fecha.toDate();
 
+      // Aseguramos que los datos que pasamos al cliente sean siempre consistentes.
       const turnoProcesado = {
         id: doc.id,
-        ...turno,
-        // Serializamos la fecha a un formato estándar (ISO string) para el cliente.
-        fecha: fechaTurno.toISOString(), 
-        // El componente cliente espera un objeto mascota, nos aseguramos que exista.
+        servicioNombre: turno.servicioNombre || 'Servicio no especificado',
+        estado: turno.estado || 'desconocido',
+        tipo: turno.tipo || 'general',
+        fecha: fechaTurno.toISOString(), // Convertimos a un formato estándar y seguro.
         mascota: {
-            nombre: turno.mascotaNombre || 'Nombre no disponible'
+            nombre: turno.mascotaNombre || 'Mascota no registrada'
         }
       };
 
-      // Clasificamos el turno en 'historial' o 'próximos'
-      if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || fechaTurno < ahora) {
+      // --- Lógica de clasificación mejorada ---
+      // Clasificamos los turnos en 'historial' o 'próximos'.
+      // Los turnos 'reprogramado' se mostrarán en "próximos" para que el usuario los vea.
+      if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || (fechaTurno < ahora && turno.estado !== 'reprogramado')) {
         historial.push(turnoProcesado);
       } else {
         proximos.push(turnoProcesado);
       }
     });
 
-    // Los turnos próximos deben mostrarse del más cercano al más lejano.
-    // Como la consulta inicial los trajo descendentes, los invertimos.
+    // Ordenamos los próximos del más cercano al más lejano.
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     return { success: true, data: { proximos, historial } };
 
   } catch (error) {
     console.error(`Error al obtener los turnos para el usuario ${userId}:`, error);
+    // Si aun así ocurre otro error, el mensaje de error genérico se mantiene.
     return { success: false, error: 'Error del servidor al buscar los turnos.' };
   }
 }
