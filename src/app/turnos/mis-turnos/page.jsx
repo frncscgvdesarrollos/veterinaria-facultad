@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
 import Link from 'next/link';
-import { FaDog, FaCat, FaPlus, FaCalendarCheck, FaHistory, FaDog, FaCat, FaExclamationTriangle, FaArrowRight } from 'react-icons/fa';
+import { FaDog, FaCat, FaPlus, FaCalendarCheck, FaHistory, FaExclamationTriangle, FaArrowRight } from 'react-icons/fa';
 
 
 const TurnoCard = ({ turno }) => {
