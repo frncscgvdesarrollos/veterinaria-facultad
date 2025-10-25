@@ -20,11 +20,20 @@ export async function getMascotasEnAdopcion() {
       return [];
     }
 
-    const mascotas = snapshot.docs.map(doc => ({
-      id: doc.id,
-      path: doc.ref.path, // Devolvemos la ruta completa para la postulación
-      ...doc.data(),
-    }));
+    const mascotas = snapshot.docs.map(doc => {
+      const data = doc.data();
+      // Convertir Timestamps a strings ISO para serialización
+      const fechaNacimiento = data.fechaNacimiento?.toDate ? data.fechaNacimiento.toDate().toISOString() : null;
+      const fechaRegistro = data.fechaRegistro?.toDate ? data.fechaRegistro.toDate().toISOString() : null;
+
+      return {
+        id: doc.id,
+        path: doc.ref.path,
+        ...data,
+        fechaNacimiento,
+        fechaRegistro,
+      };
+    });
 
     return mascotas;
 
