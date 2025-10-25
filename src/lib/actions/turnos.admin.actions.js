@@ -11,7 +11,6 @@ dayjs.extend(timezone);
 
 const db = admin.firestore();
 
-// Función auxiliar (sin cambios)
 const toISOStringOrNull = (timestamp) => {
   if (timestamp && typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toISOString();
@@ -25,10 +24,8 @@ export async function getTurnsForAdminDashboard() {
 
     const turnosSnapshot = await db.collectionGroup('turnos')
                                  .orderBy('fecha', 'desc')
-                                 .orderBy('tipo', 'asc')
                                  .get();
 
-    // MODIFICACIÓN 1: Añadir 'reprogramar' al objeto de datos inicial si no hay turnos.
     if (turnosSnapshot.empty) {
       return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [] } };
     }
@@ -37,7 +34,6 @@ export async function getTurnsForAdminDashboard() {
     const mascotasCache = new Map();
 
     const enrichedTurnosPromises = turnosSnapshot.docs.map(async (doc) => {
-      // ... (Toda esta sección de enriquecimiento de datos no cambia)
       const turnoData = doc.data();
       const userId = turnoData.clienteId;
       const mascotaId = turnoData.mascotaId;
@@ -106,42 +102,41 @@ export async function getTurnsForAdminDashboard() {
     const hoy = [];
     const proximos = [];
     const finalizados = [];
-    // MODIFICACIÓN 2: Añadir el nuevo array para los turnos a reprogramar.
-    const reprogramar = [];
+    const reprogramar = []; // Array para los turnos a reprogramar
 
     for (const turno of enrichedTurnos) {
       if (!turno.fecha) continue;
       const fechaTurno = dayjs(turno.fecha);
 
-      // MODIFICACIÓN 3: Añadir una nueva condición para capturar el estado 'reprogramado'.
-      if (turno.estado === 'reprogramado') {
+      // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+      // Se prioriza el estado 'reprogramado' para que aparezca en su propia lista.
+      if (turno.estado === 'reprogramar') {
         reprogramar.push(turno);
       } else if (turno.estado === 'finalizado' || turno.estado === 'cancelado') {
         finalizados.push(turno);
-      } else if (fechaTurno.isAfter(startOfTodayInArgentina) && fechaTurno.isBefore(endOfTodayInArgentina)) {
+      } else if (fechaTurno.isAfter(startOfTodayInArgentina) && fechaTurno.isBefore(endOfTodayInArgentina) && turno.estado === 'confirmado') {
         hoy.push(turno);
-      } else if (fechaTurno.isAfter(nowInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
+      } else if (fechaTurno.isAfter(nowInArgentina) && turno.estado === 'pendiente') {
         proximos.push(turno);
       } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
+        // Turnos pasados que no se finalizaron se mueven a historial.
         finalizados.push(turno);
       }
     }
     
-    // MODIFICACIÓN 4: Ordenar el nuevo array y añadirlo al objeto de retorno.
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     finalizados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     hoy.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    reprogramar.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Ordenamos por fecha descendente.
+    reprogramar.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha ascendente
 
     return { success: true, data: { hoy, proximos, finalizados, reprogramar } };
 
   } catch (error) {
-    console.error("Error REAL en getTurnsForAdminDashboard:", error);
+    console.error("Error en getTurnsForAdminDashboard:", error);
     return { success: false, error: `Error del servidor: ${error.message}.` };
   }
 }
 
-// La función updateTurnoStatus no necesita cambios.
 export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
