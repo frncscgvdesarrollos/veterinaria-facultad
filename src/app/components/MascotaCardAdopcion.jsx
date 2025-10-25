@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { postularseParaAdopcion } from '@/lib/actions/adopciones.actions.js';
 
 export default function MascotaCardAdopcion({ mascota }) {
-    const { user, isLoggedIn } = useAuth(); // Usamos isLoggedIn para una verificación más robusta
+    const { user, isLoggedIn } = useAuth();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -15,32 +15,32 @@ export default function MascotaCardAdopcion({ mascota }) {
     const imageUrl = mascota.fotos && mascota.fotos.length > 0 ? mascota.fotos[0] : '/img/placeholder-dog.jpg';
 
     const handlePostulacion = async () => {
-        // 1. Verificación inicial de sesión
+        alert("Botón clickeado. Verificando sesión..."); // Alerta 1: Para confirmar que el clic funciona
+
         if (!isLoggedIn || !user) {
+            alert("Error: No has iniciado sesión."); // Alerta 2: Si el usuario no está autenticado
             setError('Debes iniciar sesión para postularte. Por favor, inicia sesión y vuelve a intentarlo.');
             return;
         }
 
+        alert("Sesión verificada. Enviando postulación..."); // Alerta 3: Si el usuario SÍ está autenticado
         setLoading(true);
         setError('');
         setMessage('');
 
         try {
-            // 2. Llamada a la Server Action
             const result = await postularseParaAdopcion(mascota.path, {
                 uid: user.uid,
                 nombre: user.displayName || 'Usuario anónimo',
                 email: user.email,
             });
 
-            // 3. Manejo de la respuesta
             if (result.success) {
                 setMessage(result.message);
             } else {
                 setError(result.message || 'Ocurrió un error desconocido.');
             }
         } catch (e) {
-            // 4. Manejo de errores inesperados en el cliente
             console.error("Error en handlePostulacion:", e);
             setError('Ocurrió un error inesperado al contactar el servidor. Inténtalo de nuevo.');
         }
@@ -59,9 +59,6 @@ export default function MascotaCardAdopcion({ mascota }) {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     priority
                 />
-                <div className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md">
-                    <HeartIcon className="h-6 w-6 text-red-400" />
-                </div>
             </div>
             <div className="p-5 flex flex-col flex-grow">
                 <h3 className="text-2xl font-bold text-gray-900">{mascota.nombre}</h3>
@@ -80,7 +77,7 @@ export default function MascotaCardAdopcion({ mascota }) {
                 <div className="mt-5">
                     <button
                         onClick={handlePostulacion}
-                        disabled={loading || !!message} // Deshabilitar si está cargando o si ya se envió
+                        disabled={loading || !!message}
                         className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Enviando postulación...' : (message ? 'Postulación enviada' : 'Me quiero postular')}
