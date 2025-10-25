@@ -83,7 +83,7 @@ export async function getTurnosByUserId({ userId }) {
     const turnosSnapshot = await db.collectionGroup('turnos')
                                    .where('clienteId', '==', userId)
                                    .orderBy('fecha', 'desc')
-                                   .orderBy('tipo', 'asc')
+                                   .orderBy('tipo', 'desc')
                                    .get();
 
     if (turnosSnapshot.empty) {
