@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import Modal from '@/app/components/Modal';
 import FormularioNuevoServicio from './FormularioNuevoServicio';
 import ListaServicios from './ListaServicios';
-import { obtenerServicios, obtenerConfiguracionServicios, toggleCategoriaActiva } from '@/lib/actions/servicios.actions.js';
-import { FaPlus, FaSpinner, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import DisponibilidadCalendario from './DisponibilidadCalendario'; // Importamos el nuevo componente
+import { obtenerServicios, obtenerConfiguracionServicios, toggleCategoriaActiva, obtenerDiasBloqueados } from '@/lib/actions/servicios.actions.js';
+import { FaPlus, FaSpinner } from 'react-icons/fa';
 
-// Componente para un único interruptor de categoría
+// Componente para un único interruptor de categoría (sin cambios)
 const InterruptorCategoria = ({ nombre, categoria, activo, onToggle }) => {
     return (
         <div className={`p-4 rounded-lg flex items-center justify-between transition-colors ${activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -30,18 +31,22 @@ export default function ServiciosPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [servicios, setServicios] = useState(null);
     const [config, setConfig] = useState(null);
+    const [diasBloqueados, setDiasBloqueados] = useState([]); // Nuevo estado para los días bloqueados
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [serviciosData, configData] = await Promise.all([
+            // Cargamos todos los datos en paralelo para mayor eficiencia
+            const [serviciosData, configData, diasBloqueadosData] = await Promise.all([
                 obtenerServicios(),
-                obtenerConfiguracionServicios()
+                obtenerConfiguracionServicios(),
+                obtenerDiasBloqueados()
             ]);
             setServicios(serviciosData);
             setConfig(configData);
+            setDiasBloqueados(diasBloqueadosData);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -55,13 +60,10 @@ export default function ServiciosPage() {
 
     const handleToggleCategoria = async (categoria, estadoActual) => {
         try {
-            // Actualización optimista de la UI
             setConfig(prevConfig => ({...prevConfig, [`${categoria}_activa`]: !estadoActual}));
             await toggleCategoriaActiva(categoria, estadoActual);
-            // No es necesario llamar a fetchData() aquí gracias a la revalidación del path en la server action
         } catch (error) {
             console.error("Error al cambiar estado:", error);
-            // Revertir en caso de error
             setConfig(prevConfig => ({...prevConfig, [`${categoria}_activa`]: estadoActual}));
              alert('Hubo un error al cambiar el estado del servicio.');
         }
@@ -69,7 +71,7 @@ export default function ServiciosPage() {
 
     const handleServiceAdded = () => {
         setModalOpen(false);
-        fetchData(); // Volver a cargar todo para reflejar el nuevo servicio
+        fetchData();
     };
 
     return (
@@ -88,26 +90,6 @@ export default function ServiciosPage() {
                     </button>
                 </header>
 
-                {/* Panel de Control Global */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    {config && (
-                        <>
-                            <InterruptorCategoria 
-                                nombre="Peluquería"
-                                categoria="peluqueria"
-                                activo={config.peluqueria_activa}
-                                onToggle={handleToggleCategoria}
-                            />
-                            <InterruptorCategoria 
-                                nombre="Clínica"
-                                categoria="clinica"
-                                activo={config.clinica_activa}
-                                onToggle={handleToggleCategoria}
-                            />
-                        </>
-                    )}
-                </div>
-
                 {loading && (
                      <div className="flex justify-center items-center p-8"><FaSpinner className="animate-spin text-4xl text-blue-500" /></div>
                 )}
@@ -115,11 +97,36 @@ export default function ServiciosPage() {
                 {error && (
                     <p className="text-red-500 bg-red-50 p-4 rounded-md">Error al cargar los datos: {error}</p>
                 )}
-
+                
                 {!loading && !error && (
-                     <ListaServicios servicios={servicios} config={config} onUpdate={fetchData} />
-                )}
+                    <>
+                        {/* Panel de Control Global */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            {config && (
+                                <>
+                                    <InterruptorCategoria 
+                                        nombre="Peluquería"
+                                        categoria="peluqueria"
+                                        activo={config.peluqueria_activa}
+                                        onToggle={handleToggleCategoria}
+                                    />
+                                    <InterruptorCategoria 
+                                        nombre="Clínica"
+                                        categoria="clinica"
+                                        activo={config.clinica_activa}
+                                        onToggle={handleToggleCategoria}
+                                    />
+                                </>
+                            )}
+                        </div>
 
+                        {/* Calendario de Disponibilidad */}
+                        <DisponibilidadCalendario diasBloqueados={diasBloqueados} />
+
+                        {/* Lista de Servicios */}
+                        <ListaServicios servicios={servicios} config={config} onUpdate={fetchData} />
+                    </>
+                )}
             </div>
 
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Añadir Nuevo Servicio">

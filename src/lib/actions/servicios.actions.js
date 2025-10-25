@@ -6,64 +6,49 @@ import admin from '@/lib/firebaseAdmin';
 const firestore = admin.firestore();
 const serviciosRef = firestore.collection('servicios').doc('catalogo');
 const configRef = firestore.collection('configuracion').doc('servicios');
+const disponibilidadRef = firestore.collection('configuracion').doc('disponibilidad');
+// Referencia a la colección de turnos
+const turnosRef = firestore.collection('turnos');
 
 const initialServiceData = { peluqueria: {}, clinica: {}, medicamentos: {} };
 const initialConfigData = { peluqueria_activa: false, clinica_activa: false };
 
-/**
- * Obtiene el objeto completo de servicios desde Firestore.
- * NUNCA LANZA ERROR. En caso de fallo, devuelve un objeto de servicios vacío.
- * @returns {Promise<object>} El objeto de servicios con todas las categorías.
- */
+// --- Funciones de Servicios y Configuración (sin cambios) ---
+
 export async function obtenerServicios() {
     try {
         const doc = await serviciosRef.get();
         if (!doc.exists) {
-            await serviciosRef.set(initialServiceData); // Crea el documento si no existe
+            await serviciosRef.set(initialServiceData);
             return initialServiceData;
         }
-        return doc.data() || initialServiceData; // Devuelve datos o el objeto vacío si está corrupto
+        return doc.data() || initialServiceData;
     } catch (error) {
         console.error("Error al obtener los servicios:", error);
-        // CORRECCIÓN: Devolver un objeto vacío en lugar de lanzar error
         return initialServiceData;
     }
 }
 
-/**
- * Obtiene la configuración de activación de las categorías de servicio.
- * NUNCA LANZA ERROR. En caso de fallo, devuelve un objeto de configuración por defecto.
- * @returns {Promise<{peluqueria_activa: boolean, clinica_activa: boolean}>}
- */
 export async function obtenerConfiguracionServicios() {
     try {
         const doc = await configRef.get();
         if (!doc.exists) {
-            await configRef.set(initialConfigData); // Crea el documento si no existe
+            await configRef.set(initialConfigData);
             return initialConfigData;
         }
-        return doc.data() || initialConfigData; // Devuelve datos o el objeto por defecto si está corrupto
+        return doc.data() || initialConfigData;
     } catch (error) {
         console.error("Error al obtener la configuración de servicios:", error);
-        // CORRECCIÓN: Devolver una configuración por defecto en lugar de lanzar error
         return initialConfigData;
     }
 }
 
-/**
- * Cambia el estado de activación de una categoría completa (Peluquería o Clínica).
- * @param {'peluqueria' | 'clinica'} categoria La categoría a modificar.
- * @param {boolean} estadoActual El estado actual de la categoría.
- * @returns {Promise<{success: boolean, error?: string}>}
- */
 export async function toggleCategoriaActiva(categoria, estadoActual) {
     try {
-        const campo = `${categoria}_activa`; // ej. peluqueria_activa
+        const campo = `${categoria}_activa`;
         await configRef.update({ [campo]: !estadoActual });
-
         revalidatePath('/admin/servicios');
         revalidatePath('/turnos/nuevo');
-
         return { success: true };
     } catch (error) {
         console.error(`Error al cambiar estado de ${categoria}:`, error);
@@ -71,48 +56,114 @@ export async function toggleCategoriaActiva(categoria, estadoActual) {
     }
 }
 
-/**
- * Guarda (añade o actualiza) un servicio específico en una categoría.
- * @param {string} categoria - La categoría del servicio (ej. 'peluqueria').
- * @param {string} servicioId - El ID único del servicio.
- * @param {object} data - El objeto de datos del servicio.
- * @returns {Promise<{success: boolean, error?: string}>}
- */
 export async function guardarServicio(categoria, servicioId, data) {
     try {
         const updateData = {};
         updateData[`${categoria}.${servicioId}`] = data;
-        
         await serviciosRef.update(updateData);
-
         revalidatePath('/admin/servicios');
         return { success: true };
-
     } catch (error) {
         console.error("Error al guardar el servicio:", error);
         return { success: false, error: 'No se pudo guardar el servicio.' };
     }
 }
 
-/**
- * Elimina un servicio específico de una categoría.
- * @param {string} categoria - La categoría del servicio.
- * @param {string} servicioId - El ID del servicio a eliminar.
- * @returns {Promise<{success: boolean, error?: string}>}
- */
 export async function eliminarServicio(categoria, servicioId) {
     try {
         const FieldValue = admin.firestore.FieldValue;
         const updateData = {};
         updateData[`${categoria}.${servicioId}`] = FieldValue.delete();
-
         await serviciosRef.update(updateData);
-
         revalidatePath('/admin/servicios');
         return { success: true };
-
     } catch (error) {
         console.error("Error al eliminar el servicio:", error);
         return { success: false, error: 'No se pudo eliminar el servicio.' };
+    }
+}
+
+// --- Funciones para Disponibilidad ---
+
+export async function obtenerDiasBloqueados() {
+    try {
+        const doc = await disponibilidadRef.get();
+        if (!doc.exists) return [];
+        const data = doc.data();
+        return data.diasNoDisponibles || [];
+    } catch (error) {
+        console.error("Error al obtener los días bloqueados:", error);
+        return [];
+    }
+}
+
+/**
+ * Añade una fecha a la lista de días no disponibles y cancela automáticamente los turnos agendados.
+ * @param {string} fecha - La fecha a bloquear en formato YYYY-MM-DD.
+ * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+ */
+export async function bloquearDia(fecha) {
+    const batch = firestore.batch();
+    try {
+        // 1. Marcar el día como no disponible
+        const FieldValue = admin.firestore.FieldValue;
+        batch.set(disponibilidadRef, { 
+            diasNoDisponibles: FieldValue.arrayUnion(fecha) 
+        }, { merge: true });
+
+        // 2. Buscar turnos agendados en esa fecha para cancelarlos
+        const turnosAfectadosQuery = turnosRef
+            .where('fecha', '==', fecha)
+            .where('estado', 'in', ['pendiente', 'confirmado']);
+            
+        const turnosAfectadosSnapshot = await turnosAfectadosQuery.get();
+
+        let reprogramadosCount = 0;
+        if (!turnosAfectadosSnapshot.empty) {
+            turnosAfectadosSnapshot.forEach(doc => {
+                // 3. Actualizar el estado de cada turno a "reprogramado"
+                batch.update(doc.ref, { estado: 'reprogramado' });
+                reprogramadosCount++;
+            });
+        }
+
+        // 4. Ejecutar todas las operaciones en la base de datos
+        await batch.commit();
+
+        // 5. Revalidar las rutas para actualizar la UI en todos lados
+        revalidatePath('/admin/servicios'); // Calendario del admin
+        revalidatePath('/turnos/nuevo');     // Formulario de nuevos turnos para usuarios
+        revalidatePath('/mis-turnos');         // Lista de turnos del usuario
+
+        console.log(`Día ${fecha} bloqueado. Se han reprogramado automáticamente ${reprogramadosCount} turnos.`);
+
+        return { success: true, message: `Día bloqueado. Se reprogramaron ${reprogramadosCount} turnos.` };
+
+    } catch (error) {
+        console.error(`Error al bloquear el día ${fecha} y cancelar turnos:`, error);
+        return { success: false, error: 'No se pudo completar la operación.' };
+    }
+}
+
+/**
+ * Elimina una fecha de la lista de días no disponibles.
+ * @param {string} fecha - La fecha a desbloquear en formato YYYY-MM-DD.
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function desbloquearDia(fecha) {
+    try {
+        const FieldValue = admin.firestore.FieldValue;
+        await disponibilidadRef.update({
+            diasNoDisponibles: FieldValue.arrayRemove(fecha)
+        });
+
+        revalidatePath('/admin/servicios');
+        revalidatePath('/turnos/nuevo');
+        // No es necesario revalidar /mis-turnos aquí, ya que no se revierten los estados.
+
+        return { success: true };
+    } catch (error) {
+        console.error(`Error al desbloquear el día ${fecha}:`, error);
+        return { success: false, error: 'No se pudo desbloquear la fecha.' };
     }
 }

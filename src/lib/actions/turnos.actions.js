@@ -162,7 +162,6 @@ export async function cancelarTurnoUsuario(turnoId) {
     }
 }
 
-// Funciones de admin
 export async function confirmarTurno({ userId, mascotaId, turnoId }) {
     return updateUserTurno(userId, mascotaId, turnoId, { estado: 'confirmado' });
 }
