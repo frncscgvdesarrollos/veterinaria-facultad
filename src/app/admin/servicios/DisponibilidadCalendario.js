@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { FaSpinner } from 'react-icons/fa';
-import { bloquearDia, desbloquearDia } from '@/lib/actions/servicios.actions.js';
+import { actualizarDiasNoLaborales } from '@/lib/actions/config.admin.actions.js'; // Importamos la nueva acción
 import toast from 'react-hot-toast';
 
-// Helper para formatear la fecha como YYYY-MM-DD en UTC
+// Helper para formatear la fecha como YYYY-MM-DD en UTC (sin cambios)
 const toUTCDateString = (date) => {
+    if (!date) return '';
     const year = date.getUTCFullYear();
     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
     const day = String(date.getUTCDate()).padStart(2, '0');
@@ -16,74 +17,76 @@ const toUTCDateString = (date) => {
 }
 
 export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBloqueados = [] }) {
-    // Normalizamos las fechas iniciales a objetos Date en UTC para evitar problemas de zona horaria
+    // Normalizamos las fechas iniciales a objetos Date en UTC (sin cambios)
     const initialDates = initialDiasBloqueados.map(dateStr => {
         const [year, month, day] = dateStr.split('-').map(Number);
         return new Date(Date.UTC(year, month - 1, day));
     });
 
-    const [diasBloqueados, setDiasBloqueados] = useState(initialDates);
-    const [isLoading, setIsLoading] = useState(false);
+    // Estado para los días seleccionados en el calendario
+    const [selectedDays, setSelectedDays] = useState(initialDates);
+    // useTransition para manejar el estado de carga de la acción del servidor
+    const [isPending, startTransition] = useTransition();
 
-    const handleDayClick = async (day, { selected }) => {
-        // Evitar doble click mientras carga
-        if (isLoading) return;
-
-        setIsLoading(true);
-        const dateString = toUTCDateString(day);
-
-        try {
-            let result;
-            if (selected) {
-                // Si el día ya estaba seleccionado, lo desbloqueamos
-                result = await desbloquearDia(dateString);
-                if (result.success) {
-                    setDiasBloqueados(prev => prev.filter(d => toUTCDateString(d) !== dateString));
-                    toast.success(`Día ${dateString} desbloqueado.`);
-                } else {
-                    throw new Error(result.error || 'No se pudo desbloquear el día.');
-                }
-            } else {
-                // Si el día no estaba seleccionado, lo bloqueamos
-                result = await bloquearDia(dateString);
-                if (result.success) {
-                    // Añadimos la nueva fecha UTC al estado
-                    const [year, month, dayNum] = dateString.split('-').map(Number);
-                    setDiasBloqueados(prev => [...prev, new Date(Date.UTC(year, month - 1, dayNum))]);
-                    toast.success(`Día ${dateString} bloqueado.`);
-                } else {
-                    throw new Error(result.error || 'No se pudo bloquear el día.');
-                }
-            }
-        } catch (error) {
-            console.error("Error al actualizar la disponibilidad:", error);
-            toast.error(error.message);
-        } finally {
-            setIsLoading(false);
+    const handleDayClick = (day, { selected }) => {
+        // Actualizamos el estado local de los días seleccionados
+        if (selected) {
+            setSelectedDays(prev => prev.filter(d => d.getTime() !== day.getTime()));
+        } else {
+            setSelectedDays(prev => [...prev, day]);
         }
     };
 
-    const footer = diasBloqueados.length > 0
-        ? `Días bloqueados: ${diasBloqueados.length}.`
+    const handleGuardarCambios = () => {
+        // Convertimos los objetos Date a strings en formato YYYY-MM-DD
+        const nuevasFechas = selectedDays.map(toUTCDateString);
+
+        startTransition(async () => {
+            const toastId = toast.loading('Guardando cambios y actualizando turnos...');
+            
+            try {
+                const result = await actualizarDiasNoLaborales({ nuevasFechas });
+
+                if (result.success) {
+                    let successMessage = '¡Calendario actualizado con éxito!';
+                    if (result.reprogramadosCount > 0) {
+                        successMessage += ` Se marcaron ${result.reprogramadosCount} turnos para reprogramación.`
+                    }
+                    toast.success(successMessage, { id: toastId });
+                } else {
+                    throw new Error(result.error || 'Ocurrió un error desconocido.');
+                }
+
+            } catch (error) {
+                console.error("Error al guardar los días no laborales:", error);
+                toast.error(`Error al guardar: ${error.message}`, { id: toastId });
+            }
+        });
+    };
+
+    const footer = selectedDays.length > 0
+        ? `Días a bloquear: ${selectedDays.length}. No olvides guardar los cambios.`
         : `Selecciona uno o más días para marcarlos como no disponibles.`;
 
     return (
         <div className="bg-white p-6 rounded-2xl shadow-lg relative mt-8">
-            {isLoading && (
+            {isPending && (
                 <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
                     <FaSpinner className="animate-spin text-4xl text-blue-500" />
                 </div>
             )}
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Gestión de Días No Laborables</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Gestión de Días No Laborables</h3>
             <p className="text-gray-600 mb-4">
-                Haz clic en una fecha para bloquearla o desbloquearla. Los días marcados no estarán disponibles para agendar turnos.
+                Haz clic en las fechas para agregarlas o quitarlas de la lista de días no disponibles.
+                <br/>
+                <span className="font-semibold">Recuerda hacer clic en "Guardar Cambios" para aplicar la configuración.</span>
             </p>
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center">
                 <DayPicker
                     mode="multiple"
                     min={0}
-                    selected={diasBloqueados}
-                    onDayClick={handleDayClick}
+                    selected={selectedDays}
+                    onDayClick={handleDayClick} // Se usa onDayClick en lugar de onSelect
                     modifiersClassNames={{
                         selected: '!bg-red-500 !text-white rounded-full',
                         today: '!text-blue-500 font-bold'
@@ -94,6 +97,13 @@ export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBl
                     }}
                     footer={<p className="text-center text-sm text-gray-500 mt-4">{footer}</p>}
                 />
+                <button 
+                    onClick={handleGuardarCambios} 
+                    disabled={isPending} 
+                    className="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-300"
+                >
+                    {isPending ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
             </div>
         </div>
     );
