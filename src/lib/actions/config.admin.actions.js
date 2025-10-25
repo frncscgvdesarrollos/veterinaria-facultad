@@ -5,18 +5,35 @@ import { revalidatePath } from 'next/cache';
 
 const db = admin.firestore();
 
-/**
- * @action actualizarDiasNoLaborales
- * @description (CORREGIDO) Actualiza la lista de días no laborales y actualiza el estado de los turnos
- * afectados a 'reprogramar'. Ahora busca turnos dentro de un rango de tiempo para el día bloqueado.
- * 
- * @param {{nuevasFechas: string[]}} params - Objeto que contiene las nuevas fechas a establecer (formato YYYY-MM-DD).
- * @returns {Promise<{success: boolean, error?: string, reprogramadosCount?: number}>}
- */
 export async function actualizarDiasNoLaborales({ nuevasFechas }) {
   if (!Array.isArray(nuevasFechas)) {
     return { success: false, error: 'El formato de los datos proporcionados es incorrecto.' };
   }
+
+  // --- INICIO DE BLOQUE DE DEPURACIÓN MANUAL ---
+  console.log("--- INICIANDO DEPURACIÓN MANUAL ---");
+  const debugTurnoPath = 'usuarios/iTxgmrZ85tRCQWA9pyXRWiO2BzF3/mascotas/IjRZ1ckfrVRESOvBePQL/turnos/FIhaH41i2JDbOKBNSk8A';
+  try {
+    const debugTurnoDoc = await db.doc(debugTurnoPath).get();
+    if (debugTurnoDoc.exists) {
+      const data = debugTurnoDoc.data();
+      console.log("DATOS DEL TURNO DE PRUEBA (lectura directa):");
+      console.log(`Estado: ${data.estado}, Tipo de dato: ${typeof data.estado}`);
+      console.log(`Fecha: ${data.fecha}, Tipo de dato: ${typeof data.fecha}`);
+      if (data.fecha && typeof data.fecha.toDate === 'function') {
+        console.log(`Fecha (convertida a JS Date): ${data.fecha.toDate()}`);
+        console.log(`Fecha (ISO String UTC): ${data.fecha.toDate().toISOString()}`);
+      } else {
+        console.log("ADVERTENCIA: El campo 'fecha' NO es un Timestamp de Firestore válido.");
+      }
+    } else {
+      console.log("Error de depuración: El turno de prueba NO se encontró en la ruta especificada.");
+    }
+  } catch (e) {
+    console.error("Error fatal al leer el turno de prueba:", e);
+  }
+  console.log("--- FIN DE DEPURACIÓN MANUAL ---");
+  // --- FIN DE BLOQUE DE DEPURACIÓN MANUAL ---
 
   const configRef = db.collection('configuracion').doc('disponibilidad');
 
@@ -31,16 +48,12 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
       if (fechasRecienBloqueadas.length > 0) {
         console.log(`Días recién bloqueados detectados: ${fechasRecienBloqueadas.join(', ')}. Buscando turnos para reprogramar...`);
 
-        // Para cada día recién bloqueado, ejecutamos una consulta de rango.
         for (const fechaStr of fechasRecienBloqueadas) {
-            // 1. Crear el rango de Timestamps para todo el día (en UTC para consistencia)
             const startOfDay = new Date(`${fechaStr}T00:00:00.000Z`);
             const endOfDay = new Date(`${fechaStr}T23:59:59.999Z`);
 
             console.log(`Buscando turnos entre ${startOfDay.toISOString()} y ${endOfDay.toISOString()}`);
 
-            // 2. Consulta para encontrar turnos en el rango de fecha y con estado válido.
-            // Firestore requiere un índice para esta consulta: collectionGroup('turnos'), estado ASC, fecha ASC
             const turnosAfectadosQuery = db.collectionGroup('turnos')
               .where('estado', 'in', ['pendiente', 'confirmado'])
               .where('fecha', '>=', startOfDay)
@@ -48,10 +61,16 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
             
             const turnosAfectadosSnapshot = await turnosAfectadosQuery.get();
             
-            if (!turnosAfectadosSnapshot.empty) {
-              // 3. Actualizar cada turno encontrado dentro de la transacción.
+            if (turnosAfectadosSnapshot.empty) {
+                console.log("La consulta no encontró ningún turno que cumpla los criterios.");
+            } else {
               turnosAfectadosSnapshot.forEach(doc => {
-                console.log(`Marcando para reprogramar: Turno ID ${doc.id} en fecha ${doc.data().fecha.toDate().toISOString()}`);
+                const turnoData = doc.data();
+                console.log(`¡CONSULTA ENCONTRÓ UN TURNO! ID: ${doc.id}`);
+                console.log("--- Contenido completo del turno encontrado ---");
+                console.log(JSON.stringify(turnoData, null, 2));
+                console.log("------------------------------------------");
+
                 transaction.update(doc.ref, { estado: 'reprogramar' });
                 reprogramadosCount++;
               });
@@ -59,16 +78,12 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
         }
       }
 
-      // 4. Actualizar el documento de configuración con la lista completa de fechas.
       transaction.set(configRef, { diasNoDisponibles: nuevasFechas }, { merge: true });
     });
 
     console.log(`Operación completada. Se han reprogramado un total de ${reprogramadosCount} turnos.`);
 
-    // 5. Revalidar todas las rutas relevantes para que la UI se actualice.
-    revalidatePath('/admin/servicios'); // Contiene el DisponibilidadCalendario
-    revalidatePath('/admin/configuracion'); // Ruta antigua, por si acaso
-    revalidatePath('/turnos/nuevo');
+    revalidatePath('/admin/servicios');
     revalidatePath('/turnos/mis-turnos');
     revalidatePath('/admin/turnos');
 
@@ -79,7 +94,7 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
     if (error.message.includes('query requires an index')) {
       return {
         success: false,
-        error: `Error de base de datos: La consulta necesita un índice en Firestore. Por favor, crea un índice compuesto para la colección 'turnos' con los campos 'estado' (ascendente) y 'fecha' (ascendente).`
+        error: `Error de base de datos: La consulta necesita un índice en Firestore. Detalles: ${error.message}`
       };
     }
     return { success: false, error: `Error del servidor: ${error.message}` };
