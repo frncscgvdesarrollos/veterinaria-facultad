@@ -6,15 +6,14 @@ import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
 import Link from 'next/link';
 import { FaPlus, FaCalendarCheck, FaHistory, FaDog, FaCat, FaExclamationTriangle, FaArrowRight } from 'react-icons/fa';
 
-// --- Componente de Tarjeta para cada Turno ---
 const TurnoCard = ({ turno }) => {
-    // AÑADIDO: Estilo para el estado 'reprogramado'
+    // CORRECCIÓN: Se ajusta el nombre del estado para que coincida con la base de datos.
     const statusStyles = {
         pendiente: 'bg-yellow-100 text-yellow-800',
         confirmado: 'bg-blue-100 text-blue-800',
         finalizado: 'bg-green-100 text-green-800',
         cancelado: 'bg-red-100 text-red-800',
-        reprogramado: 'bg-orange-100 text-orange-800',
+        reprogramar: 'bg-orange-100 text-orange-800', // Clave corregida
     };
 
     const tipoIcono = {
@@ -32,8 +31,8 @@ const TurnoCard = ({ turno }) => {
         }) + ' hs'
         : 'Fecha no especificada';
     
-    // AÑADIDO: Lógica para el botón de reprogramación
-    const necesitaReprogramacion = turno.estado === 'reprogramado';
+    // CORRECCIÓN: La condición ahora usa 'reprogramar' en lugar de 'reprogramado'.
+    const necesitaReprogramacion = turno.estado === 'reprogramar';
 
     return (
         <div className={`bg-white shadow-md rounded-lg p-5 border-l-4 ${necesitaReprogramacion ? 'border-orange-500' : 'border-gray-200 hover:border-blue-500'} transition-all duration-300`}>
@@ -51,14 +50,12 @@ const TurnoCard = ({ turno }) => {
                 </span>
             </div>
             
-            {/* Si NO necesita reprogramación, muestra la fecha normal */}
             {!necesitaReprogramacion && (
                 <div className="text-right text-sm text-gray-500">
                     <p>{formattedDate}</p>
                 </div>
             )}
 
-            {/* AÑADIDO: Si SÍ necesita reprogramación, muestra un botón/enlace claro */}
             {necesitaReprogramacion && (
                 <div className="mt-4 pt-4 border-t border-gray-200 text-center">
                     <p className="text-sm text-orange-700 mb-3">Este turno fue afectado por un cambio de agenda y necesita ser reprogramado.</p>
@@ -75,7 +72,6 @@ const TurnoCard = ({ turno }) => {
     );
 };
 
-// --- Página Principal de "Mis Turnos" (sin cambios) ---
 export default function MisTurnosPage() {
     const { user } = useAuth();
     const [turnos, setTurnos] = useState({ proximos: [], historial: [] });
@@ -96,7 +92,6 @@ export default function MisTurnosPage() {
                     }
                 } catch (err) {
                     setError('No se pudo establecer conexión con el servidor. Inténtalo de nuevo.');
-                    console.error("Error de conexión al buscar turnos:", err);
                 } finally {
                     setLoading(false);
                 }
