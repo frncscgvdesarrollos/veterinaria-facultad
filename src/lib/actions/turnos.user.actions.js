@@ -79,7 +79,6 @@ export async function getTurnosByUserId({ userId }) {
 
   try {
     const db = admin.firestore();
-    // Esta consulta ahora requiere un índice de Grupo de Colección en (clienteId ASC, fecha DESC, tipo DESC).
     const turnosSnapshot = await db.collectionGroup('turnos')
                                    .where('clienteId', '==', userId)
                                    .orderBy('fecha', 'desc')
@@ -104,26 +103,30 @@ export async function getTurnosByUserId({ userId }) {
       
       const fechaTurno = turno.fecha.toDate();
       
+      // --- INICIO DE LA CORRECCIÓN ---
+      const pathParts = doc.ref.path.split('/');
+      // La ruta es 'users/{userId}/mascotas/{mascotaId}/turnos/{turnoId}'
+      const mascotaId = pathParts[3];
+      
       let mascotaNombre = turno.mascotaNombre || 'Mascota no registrada';
-      if (!turno.mascotaNombre) {
-          const pathParts = doc.ref.path.split('/');
-          const mascotaId = pathParts[3];
-          if (mascotaId) {
-              const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
-              if (mascotaDoc.exists()) {
-                  mascotaNombre = mascotaDoc.data().nombre || mascotaNombre;
-              }
+      if (!turno.mascotaNombre && mascotaId) {
+          const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
+          if (mascotaDoc.exists()) {
+              mascotaNombre = mascotaDoc.data().nombre || mascotaNombre;
           }
       }
 
       const turnoProcesado = {
         id: doc.id,
+        userId: userId, // ID del usuario añadido para la reprogramación
+        mascotaId: mascotaId, // ID de la mascota añadido para la reprogramación
         servicioNombre: turno.servicioNombre || 'Servicio no especificado',
         estado: turno.estado || 'desconocido',
         tipo: turno.tipo || 'general',
         fecha: fechaTurno.toISOString(),
         mascota: { nombre: mascotaNombre }
       };
+      // --- FIN DE LA CORRECCIÓN ---
 
       return turnoProcesado;
     });
@@ -140,15 +143,67 @@ export async function getTurnosByUserId({ userId }) {
         }
     }
 
-    // Los próximos se ordenan por fecha ascendente para ver el más cercano primero.
-    // El historial ya viene pre-ordenado por la consulta de base de datos (fecha y tipo).
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     return { success: true, data: { proximos, historial } };
 
   } catch (error) {
     console.error(`Error al obtener los turnos para el usuario ${userId}:`, error);
-    // El error de la consola del servidor te dirá si el índice compuesto falta.
     return { success: false, error: 'Error del servidor al buscar los turnos.' };
+  }
+}
+
+
+/**
+ * @action reprogramarTurnoPorUsuario
+ * @description Permite a un usuario reprogramar un turno que fue marcado para reprogramación por un admin.
+ * Busca el turno original por su ID y actualiza la fecha y el estado.
+ * 
+ * @param {object} params
+ * @param {string} params.turnoId - El ID del documento del turno a reprogramar.
+ * @param {string} params.userId - El ID del dueño de la mascota (para la ruta del documento).
+ * @param {string} params.mascotaId - El ID de la mascota (para la ruta del documento).
+ * @param {string | Date} params.nuevaFecha - La nueva fecha y hora seleccionada por el usuario.
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function reprogramarTurnoPorUsuario({ turnoId, userId, mascotaId, nuevaFecha }) {
+  // Verificación de que todos los datos necesarios están presentes.
+  if (!turnoId || !userId || !mascotaId || !nuevaFecha) {
+    return { success: false, error: 'Faltan datos esenciales para completar la reprogramación.' };
+  }
+
+  try {
+    const db = admin.firestore();
+    
+    // 1. Construimos la ruta exacta al documento del turno que queremos modificar.
+    const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
+
+    const turnoDoc = await turnoRef.get();
+
+    // 2. Doble chequeo de seguridad: nos aseguramos que el turno exista y que esté en el estado correcto.
+    if (!turnoDoc.exists) {
+      return { success: false, error: 'El turno que intentas modificar ya no existe.' };
+    }
+    if (turnoDoc.data().estado !== 'reprogramado') {
+      return { success: false, error: 'Este turno no puede ser reprogramado en este momento.' };
+    }
+
+    // 3. Actualizamos el documento del turno con la nueva información.
+    await turnoRef.update({
+      fecha: new Date(nuevaFecha), // Guardamos la nueva fecha.
+      estado: 'pendiente'         // Devolvemos el turno al estado 'pendiente' para que el admin lo confirme.
+    });
+
+    // 4. Revalidamos las rutas clave para que el cambio se refleje inmediatamente en la UI.
+    revalidatePath('/turnos/mis-turnos'); // Actualiza la lista de turnos del usuario.
+    revalidatePath('/admin/turnos');       // Actualiza el panel del administrador.
+
+    console.log(`El turno ${turnoId} ha sido reprogramado exitosamente por el usuario ${userId}.`);
+
+    return { success: true };
+
+  } catch (error) {
+    console.error(`Error crítico al reprogramar el turno ${turnoId} por el usuario:`, error);
+    return { success: false, error: 'Ocurrió un error en el servidor. Por favor, intenta más tarde.' };
   }
 }

@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
 import Link from 'next/link';
-import { FaPlus, FaCalendarCheck, FaHistory, FaDog, FaCat } from 'react-icons/fa';
+import { FaPlus, FaCalendarCheck, FaHistory, FaDog, FaCat, FaExclamationTriangle, FaArrowRight } from 'react-icons/fa';
 
 // --- Componente de Tarjeta para cada Turno ---
 const TurnoCard = ({ turno }) => {
+    // AÑADIDO: Estilo para el estado 'reprogramado'
     const statusStyles = {
         pendiente: 'bg-yellow-100 text-yellow-800',
         confirmado: 'bg-blue-100 text-blue-800',
         finalizado: 'bg-green-100 text-green-800',
         cancelado: 'bg-red-100 text-red-800',
+        reprogramado: 'bg-orange-100 text-orange-800',
     };
 
     const tipoIcono = {
@@ -29,9 +31,12 @@ const TurnoCard = ({ turno }) => {
             minute: '2-digit',
         }) + ' hs'
         : 'Fecha no especificada';
+    
+    // AÑADIDO: Lógica para el botón de reprogramación
+    const necesitaReprogramacion = turno.estado === 'reprogramado';
 
     return (
-        <div className="bg-white shadow-md rounded-lg p-5 border-l-4 border-gray-200 hover:border-blue-500 transition-all duration-300">
+        <div className={`bg-white shadow-md rounded-lg p-5 border-l-4 ${necesitaReprogramacion ? 'border-orange-500' : 'border-gray-200 hover:border-blue-500'} transition-all duration-300`}>
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center">
                     {tipoIcono[turno.tipo] || <FaDog className="text-gray-500" size={24} />}
@@ -40,18 +45,37 @@ const TurnoCard = ({ turno }) => {
                         <p className="text-md text-gray-600 font-semibold">Para: {turno.mascota.nombre}</p>
                     </div>
                 </div>
-                <span className={`px-3 py-1 text-xs font-bold rounded-full ${statusStyles[turno.estado] || 'bg-gray-100'}`}>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full flex items-center ${statusStyles[turno.estado] || 'bg-gray-100'}`}>
+                    {necesitaReprogramacion && <FaExclamationTriangle className="mr-1.5" />}
                     {turno.estado}
                 </span>
             </div>
-            <div className="text-right text-sm text-gray-500">
-                <p>{formattedDate}</p>
-            </div>
+            
+            {/* Si NO necesita reprogramación, muestra la fecha normal */}
+            {!necesitaReprogramacion && (
+                <div className="text-right text-sm text-gray-500">
+                    <p>{formattedDate}</p>
+                </div>
+            )}
+
+            {/* AÑADIDO: Si SÍ necesita reprogramación, muestra un botón/enlace claro */}
+            {necesitaReprogramacion && (
+                <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                    <p className="text-sm text-orange-700 mb-3">Este turno fue afectado por un cambio de agenda y necesita ser reprogramado.</p>
+                    <Link
+                        href={`/turnos/reprogramar?turnoId=${turno.id}&userId=${turno.userId}&mascotaId=${turno.mascotaId}`}
+                        className="inline-flex items-center justify-center bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition-transform transform hover:scale-105 shadow-lg"
+                    >
+                        Elegir nueva fecha
+                        <FaArrowRight className="ml-2" />
+                    </Link>
+                </div>
+            )}
         </div>
     );
 };
 
-// --- Página Principal de "Mis Turnos" ---
+// --- Página Principal de "Mis Turnos" (sin cambios) ---
 export default function MisTurnosPage() {
     const { user } = useAuth();
     const [turnos, setTurnos] = useState({ proximos: [], historial: [] });
@@ -79,7 +103,6 @@ export default function MisTurnosPage() {
             };
             fetchTurnos();
         } else if (user === null) {
-            // Si el usuario no está logueado, dejamos de cargar.
             setLoading(false);
         }
     }, [user]);
