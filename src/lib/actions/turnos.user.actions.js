@@ -1,8 +1,14 @@
 'use server';
 
 import admin from '@/lib/firebaseAdmin';
+import { revalidatePath } from 'next/cache';
 import { verificarDisponibilidadTraslado } from '@/lib/logica_traslado';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
 /**
  * @action checkTrasladoAvailability
  * @description (CORREGIDO) Verifica la disponibilidad del servicio de traslado para una fecha y un grupo de mascotas específicos.
