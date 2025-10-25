@@ -1,29 +1,29 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import es from 'date-fns/locale/es';
 import { reprogramarTurnoPorUsuario } from '@/lib/actions/turnos.user.actions.js';
+import { getDiasNoLaborales } from '@/lib/actions/config.actions.js';
 
-// Un componente "Spinner" simple para la carga
 const Spinner = () => (
     <div className="border-4 border-gray-200 border-t-blue-500 rounded-full w-8 h-8 animate-spin"></div>
 );
 
-// El componente principal que contiene toda la lógica
 function ReprogramarTurnoComponent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
     const [turnoInfo, setTurnoInfo] = useState({ turnoId: null, userId: null, mascotaId: null });
-    const [selectedDate, setSelectedDate] = useState(null); // Almacenará el objeto Date completo
-    const [selectedDay, setSelectedDay] = useState(null); // Almacenará solo el día del calendario
-    const [selectedTime, setSelectedTime] = useState(null); // Almacenará la hora "HH:MM"
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedTime, setSelectedTime] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [diasNoLaborales, setDiasNoLaborales] = useState([]);
 
     useEffect(() => {
         const turnoId = searchParams.get('turnoId');
@@ -35,9 +35,45 @@ function ReprogramarTurnoComponent() {
         } else {
             setTurnoInfo({ turnoId, userId, mascotaId });
         }
+        
+        async function fetchDiasNoLaborales() {
+            const result = await getDiasNoLaborales();
+            if (result.success) {
+                setDiasNoLaborales(result.data.map(d => new Date(d)));
+            } else {
+                console.error("No se pudieron cargar los días no laborales:", result.error);
+            }
+        }
+        fetchDiasNoLaborales();
+
     }, [searchParams]);
 
-    // Generador de franjas horarias
+    const disabledDays = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const twoWeeksFromNow = new Date();
+        twoWeeksFromNow.setDate(today.getDate() + 15);
+        
+        return [
+            ...diasNoLaborales,
+            { before: new Date(new Date().setDate(today.getDate())) },
+            { after: twoWeeksFromNow },
+            { dayOfWeek: [0, 6] }
+        ];
+    }, [diasNoLaborales]);
+
+    const modifiers = {
+        noLaboral: diasNoLaborales,
+    };
+    const modifiersStyles = {
+        noLaboral: {
+            color: 'white',
+            backgroundColor: '#ef4444',
+            borderRadius: '50%'
+        },
+    };
+    
     const timeSlots = [];
     for (let h = 9; h < 18; h++) {
         timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
@@ -45,19 +81,23 @@ function ReprogramarTurnoComponent() {
     }
 
     const handleDaySelect = (day) => {
+        const isDayDisabled = disabledDays.some(matcher => {
+            if (matcher instanceof Date && matcher.getTime() === day?.getTime()) return true;
+            if (typeof matcher === 'object' && matcher.before && day < matcher.before) return true;
+            if (typeof matcher === 'object' && matcher.after && day > matcher.after) return true;
+            if (typeof matcher === 'object' && matcher.dayOfWeek && matcher.dayOfWeek.includes(day?.getDay())) return true;
+            return false;
+        });
+
+        if (isDayDisabled) return;
+
         setSelectedDay(day);
-        // Si ya había una hora seleccionada, actualizamos la fecha completa
-        if (selectedTime) {
-            const [hours, minutes] = selectedTime.split(':');
-            const newFullDate = new Date(day);
-            newFullDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-            setSelectedDate(newFullDate);
-        }
+        setSelectedTime(null);
+        setSelectedDate(null);
     };
-    
+
     const handleTimeSelect = (time) => {
         setSelectedTime(time);
-        // Si ya había un día seleccionado, creamos la fecha completa
         if (selectedDay) {
             const [hours, minutes] = time.split(':');
             const newFullDate = new Date(selectedDay);
@@ -65,7 +105,7 @@ function ReprogramarTurnoComponent() {
             setSelectedDate(newFullDate);
         }
     };
-
+    
     const handleReprogramar = async () => {
         if (!selectedDate) {
             setError('Debes seleccionar una nueva fecha y hora para el turno.');
@@ -86,32 +126,21 @@ function ReprogramarTurnoComponent() {
                 setSuccess(true);
                 setTimeout(() => {
                     router.push('/turnos/mis-turnos');
-                    router.refresh(); // Forzamos la actualización de la página de mis-turnos
+                    router.refresh();
                 }, 2000);
             } else {
                 setError(result.error || 'Ocurrió un error desconocido.');
             }
         } catch (err) {
-            console.error('Error al llamar a la acción de reprogramar:', err);
             setError('No se pudo conectar con el servidor. Intenta de nuevo.');
         } finally {
             setLoading(false);
         }
-    };
-    
-    if (error && !success) {
-        return (
-            <div className="text-center text-red-500 bg-red-100 p-6 rounded-lg shadow-md max-w-lg mx-auto"><h2 className="font-bold text-xl mb-2">Error</h2><p>{error}</p><button onClick={() => router.back()} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Volver</button></div>
-        );
-    }
-    if (success) {
-        return (
-            <div className="text-center text-green-700 bg-green-100 p-6 rounded-lg shadow-md max-w-lg mx-auto"><h2 className="font-bold text-xl mb-2">¡Éxito!</h2><p>Tu turno ha sido reprogramado correctamente. Serás redirigido...</p></div>
-        );
-    }
-    if (!turnoInfo.turnoId) {
-        return <div className="text-center"><Spinner/></div>;
-    }
+     };
+
+    if (error && !success) { return ( <div className="text-center text-red-500 bg-red-100 p-6 rounded-lg shadow-md max-w-lg mx-auto"><h2 className="font-bold text-xl mb-2">Error</h2><p>{error}</p><button onClick={() => router.back()} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Volver</button></div> ); }
+    if (success) { return ( <div className="text-center text-green-700 bg-green-100 p-6 rounded-lg shadow-md max-w-lg mx-auto"><h2 className="font-bold text-xl mb-2">¡Éxito!</h2><p>Tu turno ha sido reprogramado correctamente. Serás redirigido...</p></div> ); }
+    if (!turnoInfo.turnoId) { return <div className="text-center"><Spinner/></div>; }
 
     return (
         <div className="bg-white p-8 rounded-lg shadow-xl max-w-3xl mx-auto">
@@ -126,7 +155,9 @@ function ReprogramarTurnoComponent() {
                         selected={selectedDay}
                         onSelect={handleDaySelect}
                         locale={es}
-                        disabled={{ before: new Date() }}
+                        disabled={disabledDays}
+                        modifiers={modifiers}
+                        modifiersStyles={modifiersStyles}
                         className="rounded-md border mx-auto"
                     />
                 </div>
@@ -165,7 +196,6 @@ function ReprogramarTurnoComponent() {
     );
 }
 
-// Se usa Suspense para asegurar que useSearchParams funcione correctamente.
 export default function ReprogramarTurnoPage() {
     return (
         <Suspense fallback={<div className="text-center p-10"><Spinner/> Cargando...</div>}> 
