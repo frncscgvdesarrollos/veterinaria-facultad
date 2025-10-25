@@ -11,7 +11,7 @@ dayjs.extend(timezone);
 
 const db = admin.firestore();
 
-// Función auxiliar para convertir Timestamps a strings ISO de forma segura
+// Función auxiliar (sin cambios)
 const toISOStringOrNull = (timestamp) => {
   if (timestamp && typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toISOString();
@@ -28,14 +28,16 @@ export async function getTurnsForAdminDashboard() {
                                  .orderBy('tipo', 'asc')
                                  .get();
 
+    // MODIFICACIÓN 1: Añadir 'reprogramar' al objeto de datos inicial si no hay turnos.
     if (turnosSnapshot.empty) {
-      return { success: true, data: { hoy: [], proximos: [], finalizados: [] } };
+      return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [] } };
     }
 
     const usersCache = new Map();
     const mascotasCache = new Map();
 
     const enrichedTurnosPromises = turnosSnapshot.docs.map(async (doc) => {
+      // ... (Toda esta sección de enriquecimiento de datos no cambia)
       const turnoData = doc.data();
       const userId = turnoData.clienteId;
       const mascotaId = turnoData.mascotaId;
@@ -50,7 +52,6 @@ export async function getTurnsForAdminDashboard() {
           const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
             const userData = userDoc.data();
-            // Construir objeto de usuario 100% serializable
             serializableUser = {
               id: userDoc.id,
               nombre: userData.nombre || 'N/A',
@@ -70,13 +71,11 @@ export async function getTurnsForAdminDashboard() {
             const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
             if (mascotaDoc.exists) {
                 const mascotaData = mascotaDoc.data();
-                // Construir objeto de mascota 100% serializable
                 serializableMascota = {
                   id: mascotaDoc.id,
                   nombre: mascotaData.nombre || 'N/A',
                   especie: mascotaData.especie || 'N/A',
                   raza: mascotaData.raza || 'N/A',
-                  // Convertir Timestamp de fechaNacimiento a ISO String
                   fechaNacimiento: toISOStringOrNull(mascotaData.fechaNacimiento),
                 };
                 mascotasCache.set(mascotaCacheKey, serializableMascota);
@@ -93,8 +92,8 @@ export async function getTurnsForAdminDashboard() {
         estado: turnoData.estado,
         necesitaTraslado: turnoData.necesitaTraslado || false,
         fecha: toISOStringOrNull(turnoData.fecha),
-        user: serializableUser, // Objeto de usuario limpio
-        mascota: serializableMascota, // Objeto de mascota limpio
+        user: serializableUser,
+        mascota: serializableMascota,
       };
     });
 
@@ -107,12 +106,17 @@ export async function getTurnsForAdminDashboard() {
     const hoy = [];
     const proximos = [];
     const finalizados = [];
+    // MODIFICACIÓN 2: Añadir el nuevo array para los turnos a reprogramar.
+    const reprogramar = [];
 
     for (const turno of enrichedTurnos) {
       if (!turno.fecha) continue;
       const fechaTurno = dayjs(turno.fecha);
 
-      if (turno.estado === 'finalizado' || turno.estado === 'cancelado') {
+      // MODIFICACIÓN 3: Añadir una nueva condición para capturar el estado 'reprogramado'.
+      if (turno.estado === 'reprogramado') {
+        reprogramar.push(turno);
+      } else if (turno.estado === 'finalizado' || turno.estado === 'cancelado') {
         finalizados.push(turno);
       } else if (fechaTurno.isAfter(startOfTodayInArgentina) && fechaTurno.isBefore(endOfTodayInArgentina)) {
         hoy.push(turno);
@@ -123,11 +127,13 @@ export async function getTurnsForAdminDashboard() {
       }
     }
     
+    // MODIFICACIÓN 4: Ordenar el nuevo array y añadirlo al objeto de retorno.
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     finalizados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     hoy.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    reprogramar.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Ordenamos por fecha descendente.
 
-    return { success: true, data: { hoy, proximos, finalizados } };
+    return { success: true, data: { hoy, proximos, finalizados, reprogramar } };
 
   } catch (error) {
     console.error("Error REAL en getTurnsForAdminDashboard:", error);
@@ -135,6 +141,7 @@ export async function getTurnsForAdminDashboard() {
   }
 }
 
+// La función updateTurnoStatus no necesita cambios.
 export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
