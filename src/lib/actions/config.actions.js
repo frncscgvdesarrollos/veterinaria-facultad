@@ -14,25 +14,24 @@ export async function getDiasNoLaborales() {
     const docSnap = await configRef.get();
 
     if (!docSnap.exists()) {
-      // Si el documento no existe, no hay días para deshabilitar. No es un error.
+      console.log("El documento 'disponibilidad' no existe en la colección 'configuracion'.");
       return { success: true, data: [] };
     }
 
     const data = docSnap.data();
     const dateStrings = data.diasNoDisponibles || [];
 
-    // Convertimos los strings de fecha (YYYY-MM-DD) a objetos Date de JavaScript.
-    // Es crucial crear las fechas en UTC para evitar problemas de zona horaria entre el servidor y el navegador.
     const dates = dateStrings.map(dateStr => {
       const [year, month, day] = dateStr.split('-').map(Number);
-      // El mes en el constructor de Date es 0-indexado (Enero=0), por eso se resta 1.
       return new Date(Date.UTC(year, month - 1, day));
     });
     
     return { success: true, data: dates };
 
   } catch (error) {
-    console.error("Error al obtener los días no laborales:", error);
-    return { success: false, error: 'No se pudieron cargar los días no laborales desde el servidor.' };
+    // --- MODIFICACIÓN PARA DEBUGGING ---
+    console.error("ERROR DETALLADO en getDiasNoLaborales:", error);
+    return { success: false, error: `Error del servidor: ${error.message}` };
+    // --- FIN DE LA MODIFICACIÓN ---
   }
 }
