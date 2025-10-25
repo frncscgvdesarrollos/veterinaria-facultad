@@ -79,7 +79,7 @@ export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBl
             <p className="text-gray-600 mb-4">
                 Haz clic en las fechas para agregarlas o quitarlas de la lista de días no disponibles.
                 <br/>
-                <span className="font-semibold">Recuerda hacer clic en "Guardar Cambios" para aplicar la configuración.</span>
+                <span className="font-semibold">Recuerda hacer clic en &quot;Guardar Cambios&quot; para aplicar la configuración.</span>
             </p>
             <div className="flex flex-col items-center">
                 <DayPicker
