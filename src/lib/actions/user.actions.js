@@ -143,8 +143,58 @@ export async function registerWithEmail(userData) {
     return { success: false, error: 'Ocurrió un error en el servidor durante el registro.' };
   }
 }
+const validacionDatosCompletarPerfil = (data) => {
+  const errors = {};
+  const {
+      nombre,
+      apellido,
+      dni,
+      telefonoPrincipal,
+      telefonoSecundario,
+      direccion,
+      nombreContactoEmergencia,
+      telefonoContactoEmergencia
+  } = data;
+
+  if (!nombre || !nombre.trim()) errors.nombre = 'El nombre es obligatorio.';
+  else if (!/^[a-zA-Z\s]+$/.test(nombre)) errors.nombre = 'El nombre solo puede contener letras.';
+
+  if (!apellido || !apellido.trim()) errors.apellido = 'El apellido es obligatorio.';
+  else if (!/^[a-zA-Z\s]+$/.test(apellido)) errors.apellido = 'El apellido solo puede contener letras.';
+
+  if (!dni || !dni.trim()) errors.dni = 'El DNI es obligatorio.';
+  else if (!/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI debe tener entre 7 y 8 números.';
+
+  if (!direccion || !direccion.trim()) errors.direccion = 'La dirección es obligatoria.';
+
+  if (!telefonoPrincipal || !telefonoPrincipal.trim()) errors.telefonoPrincipal = 'El teléfono principal es obligatorio.';
+  else if (!/^\d{10,15}$/.test(telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono debe tener entre 10 y 15 números.';
+
+  if (telefonoSecundario && telefonoSecundario.trim() && !/^\d{10,15}$/.test(telefonoSecundario)) {
+      errors.telefonoSecundario = 'Si se ingresa, el teléfono debe tener entre 10 y 15 números.';
+  }
+
+  if (!nombreContactoEmergencia || !nombreContactoEmergencia.trim()) errors.nombreContactoEmergencia = 'El nombre del contacto de emergencia es obligatorio.';
+  else if (!/^[a-zA-Z\s]+$/.test(nombreContactoEmergencia)) errors.nombreContactoEmergencia = 'El nombre del contacto de emergencia solo puede contener letras.';
+
+  if (!telefonoContactoEmergencia || !telefonoContactoEmergencia.trim()) errors.telefonoContactoEmergencia = 'El teléfono de emergencia es obligatorio.';
+  else if (!/^\d{10,15}$/.test(telefonoContactoEmergencia)) errors.telefonoContactoEmergencia = 'El teléfono de emergencia debe tener entre 10 y 15 números.';
+
+  return errors;
+};
 
 export async function completarPerfil(userId, userData) {
+  // 1. Validar los datos como primer paso en el servidor
+  const validationErrors = validacionDatosCompletarPerfil(userData);
+  const errorValues = Object.values(validationErrors);
+
+  if (errorValues.length > 0) {
+    // Si hay errores, unirlos en un solo string y devolver el mensaje.
+    const errorMessage = errorValues.join(' ');
+    return { success: false, error: errorMessage };
+  }
+
+  // Si la validación pasa, continuar con la lógica existente
   const firestore = admin.firestore();
   const auth = admin.auth();
   const { 
@@ -158,8 +208,8 @@ export async function completarPerfil(userId, userData) {
     telefonoContactoEmergencia 
   } = userData;
   
-  if (!userId || !nombre || !apellido || !dni || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
-    return { success: false, error: 'Faltan datos esenciales para completar el perfil.' };
+  if (!userId) {
+    return { success: false, error: 'Error de autenticación: Falta el ID de usuario.' };
   }
 
   try {
@@ -190,9 +240,10 @@ export async function completarPerfil(userId, userData) {
 
   } catch (error) {
     console.error('Error al completar el perfil:', error);
-    return { success: false, error: 'Ocurrió un error en el servidor.' };
+    return { success: false, error: 'Ocurrió un error en el servidor al guardar el perfil.' };
   }
 }
+
 
 export async function agregarMascota(userId, mascotaData) {
     if (!userId) return { success: false, error: 'Usuario no autenticado.' };
