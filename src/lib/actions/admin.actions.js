@@ -21,12 +21,18 @@ export async function getAllUsers() {
       return [];
     }
     
-    const users = [];
-    usersSnapshot.forEach(doc => {
-      users.push({ id: doc.id, ...doc.data() });
+    // Usamos .map para transformar los datos de cada usuario
+    const users = usersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toISOString() : null,
+      };
     });
     
     return users;
+
   } catch (error) {
     console.error("Error al obtener los usuarios:", error);
     return []; // Devolver array vacío en caso de error para no romper la UI
