@@ -20,7 +20,7 @@ export default function AdminLayout({ children }) {
 
     useEffect(() => {
         if (!loading) {
-            if (!user || user.role !== 'admin') {
+            if (!user || user.role !== 'admin' || user.role !== 'peluqueria' || user.role !== 'transporte') {
                 router.push('/');
             }
         }
