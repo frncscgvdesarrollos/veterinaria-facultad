@@ -12,7 +12,7 @@ import { es } from 'date-fns/locale';
 import { FaDog, FaCat, FaArrowLeft, FaCut, FaStethoscope, FaCalendarAlt, FaClock, FaSpinner, FaCheck, FaPlus, FaTruck, FaMoneyBillWave, FaCreditCard, FaSun, FaMoon } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 import { verificarDisponibilidadTrasladoAction, crearTurnos } from '@/lib/actions/turnos.actions';
-import { getDiasNoLaborales } from '@/lib/actions/config.actions.js';
+import { getDiasNoLaborales, obtenerConfiguracionServicios } from '@/lib/actions/config.actions.js';
 
 
 // --- CONFIG & CONSTANTS ---
@@ -33,8 +33,40 @@ const MascotaSelectionCard = ({ mascota, isSelected, onToggle }) => (
     </div>
 );
 
-const ServiceAssignmentRow = ({ mascota, services, onToggle }) => (
-    <tr className="border-b"><td className="py-4 px-2 sm:px-4 font-bold"><div className="flex items-center gap-3">{mascota.especie.toLowerCase() === 'perro' ? <FaDog className="text-2xl text-gray-400" /> : <FaCat className="text-2xl text-gray-400" />}{mascota.nombre}</div></td><td className="py-4 px-2 text-center"><input type="checkbox" checked={!!services.clinica} onChange={() => onToggle(mascota.id, 'clinica')} className="w-6 h-6 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"/></td><td className="py-4 px-2 text-center"><input type="checkbox" checked={!!services.peluqueria} onChange={() => onToggle(mascota.id, 'peluqueria')} disabled={mascota.especie.toLowerCase() !== 'perro'} className="w-6 h-6 rounded text-green-600 focus:ring-green-500 disabled:bg-gray-200 disabled:cursor-not-allowed cursor-pointer"/></td></tr>
+const ServiceAssignmentRow = ({ mascota, services, onToggle, configServicios }) => (
+    <tr className="border-b">
+        <td className="py-4 px-2 sm:px-4 font-bold">
+            <div className="flex items-center gap-3">
+                {mascota.especie.toLowerCase() === 'perro' ? <FaDog className="text-2xl text-gray-400" /> : <FaCat className="text-2xl text-gray-400" />}
+                {mascota.nombre}
+            </div>
+        </td>
+        <td className="py-4 px-2 text-center">
+            {configServicios.clinica_activa ? (
+                <input 
+                    type="checkbox" 
+                    checked={!!services.clinica} 
+                    onChange={() => onToggle(mascota.id, 'clinica')} 
+                    className="w-6 h-6 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+            ) : (
+                <span className="text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full">Suspendido</span>
+            )}
+        </td>
+        <td className="py-4 px-2 text-center">
+             {configServicios.peluqueria_activa ? (
+                <input 
+                    type="checkbox" 
+                    checked={!!services.peluqueria} 
+                    onChange={() => onToggle(mascota.id, 'peluqueria')} 
+                    disabled={mascota.especie.toLowerCase() !== 'perro'} 
+                    className="w-6 h-6 rounded text-green-600 focus:ring-green-500 disabled:bg-gray-200 disabled:cursor-not-allowed cursor-pointer"
+                />
+             ) : (
+                <span className="text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full">Suspendido</span>
+             )}
+        </td>
+    </tr>
 );
 
 const ServicioDetalleSelector = ({ mascota, motivo, catalogo, specificServices, onServiceChange }) => {
@@ -93,6 +125,7 @@ export default function NuevoTurnoWizardPage() {
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [diasNoLaborales, setDiasNoLaborales] = useState([]);
+    const [configServicios, setConfigServicios] = useState(null);
 
     // Wizard states
     const [step, setStep] = useState(1);
@@ -103,17 +136,18 @@ export default function NuevoTurnoWizardPage() {
     const [horarioPeluqueria, setHorarioPeluqueria] = useState({ fecha: undefined, turno: '' });
     const [necesitaTraslado, setNecesitaTraslado] = useState(false);
     const [metodoPago, setMetodoPago] = useState('efectivo');
-
+    
     useEffect(() => {
         if (!authLoading && !user) { router.push('/login?redirectTo=/turnos/nuevo'); return; }
         if (user) {
             const cargarDatos = async () => {
                 setLoadingData(true);
                 try {
-                    // Cargar mascotas, catálogo y días no laborales en paralelo
-                    const [mascotasSnap, serviciosSnap, diasResult] = await Promise.all([
+                    // Cargar mascotas, catálogo, config y días no laborales en paralelo
+                    const [mascotasSnap, serviciosSnap, configResult, diasResult] = await Promise.all([
                         getDocs(query(collection(db, 'users', user.uid, 'mascotas'), orderBy('nombre', 'asc'))),
                         getDoc(doc(db, 'servicios', 'catalogo')),
+                        obtenerConfiguracionServicios(),
                         getDiasNoLaborales()
                     ]);
 
@@ -122,6 +156,13 @@ export default function NuevoTurnoWizardPage() {
                     if (serviciosSnap.exists()) {
                         const data = serviciosSnap.data();
                         setCatalogoServicios({ clinica: Object.entries(data.clinica || {}).map(([id, val]) => ({ id, ...val })), peluqueria: Object.entries(data.peluqueria || {}).map(([id, val]) => ({ id, ...val })) });
+                    }
+
+                    if (configResult.success) {
+                        setConfigServicios(configResult.data);
+                    } else {
+                        toast.error("No se pudo cargar la configuración de servicios.");
+                        console.error("Error al cargar config servicios:", configResult.error);
                     }
 
                     if (diasResult.success) {
@@ -225,17 +266,30 @@ export default function NuevoTurnoWizardPage() {
             setSpecificServices(p => { const n = {...p}; delete n[mascotaId]; return n; });
         }
     };
+
     const handleMotivoToggle = (mascotaId, motivo) => {
+        if (!configServicios) return; // No hacer nada si la configuración aún no ha cargado
+        if (motivo === 'clinica' && !configServicios.clinica_activa) return;
+        if (motivo === 'peluqueria' && !configServicios.peluqueria_activa) return;
+        
         const isTurningOn = !motivosPorMascota[mascotaId]?.[motivo];
         setMotivosPorMascota(p => ({ ...p, [mascotaId]: { ...p[mascotaId], [motivo]: isTurningOn } }));
         if (!isTurningOn) { setSpecificServices(p => { const n = {...p}; if(n[mascotaId]) delete n[mascotaId][motivo]; return n; }); }
     };
+
     const handleSpecificServiceChange = (mascotaId, motivo, serviceId) => {
         setSpecificServices(p => ({ ...p, [mascotaId]: { ...p[mascotaId], [motivo]: serviceId } }));
     }
 
     const isStep1Complete = selectedMascotaIds.length > 0;
-    const isStep2Complete = isStep1Complete && selectedMascotaIds.every(id => motivosPorMascota[id] && (motivosPorMascota[id].clinica || motivosPorMascota[id].peluqueria));
+    const isStep2Complete = isStep1Complete && selectedMascotaIds.every(id => {
+        if (!configServicios) return false;
+        const motivoMascota = motivosPorMascota[id] || {};
+        const tieneMotivoValido = (motivoMascota.clinica && configServicios.clinica_activa) || (motivoMascota.peluqueria && configServicios.peluqueria_activa);
+        // Si no hay ningún motivo seleccionado, la condición es falsa, lo que está bien.
+        // Si hay algún motivo, debe ser un motivo válido.
+        return Object.keys(motivoMascota).length === 0 ? true : tieneMotivoValido;
+    });
     const isStep3Complete = isStep2Complete && selectedMascotas.every(m => { const mot = motivosPorMascota[m.id]||{}; const serv = specificServices[m.id]||{}; if (mot.clinica && !serv.clinica) return false; if (mot.peluqueria && !serv.peluqueria) return false; return true; });
     const isStep4Complete = isStep3Complete && (!necesitaHorarioClinica || (horarioClinica.fecha && horarioClinica.hora)) && (!necesitaHorarioPeluqueria || (horarioPeluqueria.fecha && horarioPeluqueria.turno));
 
@@ -250,13 +304,50 @@ export default function NuevoTurnoWizardPage() {
 
             <div className="p-6 sm:p-8 md:p-10">
                 {step === 1 && <div><h2 className="text-2xl font-bold mb-2">Paso 1: ¿Para quién es el turno?</h2><p className="text-gray-600 mb-6">Puedes seleccionar una o varias mascotas.</p><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{mascotas.map(m => <MascotaSelectionCard key={m.id} mascota={m} isSelected={selectedMascotaIds.includes(m.id)} onToggle={handleMascotaToggle} /> )}</div></div>}
-                {step === 2 && <div><h2 className="text-2xl font-bold mb-8">Paso 2: Elige el motivo de la visita</h2><div className="overflow-x-auto rounded-lg border"><table className="w-full text-left"><thead className="bg-gray-50"><tr><th className="py-3 px-2 sm:px-4 text-sm font-semibold text-gray-600">Mascota</th><th className="py-3 px-2 text-center text-sm font-semibold text-gray-600">Clínica <FaStethoscope className="inline ml-1"/></th><th className="py-3 px-2 text-center text-sm font-semibold text-gray-600">Peluquería <FaCut className="inline ml-1"/></th></tr></thead><tbody>{selectedMascotas.map(mascota => <ServiceAssignmentRow key={mascota.id} mascota={mascota} services={motivosPorMascota[mascota.id] || {}} onToggle={handleMotivoToggle} /> )}</tbody></table></div></div>}
-                {step === 3 && <div><h2 className="text-2xl font-bold mb-8">Paso 3: Detalla los servicios</h2><div className="space-y-8">{selectedMascotas.map(mascota => { const motivos = motivosPorMascota[mascota.id]; if (!motivos || (!motivos.clinica && !motivos.peluqueria)) return null; return (<div key={mascota.id} className="p-6 bg-gray-50 rounded-xl border-l-4 border-blue-500"><h3 className="font-bold text-xl mb-4 text-gray-800">{mascota.nombre}</h3><div className="space-y-4"> {motivos.clinica && <div><label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2"><FaStethoscope /> Servicio de Clínica</label><ServicioDetalleSelector mascota={mascota} motivo="clinica" catalogo={catalogoServicios} specificServices={specificServices} onServiceChange={handleSpecificServiceChange} /></div>} {motivos.peluqueria && <div><label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2"><FaCut /> Servicio de Peluquería</label><ServicioDetalleSelector mascota={mascota} motivo="peluqueria" catalogo={catalogoServicios} specificServices={specificServices} onServiceChange={handleSpecificServiceChange} /></div>}</div></div>);})}</div></div>}
+                
+                {step === 2 && configServicios && (
+                    <div>
+                        <h2 className="text-2xl font-bold mb-8">Paso 2: Elige el motivo de la visita</h2>
+                        {!configServicios.clinica_activa && !configServicios.peluqueria_activa ? (
+                            <div className="text-center p-8 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="font-bold text-lg text-yellow-800">EL SISTEMA DE TURNOS SE ENCUENTRA CERRADO POR EL MOMENTO.</p>
+                                <p className="text-yellow-700 mt-2">Disculpe las molestias. Intente nuevamente más tarde.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto rounded-lg border">
+                                <table className="w-full text-left">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="py-3 px-2 sm:px-4 text-sm font-semibold text-gray-600">Mascota</th>
+                                            <th className="py-3 px-2 text-center text-sm font-semibold text-gray-600">Clínica <FaStethoscope className="inline ml-1"/></th>
+                                            <th className="py-3 px-2 text-center text-sm font-semibold text-gray-600">Peluquería <FaCut className="inline ml-1"/></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedMascotas.map(mascota => 
+                                            <ServiceAssignmentRow 
+                                                key={mascota.id} 
+                                                mascota={mascota} 
+                                                services={motivosPorMascota[mascota.id] || {}} 
+                                                onToggle={handleMotivoToggle}
+                                                configServicios={configServicios}
+                                            /> 
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {step === 3 && <div><h2 className="text-2xl font-bold mb-8">Paso 3: Detalla los servicios</h2><div className="space-y-8">{selectedMascotas.map(mascota => { const motivos = motivosPorMascota[mascota.id]; if (!motivos || (!motivos.clinica && !motivos.peluqueria)) return null; return (<div key={mascota.id} className="p-6 bg-gray-50 rounded-xl border-l-4 border-blue-500"><h3 className="font-bold text-xl mb-4 text-gray-800">{mascota.nombre}</h3><div className="space-y-4"> {motivos.clinica && configServicios.clinica_activa && <div><label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2"><FaStethoscope /> Servicio de Clínica</label><ServicioDetalleSelector mascota={mascota} motivo="clinica" catalogo={catalogoServicios} specificServices={specificServices} onServiceChange={handleSpecificServiceChange} /></div>} {motivos.peluqueria && configServicios.peluqueria_activa && <div><label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2"><FaCut /> Servicio de Peluquería</label><ServicioDetalleSelector mascota={mascota} motivo="peluqueria" catalogo={catalogoServicios} specificServices={specificServices} onServiceChange={handleSpecificServiceChange} /></div>}</div></div>);})}</div></div>}
+                
                 {step === 4 && <div><h2 className="text-2xl font-bold mb-8">Paso 4: Elige los horarios y traslado</h2><div className="space-y-8">
                     {necesitaHorarioClinica && <div className="bg-gray-50 p-6 rounded-xl border"><h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-3"><FaStethoscope className="text-blue-500"/>Turno de Clínica</h3><HorarioClinicaSelector horariosDisponibles={horariosDisponiblesClinica} fecha={horarioClinica.fecha} hora={horarioClinica.hora} onFechaChange={(fecha) => setHorarioClinica(p => ({ ...p, fecha, hora: '' }))} onHoraChange={(hora) => setHorarioClinica(p => ({ ...p, hora }))} disabledDays={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} /></div>}
                     {necesitaHorarioPeluqueria && <div className="bg-gray-50 p-6 rounded-xl border"><h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-3"><FaCut className="text-green-500"/>Turno de Peluquería</h3><HorarioPeluqueriaSelector fecha={horarioPeluqueria.fecha} turno={horarioPeluqueria.turno} onFechaChange={(fecha) => setHorarioPeluqueria(p => ({ ...p, fecha, turno: ''}))} onTurnoChange={(turno) => setHorarioPeluqueria(p => ({...p, turno}))} disabledDays={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} /></div>}
                     <div className="p-4 border rounded-lg"><div className="flex items-center justify-between"><div className="flex items-center"><FaTruck className="text-2xl text-gray-600 mr-3"/><span className="font-bold text-gray-700">¿Necesitas traslado?</span></div><button type="button" onClick={() => setNecesitaTraslado(!necesitaTraslado)} className={`relative inline-flex items-center h-6 rounded-full w-11 ${necesitaTraslado ? 'bg-blue-600' : 'bg-gray-300'}`}><span className={`inline-block w-4 h-4 transform bg-white rounded-full ${necesitaTraslado ? 'translate-x-6' : 'translate-x-1'}`}/></button></div></div>
                 </div></div>}
+                
                 {step === 5 && <div><h2 className="text-2xl font-bold mb-8">Paso 5: Detalles Finales y Confirmación</h2><div className="space-y-8"><div className="grid grid-cols-1 md:grid-cols-2 gap-8"><div className="p-4 border rounded-lg"><div className="flex items-center mb-3"><FaCreditCard className="text-2xl text-gray-600 mr-3"/><span className="font-bold text-gray-700">Método de pago</span></div><div className="flex gap-4"><button type="button" onClick={() => setMetodoPago('efectivo')} className={`flex-1 p-3 rounded-lg border-2 ${metodoPago === 'efectivo' ? 'border-blue-500 bg-blue-50' : ''}`}><FaMoneyBillWave className="inline mr-2"/> Efectivo</button><button type="button" onClick={() => setMetodoPago('transferencia')} className={`flex-1 p-3 rounded-lg border-2 ${metodoPago === 'transferencia' ? 'border-blue-500 bg-blue-50' : ''}`}><FaCreditCard className="inline mr-2"/> Transferencia</button></div></div></div><div className="p-6 bg-gray-50 rounded-xl border"><h3 className="text-xl font-bold mb-4 border-b pb-2">Resumen del Turno</h3>{/* Aquí podría ir un resumen detallado */}</div></div></div>}
             </div>
 

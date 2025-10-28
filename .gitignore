@@ -4,7 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
-
+/src/app/turnos/nuevo/a.js
 # Testing
 /coverage
 
