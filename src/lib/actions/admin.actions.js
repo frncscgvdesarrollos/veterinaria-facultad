@@ -1,6 +1,7 @@
 'use server';
 
 import admin from '@/lib/firebaseAdmin';
+import { revalidatePath } from 'next/cache';
 
 const db = admin.firestore();
 
@@ -84,10 +85,8 @@ export async function getAllAppointmentsWithDetails() {
     for (const turnoDoc of turnosSnapshot.docs) {
       const turnoData = turnoDoc.data();
       
-      // CORRECCIÓN: Usar el campo `clienteId` que es más robusto
       const userId = turnoData.clienteId;
 
-      // Si no hay un clienteId en el turno, lo saltamos para evitar errores
       if (!userId) {
         console.warn(`Turno con ID ${turnoDoc.id} no tiene clienteId. Saltando...`);
         continue;
@@ -102,7 +101,6 @@ export async function getAllAppointmentsWithDetails() {
           ownerData = userDoc.data();
           ownersCache[userId] = ownerData; // Guardar en cache
         } else {
-          // Si el usuario no se encuentra, usamos datos por defecto
           ownerData = { nombre: 'Usuario Desconocido', apellido: '' };
         }
       }
@@ -110,7 +108,6 @@ export async function getAllAppointmentsWithDetails() {
       appointments.push({
         id: turnoDoc.id,
         ...turnoData,
-        // CORRECCIÓN: Estandarizar la serialización de todas las fechas
         fecha: safeToISOString(turnoData.fecha),
         creadoEn: safeToISOString(turnoData.creadoEn),
         owner: {
@@ -119,7 +116,6 @@ export async function getAllAppointmentsWithDetails() {
           apellido: ownerData.apellido,
           email: ownerData.email,
         },
-        // Incluimos los IDs originales para las acciones de admin
         userId: userId, 
         mascotaId: turnoData.mascotaId,
         turnoId: turnoDoc.id
@@ -130,7 +126,50 @@ export async function getAllAppointmentsWithDetails() {
 
   } catch (error) {
     console.error("Error al obtener todos los turnos:", error);
-    // CORRECIÓN: Devolver un array vacío para que la página no crashee
     return [];
+  }
+}
+
+/**
+ * @action updateUserRole
+ * @description Actualiza el rol de un usuario tanto en Firestore como en los Custom Claims de Firebase Authentication.
+ * @param {string} userId - El ID del usuario a modificar.
+ * @param {string} newRole - El nuevo rol a asignar. Roles válidos: 'admin', 'dueño', 'peluqueria', 'transporte'.
+ * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+ */
+export async function updateUserRole(userId, newRole) {
+  const auth = admin.auth();
+  const db = admin.firestore();
+
+  const validRoles = ['admin', 'dueño', 'peluqueria', 'transporte'];
+
+  if (!userId || !newRole) {
+    return { success: false, error: 'Faltan el ID de usuario o el nuevo rol.' };
+  }
+
+  if (!validRoles.includes(newRole)) {
+    return { success: false, error: `El rol '${newRole}' no es válido.` };
+  }
+
+  try {
+    // 1. Actualizar el Custom Claim en Firebase Auth (Paso CRÍTICO para la seguridad)
+    await auth.setCustomUserClaims(userId, { role: newRole });
+
+    // 2. Actualizar el rol en el documento de Firestore para consistencia de datos
+    const userRef = db.collection('users').doc(userId);
+    await userRef.update({ role: newRole });
+
+    // 3. Revalidar la ruta para que la UI se actualice
+    revalidatePath('/admin/empleados');
+    
+    console.log(`Rol del usuario ${userId} actualizado a ${newRole} exitosamente.`);
+    return { success: true, message: `El rol del usuario ha sido actualizado a ${newRole}.` };
+
+  } catch (error) {
+    console.error(`Error al actualizar el rol del usuario ${userId}:`, error);
+    if (error.code === 'auth/user-not-found') {
+        return { success: false, error: 'El usuario no fue encontrado en el sistema de autenticación.' };
+    }
+    return { success: false, error: 'Ocurrió un error en el servidor al intentar actualizar el rol.' };
   }
 }

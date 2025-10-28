@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
+import { FaBars, FaTimes, FaSignOutAlt, FaUserShield } from 'react-icons/fa';
 
 const getInitial = (name) => {
   if (!name) return '?';
@@ -18,7 +18,6 @@ export default function Header() {
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // Cierra el menú móvil cada vez que cambia la ruta
     useEffect(() => {
         setIsMenuOpen(false);
     }, [pathname]);
@@ -41,38 +40,55 @@ export default function Header() {
         }
     }
 
+    // --- Componente para el enlace específico del rol ---
+    const RoleSpecificLink = ({ isMobile }) => {
+        const baseClasses = isMobile 
+            ? "flex items-center gap-3 text-md font-bold text-violet-700 p-3 rounded-md bg-violet-50 hover:bg-violet-100"
+            : "text-md font-semibold text-violet-700 hover:text-violet-900 transition-colors";
+
+        if (!user || !user.role) return null;
+
+        switch (user.role) {
+            case 'admin':
+                return <Link href="/admin" className={baseClasses}>{isMobile && <FaUserShield />}Panel Admin</Link>;
+            case 'peluqueria':
+                return <Link href="/admin/empleados/peluqueria" className={baseClasses}>{isMobile && <FaUserShield />}Portal Peluquería</Link>;
+            case 'transporte':
+                return <Link href="/admin/empleados/transporte" className={baseClasses}>{isMobile && <FaUserShield />}Portal Transporte</Link>;
+            default:
+                return null;
+        }
+    };
+
     return (
         <header className="bg-white shadow-md sticky top-0 z-50 w-full">
             <nav className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     
-                    {/* Logo */}
                     <div className="flex-shrink-0">
                         <Link href="/" onClick={() => setIsMenuOpen(false)}>
                             <Image 
                                 src="/LOGO.svg" 
                                 alt="Logo Veterinaria Magali Martin"
-                                width={180} // Tamaño reducido
+                                width={180}
                                 height={50}
                                 priority
                             />
                         </Link>
                     </div>
                     
-                    {/* Navegación para Desktop */}
                     {isLoggedIn && (
                          <div className="hidden md:flex items-center gap-8">
+                            <RoleSpecificLink isMobile={false} />
                             <Link href="/mis-datos" className="text-md font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Datos</Link>
                             <Link href="/mascotas" className="text-md font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Mascotas</Link>
                             <Link href="/turnos/mis-turnos" className="text-md font-medium text-gray-600 hover:text-violet-700 transition-colors">Mis Turnos</Link>
                          </div>
                     )}
 
-                    {/* Elementos de la derecha */}
                     <div className="flex items-center justify-end gap-3">
                         {isLoggedIn && user ? (
                             <>
-                                {/* Avatar e Info de Usuario */}
                                 <div className="flex items-center gap-3">
                                     <span className="hidden sm:inline text-sm font-medium text-gray-700 capitalize">Hola, {displayIdentifier}</span>
                                     <div className="flex items-center justify-center bg-violet-100 rounded-full h-11 w-11 text-violet-700 font-bold text-lg overflow-hidden">
@@ -84,27 +100,24 @@ export default function Header() {
                                     </div>
                                 </div>
 
-                                {/* Botón de Logout para Desktop */}
                                 <button onClick={cerrarsesion} className="hidden md:flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">
                                     Salir
                                 </button>
                                 
-                                {/* Botón de Menú Hamburguesa para Móvil */}
                                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-2xl text-gray-700 hover:text-violet-700">
                                     {isMenuOpen ? <FaTimes /> : <FaBars />}
                                 </button>
                             </>
                         ) : (
-                            // No se muestra nada si el usuario no está logueado, como solicitaste.
-                            <div className="h-11"></div> // Placeholder para mantener la altura
+                            <div className="h-11"></div>
                         )}
                     </div>
                 </div>
 
-                {/* Panel del Menú Móvil */}
                 {isMenuOpen && isLoggedIn && (
                     <div className="md:hidden py-4 border-t border-gray-200">
                         <div className="flex flex-col gap-4">
+                            <RoleSpecificLink isMobile={true} />
                             <Link href="/mis-datos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Datos</Link>
                             <Link href="/mascotas" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Mascotas</Link>
                             <Link href="/turnos/mis-turnos" className="text-md font-medium text-gray-600 hover:text-violet-700 p-2 rounded-md hover:bg-gray-100">Mis Turnos</Link>

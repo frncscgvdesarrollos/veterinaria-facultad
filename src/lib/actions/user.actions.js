@@ -3,9 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 
-const aplicationRoles = {
-  // Ejemplo: '12345678': 'admin'
-};
 
 export async function signInWithGoogle(idToken) {
   if (!idToken) {
@@ -101,7 +98,8 @@ export async function registerWithEmail(userData) {
     });
 
     const userId = userRecord.uid;
-    const userRole = aplicationRoles[dni] || 'dueño';
+    // MODIFICACIÓN: Rol 'dueño' asignado por defecto a todos los nuevos usuarios.
+    const userRole = 'dueño'; 
 
     await auth.setCustomUserClaims(userId, { role: userRole });
 
@@ -143,6 +141,7 @@ export async function registerWithEmail(userData) {
     return { success: false, error: 'Ocurrió un error en el servidor durante el registro.' };
   }
 }
+
 const validacionDatosCompletarPerfil = (data) => {
   const errors = {};
   const {
@@ -184,17 +183,15 @@ const validacionDatosCompletarPerfil = (data) => {
 };
 
 export async function completarPerfil(userId, userData) {
-  // 1. Validar los datos como primer paso en el servidor
   const validationErrors = validacionDatosCompletarPerfil(userData);
   const errorValues = Object.values(validationErrors);
 
   if (errorValues.length > 0) {
-    // Si hay errores, unirlos en un solo string y devolver el mensaje.
     const errorMessage = errorValues.join(' ');
     return { success: false, error: errorMessage };
   }
 
-  // Si la validación pasa, continuar con la lógica existente
+
   const firestore = admin.firestore();
   const auth = admin.auth();
   const { 
@@ -213,7 +210,7 @@ export async function completarPerfil(userId, userData) {
   }
 
   try {
-    const userRole = aplicationRoles[dni] || 'dueño';
+    const userRole = 'dueño';
 
     await auth.updateUser(userId, {
         displayName: `${nombre} ${apellido}`
