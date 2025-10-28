@@ -7,7 +7,8 @@ import { db } from '@/lib/firebase';
 import { actualizarPerfil } from '@/lib/actions/user.actions.js';
 import SubHeader from '@/app/components/SubHeader';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
-
+import Link from 'next/link';
+import { FaUserShield } from 'react-icons/fa';
 // Componente para un campo de información, ahora con una prop `isEditable`
 const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable = true }) => {
     const Icon = icon;
@@ -34,7 +35,28 @@ const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable =
         </div>
     );
 };
-
+const RoleSpecificButton = ({ role }) => {
+    const roles = {
+      admin: { href: '/admin', label: 'Panel de Administrador' },
+      peluqueria: { href: '/admin/empleados/peluqueria', label: 'Portal de Peluquería' },
+      transporte: { href: '/admin/empleados/transporte', label: 'Portal de Transporte' }
+    };
+  
+    if (!role || !roles[role]) {
+      return null; // No se muestra nada si el rol no es válido o no existe
+    }
+  
+    const { href, label } = roles[role];
+  
+    return (
+      <div className="mb-6">
+        <Link href={href} className="inline-flex items-center gap-3 w-full text-left bg-violet-600 text-white font-bold p-4 rounded-lg hover:bg-violet-700 transition-colors text-md shadow-lg">
+          <FaUserShield size={20} />
+          {label}
+        </Link>
+      </div>
+    );
+  };
 // Componente para mostrar notificaciones
 const Notification = ({ message, type, onClose }) => {
     if (!message) return null;
@@ -132,6 +154,8 @@ export default function MisDatosPage() {
     return (
         <>
             <SubHeader title="Mis Datos" />
+            {userData && <RoleSpecificButton role={userData.role} />}
+
             <main className="max-w-4xl mx-auto p-4 md:p-8">
                 <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: '' })} />
 

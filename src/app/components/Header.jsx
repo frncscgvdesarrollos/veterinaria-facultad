@@ -4,28 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { FaSignOutAlt, FaUserShield } from 'react-icons/fa';
+import { FaSignOutAlt } from 'react-icons/fa';
 
 const getInitial = (name) => {
   if (!name) return '?';
   return name.charAt(0).toUpperCase();
-};
-
-const RoleSpecificLink = ({ user }) => {
-    const baseClasses = "text-md font-semibold text-violet-700 hover:text-violet-900 transition-colors flex items-center gap-2";
-
-    if (!user || !user.role) return null;
-
-    switch (user.role) {
-        case 'admin':
-            return <Link href="/admin" className={baseClasses}><FaUserShield />Panel Admin</Link>;
-        case 'peluqueria':
-            return <Link href="/admin/empleados/peluqueria" className={baseClasses}><FaUserShield />Portal Peluquería</Link>;
-        case 'transporte':
-            return <Link href="/admin/empleados/transporte" className={baseClasses}><FaUserShield />Portal Transporte</Link>;
-        default:
-            return null;
-    }
 };
 
 export default function Header() {
@@ -51,9 +34,6 @@ export default function Header() {
 
             return (
                 <div className="flex items-center justify-end gap-4">
-                    <div className="hidden md:flex">
-                        <RoleSpecificLink user={user} />
-                    </div>
                     <div className="flex items-center gap-3">
                         <span className="hidden sm:inline text-sm font-medium text-gray-700 capitalize">Hola, {displayIdentifier}</span>
                         <div className="flex items-center justify-center bg-violet-100 rounded-full h-11 w-11 text-violet-700 font-bold text-lg overflow-hidden">
@@ -72,7 +52,6 @@ export default function Header() {
             );
         }
         
-        // Si no está logueado, no se muestra nada a la derecha
         return null;
     };
 
