@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -22,6 +21,7 @@ export default function EmpleadosClientView({ initialUsers }) {
   const [users, setUsers] = useState(initialUsers);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState({ message: '', type: '' });
+  const [emailFilter, setEmailFilter] = useState(''); // Estado para el filtro de email
 
   const handleRoleChange = (userId, newRole) => {
     setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
@@ -41,23 +41,38 @@ export default function EmpleadosClientView({ initialUsers }) {
     } else {
       setFeedback({ message: `Error: ${result.error}`, type: 'error' });
       // Opcional: Revertir el cambio en la UI si la actualización falla
-      // Para ello, necesitaríamos una copia del estado original.
     }
 
     setLoading(false);
-    // Ocultar el mensaje después de unos segundos
     setTimeout(() => setFeedback({ message: '', type: '' }), 4000);
   };
 
   const rolesDisponibles = ['dueño', 'admin', 'peluqueria', 'transporte'];
 
+  // Lógica para filtrar los usuarios por email
+  const filteredUsers = users.filter(user => 
+    user.email.toLowerCase().includes(emailFilter.toLowerCase())
+  );
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="p-4">
+        {/* Input para el filtro de email */}
+        <input
+          type="text"
+          placeholder="Filtrar por email..."
+          value={emailFilter}
+          onChange={(e) => setEmailFilter(e.target.value)}
+          className="block w-full max-w-sm pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+      </div>
+      
       {feedback.message && (
-        <div className="p-4">
+        <div className="p-4 border-t border-gray-200">
           <FeedbackMessage message={feedback.message} type={feedback.type} />
         </div>
       )}
+
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -71,7 +86,8 @@ export default function EmpleadosClientView({ initialUsers }) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
+            {/* Mapear sobre los usuarios filtrados */}
+            {filteredUsers.map((user) => (
               <tr key={user.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{user.nombre} {user.apellido}</div>
@@ -81,7 +97,7 @@ export default function EmpleadosClientView({ initialUsers }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <select
-                    value={user.role || 'dueño'} // Asigna 'dueño' si el rol no está definido
+                    value={user.role || 'dueño'}
                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
                     className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                   >
