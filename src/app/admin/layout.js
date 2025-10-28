@@ -1,6 +1,9 @@
-
+'use client'
 import Link from 'next/link';
 import { FaTachometerAlt, FaCalendarAlt, FaUsers, FaConciergeBell } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const SidebarLink = ({ icon: Icon, text, href }) => (
     <Link href={href}>
@@ -12,6 +15,21 @@ const SidebarLink = ({ icon: Icon, text, href }) => (
 );
 
 export default function AdminLayout({ children }) {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading) {
+            if (!user || user.role !== 'admin') {
+                router.push('/');
+            }
+        }
+    }, [user, loading, router]);
+
+    if (loading || !user || user.role !== 'admin') {
+        return null; // No mostrar nada hasta que la verificación esté completa
+    }
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
