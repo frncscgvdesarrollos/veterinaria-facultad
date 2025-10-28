@@ -49,13 +49,25 @@ const RoleSpecificButton = ({ role }) => {
     const { href, label } = roles[role];
   
     return (
-      <div className="mb-6">
-        <Link href={href} className="inline-flex items-center gap-3 w-full text-left bg-violet-600 text-white font-bold p-4 rounded-lg hover:bg-violet-700 transition-colors text-md shadow-lg">
-          <FaUserShield size={20} />
-          {label}
-        </Link>
-      </div>
+        <div className="mb-8">
+          <Link 
+            href={href} 
+            className="flex items-center justify-between w-full p-4 text-left bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              {/* Icono destacado */}
+              <div className="p-3 bg-violet-100 rounded-xl">
+                <FaUserShield className="text-violet-600" size={22} />
+              </div>
+              {/* Etiqueta del rol */}
+              <span className="text-lg font-bold text-gray-800">{label}</span>
+            </div>
+            {/* Flecha indicadora */}
+            <FaChevronRight className="text-gray-400 group-hover:text-violet-600 transition-colors" size={20} />
+          </Link>
+        </div>
     );
+   
   };
 // Componente para mostrar notificaciones
 const Notification = ({ message, type, onClose }) => {
