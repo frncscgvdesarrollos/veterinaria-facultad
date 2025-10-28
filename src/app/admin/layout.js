@@ -26,7 +26,7 @@ export default function AdminLayout({ children }) {
         }
     }, [user, loading, router]);
 
-    if (loading || !user || user.role !== 'admin') {
+    if (loading || !user || user.role !== 'admin' || user.role !== 'peluqueria' || user.role !== 'transporte') {
         return null; // No mostrar nada hasta que la verificación esté completa
     }
 
