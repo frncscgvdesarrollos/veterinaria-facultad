@@ -1,7 +1,10 @@
-
 'use client'
 import Link from 'next/link';
-import { FaBell, FaBoxOpen, FaCog, FaTachometerAlt, FaCalendarAlt, FaUsers, FaConciergeBell } from 'react-icons/fa';
+import { FaBell, FaBoxOpen, FaCog } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
 
 const DashboardCard = ({ title, description, href }) => (
     <Link href={href}>
@@ -13,17 +16,35 @@ const DashboardCard = ({ title, description, href }) => (
 );
 
 export default function AdminDashboardPage() {
+
+    const { user, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading) {
+            if (!user || user.role !== 'admin') {
+                router.push('/');
+            }
+        }
+    }, [user, loading, router]);
+
+    if (loading || !user || user.role !== 'admin') {
+        return null;
+    }
+
+
   return (
     <div>
         <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel de Control</h1>
-            <p className="text-gray-500 mt-1">Bienvenida, Magali. Selecciona una opción.</p>
+            <p className="text-gray-500 mt-1">Bienvenida, {user?.displayName || 'Admin'}. Selecciona una opción.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <DashboardCard title="Turnos" description="Gestionar todas las citas" href="/admin/turnos" />
             <DashboardCard title="Clientes" description="Ver y administrar clientes" href="/admin/clientes" />
             <DashboardCard title="Servicios" description="Configurar los servicios ofrecidos" href="/admin/servicios" />
+            <DashboardCard title="Empleados" description="Alta o baja de empleados" href="/admin/empleados" />
         </div>
 
         <div className="mt-10 bg-white rounded-lg shadow-md p-6">
