@@ -8,7 +8,7 @@ import { actualizarPerfil } from '@/lib/actions/user.actions.js';
 import SubHeader from '@/app/components/SubHeader';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
 import Link from 'next/link';
-import { FaChevronRight } from 'react-icons/fa';
+import { FaUserShield , FaChevronRight } from 'react-icons/fa';
 // Componente para un campo de información, ahora con una prop `isEditable`
 const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable = true }) => {
     const Icon = icon;
