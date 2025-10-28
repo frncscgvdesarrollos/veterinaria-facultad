@@ -40,7 +40,6 @@ export default function Header() {
         }
     }
 
-    // --- Componente para el enlace específico del rol ---
     const RoleSpecificLink = ({ isMobile }) => {
         const baseClasses = isMobile 
             ? "flex items-center gap-3 text-md font-bold text-violet-700 p-3 rounded-md bg-violet-50 hover:bg-violet-100"
@@ -109,7 +108,10 @@ export default function Header() {
                                 </button>
                             </>
                         ) : (
-                            <div className="h-11"></div>
+                            <div className="flex items-center gap-4">
+                                <Link href="/login" className="text-md font-medium text-gray-600 hover:text-violet-700 transition-colors">Ingresar</Link>
+                                <Link href="/login?register=true" className="text-md font-medium text-white bg-violet-700 hover:bg-violet-800 px-4 py-2 rounded-md transition-colors">Registrarse</Link>
+                            </div>
                         )}
                     </div>
                 </div>
