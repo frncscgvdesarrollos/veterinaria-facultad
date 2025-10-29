@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, doc, getDoc, orderBy, where } from 'firebase/firestore'; // Import 'where'
 import { db } from '@/lib/firebase';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -16,7 +16,6 @@ import { FaDog, FaCat, FaArrowLeft, FaCut, FaStethoscope, FaCalendarAlt, FaClock
 import toast, { Toaster } from 'react-hot-toast';
 import { verificarDisponibilidadTrasladoAction, crearTurnos } from '@/lib/actions/turnos.actions';
 import { getDiasNoLaborales, obtenerConfiguracionServicios } from '@/lib/actions/config.actions.js';
-
 
 // --- CONFIG & CONSTANTS ---
 const VETERINARIOS_DISPONIBLES = 1;
@@ -48,9 +47,7 @@ const calcularFechaLimite = (diasNoLaborales = []) => {
     return fechaActual;
 };
 
-
 // --- WIZARD SUB-COMPONENTS ---
-
 const MascotaSelectionCard = ({ mascota, isSelected, onToggle }) => (
     <div onClick={() => onToggle(mascota.id)} className={`p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-4 ${isSelected ? 'bg-blue-50 border-blue-500 shadow-lg' : 'bg-white dark:bg-gray-700 hover:bg-gray-50'}`}>
         <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>{isSelected && <FaCheck className="text-white text-xs"/>}</div>
@@ -69,25 +66,14 @@ const ServiceAssignmentRow = ({ mascota, services, onToggle, configServicios }) 
         </td>
         <td className="py-4 px-2 text-center">
             {configServicios.clinica_activa ? (
-                <input 
-                    type="checkbox" 
-                    checked={!!services.clinica} 
-                    onChange={() => onToggle(mascota.id, 'clinica')} 
-                    className="w-6 h-6 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                />
+                <input type="checkbox" checked={!!services.clinica} onChange={() => onToggle(mascota.id, 'clinica')} className="w-6 h-6 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"/>
             ) : (
                 <span className="text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full">Suspendido</span>
             )}
         </td>
         <td className="py-4 px-2 text-center">
              {configServicios.peluqueria_activa ? (
-                <input 
-                    type="checkbox" 
-                    checked={!!services.peluqueria} 
-                    onChange={() => onToggle(mascota.id, 'peluqueria')} 
-                    disabled={mascota.especie.toLowerCase() !== 'perro'} 
-                    className="w-6 h-6 rounded text-green-600 focus:ring-green-500 disabled:bg-gray-200 disabled:cursor-not-allowed cursor-pointer"
-                />
+                <input type="checkbox" checked={!!services.peluqueria} onChange={() => onToggle(mascota.id, 'peluqueria')} disabled={mascota.especie.toLowerCase() !== 'perro'} className="w-6 h-6 rounded text-green-600 focus:ring-green-500 disabled:bg-gray-200 disabled:cursor-not-allowed cursor-pointer"/>
              ) : (
                 <span className="text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full">Suspendido</span>
              )}
@@ -112,10 +98,10 @@ const ServicioDetalleSelector = ({ mascota, motivo, catalogo, specificServices, 
     );
 };
 
-const HorarioClinicaSelector = ({ horariosDisponibles, fecha, hora, onFechaChange, onHoraChange, disabledDays, modifiers, modifiersStyles }) => (
+const HorarioClinicaSelector = ({ fecha, hora, onFechaChange, onHoraChange, disabledDays, modifiers, modifiersStyles, horariosDisponibles, month, onMonthChange }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <div className="flex justify-center">
-             <DayPicker mode="single" selected={fecha} onSelect={onFechaChange} locale={es} disabled={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} styles={{ caption: { color: '#1d4ed8' }, head: { color: '#3b82f6'} }}/>
+             <DayPicker mode="single" selected={fecha} onSelect={onFechaChange} locale={es} disabled={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} styles={{ caption: { color: '#1d4ed8' }, head: { color: '#3b82f6'} }} month={month} onMonthChange={onMonthChange} />
         </div>
         <div>
             <label className="block text-sm font-bold text-gray-700 mb-4">Horario</label>
@@ -124,10 +110,10 @@ const HorarioClinicaSelector = ({ horariosDisponibles, fecha, hora, onFechaChang
     </div>
 );
 
-const HorarioPeluqueriaSelector = ({ fecha, turno, onFechaChange, onTurnoChange, disabledDays, modifiers, modifiersStyles }) => (
+const HorarioPeluqueriaSelector = ({ fecha, turno, onFechaChange, onTurnoChange, disabledDays, modifiers, modifiersStyles, month, onMonthChange }) => (
      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <div className="flex justify-center">
-             <DayPicker mode="single" selected={fecha} onSelect={onFechaChange} locale={es} disabled={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} styles={{ caption: { color: '#16a34a' }, head: { color: '#22c55e'} }}/>
+             <DayPicker mode="single" selected={fecha} onSelect={onFechaChange} locale={es} disabled={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} styles={{ caption: { color: '#16a34a' }, head: { color: '#22c55e'} }} month={month} onMonthChange={onMonthChange}/>
         </div>
         <div>
             <label className="block text-sm font-bold text-gray-700 mb-4">Turno</label>
@@ -161,10 +147,17 @@ export default function NuevoTurnoWizardPage() {
     const [necesitaTraslado, setNecesitaTraslado] = useState(false);
     const [metodoPago, setMetodoPago] = useState('efectivo');
     
+    const [currentClinicMonth, setCurrentClinicMonth] = useState(new Date());
+    const [currentPeluqueriaMonth, setCurrentPeluqueriaMonth] = useState(new Date());
+
+    const selectedMascotas = useMemo(() => mascotas.filter(m => selectedMascotaIds.includes(m.id)), [mascotas, selectedMascotaIds]);
+    const necesitaHorarioClinica = useMemo(() => selectedMascotas.some(m => motivosPorMascota[m.id]?.clinica), [selectedMascotas, motivosPorMascota]);
+    const necesitaHorarioPeluqueria = useMemo(() => selectedMascotas.some(m => motivosPorMascota[m.id]?.peluqueria), [selectedMascotas, motivosPorMascota]);
+    
     useEffect(() => {
         if (!authLoading && !user) { router.push('/login?redirectTo=/turnos/nuevo'); return; }
         if (user) {
-            const cargarDatos = async () => {
+            const cargarDatosIniciales = async () => {
                 setLoadingData(true);
                 try {
                     const [mascotasSnap, serviciosSnap, configResult, diasResult] = await Promise.all([
@@ -181,24 +174,51 @@ export default function NuevoTurnoWizardPage() {
                         setCatalogoServicios({ clinica: Object.entries(data.clinica || {}).map(([id, val]) => ({ id, ...val })), peluqueria: Object.entries(data.peluqueria || {}).map(([id, val]) => ({ id, ...val })) });
                     }
 
-                    if (configResult.success) {
-                        setConfigServicios(configResult.data);
-                    } else {
-                        toast.error("No se pudo cargar la configuración de servicios.");
-                    }
+                    if (configResult.success) setConfigServicios(configResult.data);
+                    else toast.error("No se pudo cargar la configuración de servicios.");
 
-                    if (diasResult.success) {
-                        setDiasNoLaborales(diasResult.data.map(d => new Date(`${d}T00:00:00`)));
-                    } else {
-                        toast.error("No se pudo cargar la configuración de días festivos.");
-                    }
+                    if (diasResult.success) setDiasNoLaborales(diasResult.data.map(d => new Date(`${d}T00:00:00`)));
+                    else toast.error("No se pudo cargar la configuración de días festivos.");
 
                 } catch (err) { setError('Ocurrió un error al cargar los datos iniciales.'); console.error(err); } finally { setLoadingData(false); }
             };
-            cargarDatos();
+            cargarDatosIniciales();
         }
     }, [user, authLoading, router]);
     
+    useEffect(() => {
+        const fetchOcupacionClinica = async () => {
+            if (!necesitaHorarioClinica) return;
+
+            const startOfMonth = dayjs(currentClinicMonth).startOf('month').toDate();
+            const endOfMonth = dayjs(currentClinicMonth).endOf('month').toDate();
+            
+            const q = query(
+                collection(db, 'turnos'),
+                where('tipo', '==', 'clinica'),
+                where('fecha', '>=', startOfMonth),
+                where('fecha', '<=', endOfMonth)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const newOcupacion = {};
+
+            querySnapshot.forEach(doc => {
+                const turno = doc.data();
+                const fecha = turno.fecha.toDate();
+                const fechaStr = dayjs(fecha).format('YYYY-MM-DD');
+                const horaStr = dayjs(fecha).format('HH:mm');
+
+                if (!newOcupacion[fechaStr]) newOcupacion[fechaStr] = {};
+                newOcupacion[fechaStr][horaStr] = (newOcupacion[fechaStr][horaStr] || 0) + 1;
+            });
+            
+            setOcupacion(prev => ({ ...prev, ...newOcupacion }));
+        };
+
+        fetchOcupacionClinica();
+    }, [currentClinicMonth, necesitaHorarioClinica]);
+
     const disabledDays = useMemo(() => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -206,26 +226,22 @@ export default function NuevoTurnoWizardPage() {
 
         const fechaLimite = calcularFechaLimite(diasNoLaborales);
         
-        return [
-            ...diasNoLaborales,
-            { before: tomorrow },
-            { after: fechaLimite },
-            { dayOfWeek: [0, 6] }
-        ];
+        return [ ...diasNoLaborales, { before: tomorrow }, { after: fechaLimite }, { dayOfWeek: [0, 6] } ];
     }, [diasNoLaborales]);
     
-    const modifiers = { noLaboral: diasNoLaborales };
+    const modifiers = useMemo(() => ({ noLaboral: diasNoLaborales }), [diasNoLaborales]);
     const modifiersStyles = { noLaboral: { color: 'white', backgroundColor: '#ef4444', borderRadius: '50%'} };
-
-    const selectedMascotas = useMemo(() => mascotas.filter(m => selectedMascotaIds.includes(m.id)), [mascotas, selectedMascotaIds]);
-    const necesitaHorarioClinica = useMemo(() => selectedMascotas.some(m => motivosPorMascota[m.id]?.clinica), [selectedMascotas, motivosPorMascota]);
-    const necesitaHorarioPeluqueria = useMemo(() => selectedMascotas.some(m => motivosPorMascota[m.id]?.peluqueria), [selectedMascotas, motivosPorMascota]);
 
     const horariosDisponiblesClinica = useMemo(() => {
         if (!horarioClinica.fecha) return [];
-        const ocupacionFecha = ocupacion[horarioClinica.fecha.toISOString().split('T')[0]] || {};
+        const fechaStr = dayjs(horarioClinica.fecha).format('YYYY-MM-DD');
+        const ocupacionFecha = ocupacion[fechaStr] || {};
         const numTurnosClinica = selectedMascotas.filter(m => motivosPorMascota[m.id]?.clinica).length;
-        return horariosConsulta.filter(h => (ocupacionFecha[h] || 0) + numTurnosClinica <= VETERINARIOS_DISPONIBLES);
+        
+        return horariosConsulta.filter(h => {
+            const ocupados = ocupacionFecha[h] || 0;
+            return (ocupados + numTurnosClinica) <= VETERINARIOS_DISPONIBLES;
+        });
     }, [horarioClinica.fecha, ocupacion, selectedMascotas, motivosPorMascota]);
 
     const handleNextStep = async () => {
@@ -236,7 +252,7 @@ export default function NuevoTurnoWizardPage() {
 
             if (fechaPeluqueria && mascotasParaTraslado.length > 0) {
                  const result = await verificarDisponibilidadTrasladoAction({
-                    fecha: fechaPeluqueria.toISOString().split('T')[0],
+                    fecha: dayjs(fechaPeluqueria).format('YYYY-MM-DD'),
                     nuevasMascotas: mascotasParaTraslado
                 });
                 
@@ -340,13 +356,7 @@ export default function NuevoTurnoWizardPage() {
                                     </thead>
                                     <tbody>
                                         {selectedMascotas.map(mascota => 
-                                            <ServiceAssignmentRow 
-                                                key={mascota.id} 
-                                                mascota={mascota} 
-                                                services={motivosPorMascota[mascota.id] || {}} 
-                                                onToggle={handleMotivoToggle}
-                                                configServicios={configServicios}
-                                            /> 
+                                            <ServiceAssignmentRow key={mascota.id} mascota={mascota} services={motivosPorMascota[mascota.id] || {}} onToggle={handleMotivoToggle} configServicios={configServicios} /> 
                                         )}
                                     </tbody>
                                 </table>
@@ -356,10 +366,9 @@ export default function NuevoTurnoWizardPage() {
                 )}
 
                 {step === 3 && <div><h2 className="text-2xl font-bold mb-8">Paso 3: Detalla los servicios</h2><div className="space-y-8">{selectedMascotas.map(mascota => { const motivos = motivosPorMascota[mascota.id]; if (!motivos || (!motivos.clinica && !motivos.peluqueria)) return null; return (<div key={mascota.id} className="p-6 bg-gray-50 rounded-xl border-l-4 border-blue-500"><h3 className="font-bold text-xl mb-4 text-gray-800">{mascota.nombre}</h3><div className="space-y-4"> {motivos.clinica && configServicios.clinica_activa && <div><label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2"><FaStethoscope /> Servicio de Clínica</label><ServicioDetalleSelector mascota={mascota} motivo="clinica" catalogo={catalogoServicios} specificServices={specificServices} onServiceChange={handleSpecificServiceChange} /></div>} {motivos.peluqueria && configServicios.peluqueria_activa && <div><label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2"><FaCut /> Servicio de Peluquería</label><ServicioDetalleSelector mascota={mascota} motivo="peluqueria" catalogo={catalogoServicios} specificServices={specificServices} onServiceChange={handleSpecificServiceChange} /></div>}</div></div>);})}</div></div>}
-                
                 {step === 4 && <div><h2 className="text-2xl font-bold mb-8">Paso 4: Elige los horarios y traslado</h2><div className="space-y-8">
-                    {necesitaHorarioClinica && <div className="bg-gray-50 p-6 rounded-xl border"><h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-3"><FaStethoscope className="text-blue-500"/>Turno de Clínica</h3><HorarioClinicaSelector horariosDisponibles={horariosDisponiblesClinica} fecha={horarioClinica.fecha} hora={horarioClinica.hora} onFechaChange={(fecha) => setHorarioClinica(p => ({ ...p, fecha, hora: '' }))} onHoraChange={(hora) => setHorarioClinica(p => ({ ...p, hora }))} disabledDays={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} /></div>}
-                    {necesitaHorarioPeluqueria && <div className="bg-gray-50 p-6 rounded-xl border"><h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-3"><FaCut className="text-green-500"/>Turno de Peluquería</h3><HorarioPeluqueriaSelector fecha={horarioPeluqueria.fecha} turno={horarioPeluqueria.turno} onFechaChange={(fecha) => setHorarioPeluqueria(p => ({ ...p, fecha, turno: ''}))} onTurnoChange={(turno) => setHorarioPeluqueria(p => ({...p, turno}))} disabledDays={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} /></div>}
+                    {necesitaHorarioClinica && <div className="bg-gray-50 p-6 rounded-xl border"><h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-3"><FaStethoscope className="text-blue-500"/>Turno de Clínica</h3><HorarioClinicaSelector horariosDisponibles={horariosDisponiblesClinica} fecha={horarioClinica.fecha} hora={horarioClinica.hora} onFechaChange={(fecha) => setHorarioClinica(p => ({ ...p, fecha, hora: '' }))} onHoraChange={(hora) => setHorarioClinica(p => ({ ...p, hora }))} disabledDays={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} month={currentClinicMonth} onMonthChange={setCurrentClinicMonth}/></div>}
+                    {necesitaHorarioPeluqueria && <div className="bg-gray-50 p-6 rounded-xl border"><h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-3"><FaCut className="text-green-500"/>Turno de Peluquería</h3><HorarioPeluqueriaSelector fecha={horarioPeluqueria.fecha} turno={horarioPeluqueria.turno} onFechaChange={(fecha) => setHorarioPeluqueria(p => ({ ...p, fecha, turno: ''}))} onTurnoChange={(turno) => setHorarioPeluqueria(p => ({...p, turno}))} disabledDays={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} month={currentPeluqueriaMonth} onMonthChange={setCurrentPeluqueriaMonth} /></div>}
                     <div className="p-4 border rounded-lg"><div className="flex items-center justify-between"><div className="flex items-center"><FaTruck className="text-2xl text-gray-600 mr-3"/><span className="font-bold text-gray-700">¿Necesitas traslado?</span></div><button type="button" onClick={() => setNecesitaTraslado(!necesitaTraslado)} className={`relative inline-flex items-center h-6 rounded-full w-11 ${necesitaTraslado ? 'bg-blue-600' : 'bg-gray-300'}`}><span className={`inline-block w-4 h-4 transform bg-white rounded-full ${necesitaTraslado ? 'translate-x-6' : 'translate-x-1'}`}/></button></div></div>
                 </div></div>}
                 
@@ -373,6 +382,7 @@ export default function NuevoTurnoWizardPage() {
         </section>
     );
 }
+
 
 
 
