@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link';
 import { FaTachometerAlt, FaCalendarAlt, FaUsers, FaConciergeBell } from 'react-icons/fa';
-import { useAuth } from '@/context/AuthContext'; // Ajusta la ruta a tu AuthContext
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
