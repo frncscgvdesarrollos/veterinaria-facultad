@@ -37,7 +37,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 bg-gray-800 text-white flex-col p-4 hidden md:flex">
+      <aside className="w-64 bg-gray-100 text-white flex-col p-4 hidden md:flex">
         <div className="mb-10">
             <Link href="/admin">
               <span className="text-2xl font-bold text-white">Panel de Admin</span>
@@ -51,7 +51,7 @@ export default function AdminLayout({ children }) {
         </nav>
       </aside>
       
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-900">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-100">
         <header className="md:hidden flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-white">Admin</h1>
         </header>
