@@ -7,41 +7,41 @@ import { FaSpinner } from 'react-icons/fa';
 import { actualizarDiasNoLaborales } from '@/lib/actions/config.admin.actions.js';
 import toast from 'react-hot-toast';
 
-// Helper para formatear la fecha como YYYY-MM-DD en UTC
-const toUTCDateString = (date) => {
+// Helper para formatear la fecha LOCAL a YYYY-MM-DD
+const toLocalDateString = (date) => {
     if (!date) return '';
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
 
 export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBloqueados = [] }) {
-    // Normalizamos las fechas iniciales a objetos Date en UTC
+    // --- CORRECCIÓN DE ZONA HORARIA ---
+    // Se inicializan las fechas como objetos Date en la zona horaria LOCAL del navegador.
     const initialDates = initialDiasBloqueados.map(dateStr => {
-        const [year, month, day] = dateStr.split('-').map(Number);
-        return new Date(Date.UTC(year, month - 1, day));
+        // La T00:00:00 asegura que el string se interprete en la zona horaria local.
+        return new Date(`${dateStr}T00:00:00`);
     });
 
     const [selectedDays, setSelectedDays] = useState(initialDates);
     const [isPending, startTransition] = useTransition();
 
     const handleDayClick = (day, { selected }) => {
-        // --- CORRECCIÓN DE ZONA HORARIA ---
-        // Normalizamos el día del clic a UTC para que coincida con el formato del estado.
-        const dayInUTC = new Date(Date.UTC(day.getFullYear(), day.getMonth(), day.getDate()));
+        // El objeto 'day' ya viene en la zona horaria local. No se necesita conversión.
+        // Se normaliza a medianoche para evitar problemas de comparación de horas.
+        const dayAtMidnight = new Date(day.getFullYear(), day.getMonth(), day.getDate());
 
         if (selected) {
-            // Si el día ya estaba seleccionado, lo filtramos (eliminamos)
-            setSelectedDays(prev => prev.filter(d => d.getTime() !== dayInUTC.getTime()));
+            setSelectedDays(prev => prev.filter(d => d.getTime() !== dayAtMidnight.getTime()));
         } else {
-            // Si no estaba seleccionado, lo añadimos
-            setSelectedDays(prev => [...prev, dayInUTC]);
+            setSelectedDays(prev => [...prev, dayAtMidnight]);
         }
     };
 
     const handleGuardarCambios = () => {
-        const nuevasFechas = selectedDays.map(toUTCDateString);
+        // Se utiliza el helper que convierte la fecha LOCAL a string.
+        const nuevasFechas = selectedDays.map(toLocalDateString);
 
         startTransition(async () => {
             const toastId = toast.loading('Guardando cambios y actualizando turnos...');
