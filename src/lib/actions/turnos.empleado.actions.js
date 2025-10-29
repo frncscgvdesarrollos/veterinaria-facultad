@@ -29,8 +29,83 @@ const serializeTurno = (turnoData) => {
     };
 };
 
+// --- FUNCIÓN ACTUALIZADA PARA TRANSPORTE (CON CONSULTA SIMPLIFICADA) ---
+export async function getTurnsForTransporte() {
+  try {
+    const timeZone = 'America/Argentina/Buenos_Aires';
+    const nowInArgentina = dayjs().tz(timeZone);
+    const startOfToday = nowInArgentina.startOf('day').toDate();
+    const endOfToday = nowInArgentina.endOf('day').toDate();
 
-// --- FUNCIÓN ACTUALIZADA PARA TRANSPORTE (VISTA UNIFICADA) ---
+    // 1. CONSULTA SIMPLIFICADA: Traemos todos los turnos del día.
+    const turnosSnapshot = await db.collectionGroup('turnos')
+      .where('fecha', '>=', startOfToday)
+      .where('fecha', '<=', endOfToday)
+      .orderBy('fecha', 'asc')
+      .get();
+
+    if (turnosSnapshot.empty) {
+      return { success: true, data: [] }; 
+    }
+
+    // 2. FILTRO EN CÓDIGO: Filtramos los que necesitan traslado después de obtenerlos.
+    const turnosParaTraslado = turnosSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(turno => turno.necesitaTraslado === true);
+    
+    if (turnosParaTraslado.length === 0) {
+        return { success: true, data: [] };
+    }
+
+    // 3. ENRIQUECIMIENTO: Continuamos solo con los turnos filtrados.
+    const usersCache = new Map();
+    const mascotasCache = new Map();
+
+    const enrichedTurnosPromises = turnosParaTraslado.map(async (turnoData) => {
+      const userId = turnoData.clienteId;
+      const mascotaId = turnoData.mascotaId;
+      
+      let serializableUser = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', direccion: 'N/A', telefono: 'N/A' };
+      if (userId) {
+        if (!usersCache.has(userId)) {
+          const userDoc = await db.collection('users').doc(userId).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            serializableUser = { id: userDoc.id, nombre: userData.nombre || 'N/A', apellido: userData.apellido || 'N/A', email: userData.email || 'N/A', direccion: userData.direccion || 'N/A', telefono: userData.telefono || 'N/A' };
+            usersCache.set(userId, serializableUser);
+          }
+        } else {
+            serializableUser = usersCache.get(userId);
+        }
+      }
+      
+      let serializableMascota = { id: mascotaId, nombre: 'Mascota Eliminada' };
+      if (userId && mascotaId) {
+        const mascotaCacheKey = `${userId}-${mascotaId}`;
+        if (!mascotasCache.has(mascotaCacheKey)) {
+            const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
+            if (mascotaDoc.exists) {
+                const mascotaData = mascotaDoc.data();
+                serializableMascota = { id: mascotaDoc.id, nombre: mascotaData.nombre || 'N/A' };
+                mascotasCache.set(mascotaCacheKey, serializableMascota);
+            }
+        } else {
+            serializableMascota = mascotasCache.get(mascotaCacheKey);
+        }
+      }
+
+      return { ...serializeTurno(turnoData), id: turnoData.id, user: serializableUser, mascota: serializableMascota };
+    });
+
+    const enrichedTurnos = await Promise.all(enrichedTurnosPromises);
+
+    return { success: true, data: enrichedTurnos };
+
+  } catch (error) {
+    console.error("Error en getTurnsForTransporte:", error);
+    return { success: false, error: `Error del servidor: ${error.message}.` };
+  }
+}
 export async function getTurnsForTransporte() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
