@@ -87,7 +87,7 @@ const TurnosTable = ({ title, turnos, tipo, onUpdateStatus }) => {
 
 
 // --- Componente Principal de la Vista del Cliente de Transporte ---
-export default function TransporteClientView  ({ recogidas, entregas })  {
+const TransporteClientView = ({ recogidas, entregas }) => {
     const [currentRecogidas, setCurrentRecogidas] = useState(recogidas);
     const [currentEntregas, setCurrentEntregas] = useState(entregas);
 
@@ -109,13 +109,13 @@ export default function TransporteClientView  ({ recogidas, entregas })  {
 
     // Usamos useMemo para evitar recalcular los filtros en cada render a menos que los datos cambien
     const turnosMañana = useMemo(() => ({
-        recogidas: currentRecogidas.filter(t => t.horario === 'Mañana'),
-        entregas: currentEntregas.filter(t => t.horario === 'Mañana')
+        recogidas: currentRecogidas.filter(t => t.horario === 'mañana'),
+        entregas: currentEntregas.filter(t => t.horario === 'mañana')
     }), [currentRecogidas, currentEntregas]);
 
     const turnosTarde = useMemo(() => ({
-        recogidas: currentRecogidas.filter(t => t.horario === 'Tarde'),
-        entregas: currentEntregas.filter(t => t.horario === 'Tarde')
+        recogidas: currentRecogidas.filter(t => t.horario === 'tarde'),
+        entregas: currentEntregas.filter(t => t.horario === 'tarde')
     }), [currentRecogidas, currentEntregas]);
 
     return (
@@ -164,3 +164,5 @@ export default function TransporteClientView  ({ recogidas, entregas })  {
         </div>
     );
 };
+
+export default TransporteClientView;
