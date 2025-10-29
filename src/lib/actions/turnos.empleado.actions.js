@@ -115,7 +115,7 @@ export async function getTurnsForTransporte() {
   }
 }
 
-// --- FUNCIÓN PREPARADA PARA PELUQUERÍA ---
+// --- FUNCIÓN CORREGIDA PARA PELUQUERÍA ---
 export async function getTurnsForPeluqueria() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
@@ -123,7 +123,6 @@ export async function getTurnsForPeluqueria() {
     const startOfToday = nowInArgentina.startOf('day').toDate();
     const endOfToday = nowInArgentina.endOf('day').toDate();
 
-    // Traemos todos los turnos del día que no sean solo de consulta
     const turnosSnapshot = await db.collectionGroup('turnos')
       .where('fecha', '>=', startOfToday)
       .where('fecha', '<=', endOfToday)
@@ -135,19 +134,13 @@ export async function getTurnsForPeluqueria() {
       return { success: true, data: [] };
     }
     
-    // Aquí filtramos solo por los que están 'enVeterinaria'
-    const turnosEnPeluqueria = turnosSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(turno => turno.estado === 'enVeterinaria');
-    
-    if (turnosEnPeluqueria.length === 0) {
-        return { success: true, data: [] };
-    }
+    // CORRECCIÓN: Se eliminó el filtro de estado. Ahora se procesan todos los turnos de peluquería del día.
+    const turnosDePeluqueria = turnosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const usersCache = new Map();
     const mascotasCache = new Map();
 
-    const enrichedTurnosPromises = turnosEnPeluqueria.map(async (turnoData) => {
+    const enrichedTurnosPromises = turnosDePeluqueria.map(async (turnoData) => {
       const userId = turnoData.clienteId;
       const mascotaId = turnoData.mascotaId;
       
@@ -176,7 +169,7 @@ export async function getTurnsForPeluqueria() {
             mascotasCache.set(mascotaCacheKey, serializableMascota);
           }
         } else {
-            serializableMascota = mascotasCache.get(mascotaCacheKey);
+            serializableMascota = mascotasCache.get(mascotasCacheKey);
         }
       }
 
@@ -198,16 +191,22 @@ export async function getTurnsForPeluqueria() {
   }
 }
 
-// --- FUNCIÓN DE ACTUALIZACIÓN DE ESTADO CORREGIDA ---
-export async function updateTurnoStatusByEmpleado({ userId, mascotaId, turnoId, newStatus }) {
+// --- FUNCIÓN DE ACTUALIZACIÓN DE ESTADO CORREGIDA Y ROBUSTA ---
+export async function updateTurnoStatusByEmpleado(params) {
   try {
-    if (!userId || !mascotaId || !turnoId || !newStatus) {
-      throw new Error("Faltan parámetros requeridos para actualizar el estado.");
+    // Aceptamos tanto 'userId' como 'clienteId' para ser más flexibles.
+    const { userId, clienteId, mascotaId, turnoId, newStatus } = params;
+    
+    // Usamos el que esté disponible.
+    const finalUserId = userId || clienteId;
+
+    // La validación ahora comprueba si tenemos un ID de usuario, sin importar cómo se llame.
+    if (!finalUserId || !mascotaId || !turnoId || !newStatus) {
+      throw new Error("Faltan parámetros requeridos para actualizar el estado (se necesita userId o clienteId).");
     }
     
-    const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
+    const turnoRef = db.collection('users').doc(finalUserId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
     
-    // El estado se actualiza directamente al que se pasa como parámetro
     await turnoRef.update({ estado: newStatus });
 
     // Revalidamos las rutas para que los cambios se reflejen en la UI
