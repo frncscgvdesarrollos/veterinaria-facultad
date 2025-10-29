@@ -6,15 +6,40 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import es from 'date-fns/locale/es';
 import dayjs from 'dayjs';
-import 'dayjs/locale/es'; // Importa el locale español para dayjs
-dayjs.locale('es'); // Configura el locale globalmente
+import 'dayjs/locale/es';
+dayjs.locale('es');
 
 import { reprogramarTurnoPorUsuario, getTurnoDetailsForReprogramming, getAvailableSlotsForReprogramming } from '@/lib/actions/turnos.user.actions.js';
 import { getDiasNoLaborales } from '@/lib/actions/config.actions.js';
+import toast from 'react-hot-toast';
 
 const Spinner = ({ small } = {}) => (
     <div className={`border-2 ${small ? 'border-white' : 'border-gray-200'} border-t-blue-500 rounded-full ${small ? 'w-5 h-5' : 'w-8 h-8'} animate-spin`}></div>
 );
+
+// --- ¡NUEVA FUNCIÓN AUXILIAR! ---
+const calcularFechaLimite = (diasNoLaborales = []) => {
+    let contadorDiasHabiles = 0;
+    let fechaActual = new Date();
+    fechaActual.setHours(0, 0, 0, 0); // Normalizar a medianoche
+
+    // Pre-procesar los días no laborales para una búsqueda eficiente
+    const diasNoLaboralesSet = new Set(diasNoLaborales.map(d => dayjs(d).format('YYYY-MM-DD')));
+
+    while (contadorDiasHabiles < 20) {
+        fechaActual.setDate(fechaActual.getDate() + 1);
+        const diaSemana = fechaActual.getDay();
+
+        // Comprobar si es fin de semana o día no laboral
+        const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
+        const esNoLaboral = diasNoLaboralesSet.has(dayjs(fechaActual).format('YYYY-MM-DD'));
+
+        if (!esFinDeSemana && !esNoLaboral) {
+            contadorDiasHabiles++;
+        }
+    }
+    return fechaActual;
+};
 
 function ReprogramarTurnoComponent() {
     const router = useRouter();
@@ -60,7 +85,6 @@ function ReprogramarTurnoComponent() {
             }
 
             if (diasResult.success) {
-                // CORRECCIÓN: Interpreta las fechas como locales para evitar el desfase de zona horaria.
                 setDiasNoLaborales(diasResult.data.map(d => new Date(`${d}T00:00:00`)));
             }
             setLoading(false);
@@ -69,20 +93,24 @@ function ReprogramarTurnoComponent() {
         fetchInitialData();
     }, [turnoInfo]);
 
+    // --- ¡LÓGICA DEL CALENDARIO ACTUALIZADA! ---
     const disabledDays = useMemo(() => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);
+
+        // Se calcula la fecha límite usando la nueva función auxiliar
+        const fechaLimite = calcularFechaLimite(diasNoLaborales);
+
         return [
             ...diasNoLaborales,
-            { before: tomorrow },
-            { dayOfWeek: [0, 6] } // Domingo y Sábado
+            { before: tomorrow }, // No se puede reprogramar para hoy o días pasados
+            { dayOfWeek: [0, 6] }, // Domingo y Sábado
+            { after: fechaLimite } // No se puede reprogramar después de 20 días hábiles
         ];
     }, [diasNoLaborales]);
 
-    // CORRECCIÓN: Se usa el tercer parámetro 'modifiers' que provee DayPicker.
     const handleDaySelect = async (day, selectedDay, modifiers) => {
-        // Si el día no existe o el modifier 'disabled' es true, no se hace nada.
         if (!day || modifiers.disabled) {
             return; 
         }
@@ -105,7 +133,7 @@ function ReprogramarTurnoComponent() {
         if (result.success) {
             setAvailableSlots(result.data.horarios);
             if (result.data.horarios.length === 0) {
-                 setSlotsError(result.error || "No hay horarios disponibles para este día.")
+                 setSlotsError("No hay horarios disponibles para este día.")
             }
         } else {
             setSlotsError(result.error);
@@ -120,7 +148,7 @@ function ReprogramarTurnoComponent() {
             if (turnoDetails.tipo === 'clinica') {
                  const [hours, minutes] = time.split(':').map(Number);
                  newFullDate.setHours(hours, minutes, 0, 0);
-            } else { // Peluquería
+            } else {
                 const hour = time === 'mañana' ? 9 : 14;
                 newFullDate.setHours(hour, 0, 0, 0);
             }

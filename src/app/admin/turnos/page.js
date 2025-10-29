@@ -158,7 +158,7 @@ export default function AdminTurnosDashboard() {
           </div>
 
           {/* Vista Escritorio (Tabla) */}
-          <div className="md:block hidden">
+          <div className="md:block ">
             <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
           </div>
 
@@ -181,7 +181,7 @@ export default function AdminTurnosDashboard() {
           </div>
 
           {/* Vista Escritorio (Tabla) */}
-          <div className="md:block hidden">
+          <div className="md:block">
             <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
           </div>
 
