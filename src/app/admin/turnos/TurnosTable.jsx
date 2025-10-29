@@ -1,4 +1,3 @@
-
 'use client';
 
 import { FaCheck, FaTimes, FaDog, FaCat } from 'react-icons/fa';
@@ -33,10 +32,6 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView 
       minute: '2-digit',
     }) + ' hs';
   };
-
-  if (turnos.length === 0) {
-    return <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>;
-  }
 
   return (
     <div className="overflow-x-auto bg-white rounded-lg shadow">
@@ -105,6 +100,13 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView 
               </td>
             </tr>
           ))}
+          {!turnos.length && (
+            <tr>
+              <td colSpan="6" className="px-6 py-10 text-center text-gray-500">
+                No hay turnos para mostrar.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

@@ -149,20 +149,25 @@ export default function AdminTurnosDashboard() {
 
       {isUpdating && <div className='text-center mb-4 text-blue-600 font-semibold'>Actualizando...</div>}
 
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col md:flex-row gap-6 mt-6">
         {/* Columna Clínica */}
         <div className="bg-gray-50 p-4 rounded-lg flex-1">
           <div className="flex items-center mb-4">
             <IconoClinica />
             <h2 className="text-xl font-bold text-gray-700">Turnos de Clínica ({turnosClinica.length})</h2>
           </div>
+
+          {/* Vista Escritorio (Tabla) */}
           <div className="hidden md:block">
             <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
           </div>
+
+          {/* Vista Móvil (Tarjetas) */}
           <div className="md:hidden">
-            {turnosClinica.length > 0 ? (
-              turnosClinica.map(turno => <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />)
-            ) : (
+            {turnosClinica.map(turno => (
+              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
+            ))}
+            {!turnosClinica.length && (
               <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
             )}
           </div>
@@ -174,13 +179,18 @@ export default function AdminTurnosDashboard() {
             <IconoPeluqueria />
             <h2 className="text-xl font-bold text-gray-700">Turnos de Peluquería ({turnosPeluqueria.length})</h2>
           </div>
+
+          {/* Vista Escritorio (Tabla) */}
           <div className="hidden md:block">
             <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
           </div>
+
+          {/* Vista Móvil (Tarjetas) */}
           <div className="md:hidden">
-            {turnosPeluqueria.length > 0 ? (
-              turnosPeluqueria.map(turno => <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />)
-            ) : (
+            {turnosPeluqueria.map(turno => (
+              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
+            ))}
+            {!turnosPeluqueria.length && (
               <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
             )}
           </div>
