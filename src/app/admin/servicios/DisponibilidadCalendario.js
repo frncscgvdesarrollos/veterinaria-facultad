@@ -4,10 +4,10 @@ import { useState, useTransition } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { FaSpinner } from 'react-icons/fa';
-import { actualizarDiasNoLaborales } from '@/lib/actions/config.admin.actions.js'; // Importamos la nueva acción
+import { actualizarDiasNoLaborales } from '@/lib/actions/config.admin.actions.js';
 import toast from 'react-hot-toast';
 
-// Helper para formatear la fecha como YYYY-MM-DD en UTC (sin cambios)
+// Helper para formatear la fecha como YYYY-MM-DD en UTC
 const toUTCDateString = (date) => {
     if (!date) return '';
     const year = date.getUTCFullYear();
@@ -17,28 +17,30 @@ const toUTCDateString = (date) => {
 }
 
 export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBloqueados = [] }) {
-    // Normalizamos las fechas iniciales a objetos Date en UTC (sin cambios)
+    // Normalizamos las fechas iniciales a objetos Date en UTC
     const initialDates = initialDiasBloqueados.map(dateStr => {
         const [year, month, day] = dateStr.split('-').map(Number);
         return new Date(Date.UTC(year, month - 1, day));
     });
 
-    // Estado para los días seleccionados en el calendario
     const [selectedDays, setSelectedDays] = useState(initialDates);
-    // useTransition para manejar el estado de carga de la acción del servidor
     const [isPending, startTransition] = useTransition();
 
     const handleDayClick = (day, { selected }) => {
-        // Actualizamos el estado local de los días seleccionados
+        // --- CORRECCIÓN DE ZONA HORARIA ---
+        // Normalizamos el día del clic a UTC para que coincida con el formato del estado.
+        const dayInUTC = new Date(Date.UTC(day.getFullYear(), day.getMonth(), day.getDate()));
+
         if (selected) {
-            setSelectedDays(prev => prev.filter(d => d.getTime() !== day.getTime()));
+            // Si el día ya estaba seleccionado, lo filtramos (eliminamos)
+            setSelectedDays(prev => prev.filter(d => d.getTime() !== dayInUTC.getTime()));
         } else {
-            setSelectedDays(prev => [...prev, day]);
+            // Si no estaba seleccionado, lo añadimos
+            setSelectedDays(prev => [...prev, dayInUTC]);
         }
     };
 
     const handleGuardarCambios = () => {
-        // Convertimos los objetos Date a strings en formato YYYY-MM-DD
         const nuevasFechas = selectedDays.map(toUTCDateString);
 
         startTransition(async () => {
@@ -86,7 +88,7 @@ export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBl
                     mode="multiple"
                     min={0}
                     selected={selectedDays}
-                    onDayClick={handleDayClick} // Se usa onDayClick en lugar de onSelect
+                    onDayClick={handleDayClick}
                     modifiersClassNames={{
                         selected: '!bg-red-500 !text-white rounded-full',
                         today: '!text-blue-500 font-bold'
