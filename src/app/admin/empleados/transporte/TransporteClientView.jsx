@@ -25,7 +25,7 @@ const ActionButton = ({ turno, onUpdate, isLoading }) => {
 
     return (
         <button
-            onClick={() => onUpdate(userId, mascotaId, id, action.newStatus)}
+            onClick={() => onUpdate({userId, mascotaId, turnoId: id, newStatus: action.newStatus})}
             disabled={isLoading}
             className={`text-white font-bold py-2 px-4 rounded transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed ${action.className}`}
         >
@@ -36,13 +36,12 @@ const ActionButton = ({ turno, onUpdate, isLoading }) => {
 
 // --- Componente Principal de la Vista del Cliente de Transporte ---
 const TransporteClientView = ({ recogidas, entregas }) => {
-    // 1. Fusionamos las props en un único estado
     const initialState = useMemo(() => [...(recogidas || []), ...(entregas || [])].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)), [recogidas, entregas]);
     const [turnos, setTurnos] = useState(initialState);
     const [loadingTurnoId, setLoadingTurnoId] = useState(null);
 
-    // 2. La función de actualización ahora modifica el estado en lugar de filtrar
-    const handleStatusUpdate = async (userId, mascotaId, turnoId, newStatus) => {
+    // La función de actualización ahora recibe el objeto directamente
+    const handleStatusUpdate = async ({ userId, mascotaId, turnoId, newStatus }) => {
         setLoadingTurnoId(turnoId);
         const result = await updateTurnoStatusByEmpleado({ userId, mascotaId, turnoId, newStatus });
         
@@ -54,12 +53,10 @@ const TransporteClientView = ({ recogidas, entregas }) => {
             );
         } else {
             console.error("Fallo al actualizar el turno:", result.error);
-            // Opcional: mostrar un toast/alerta de error al usuario
         }
         setLoadingTurnoId(null);
     };
     
-    // Diccionario para dar estilo a las etiquetas de estado
     const statusColors = {
       default: 'bg-gray-100 text-gray-800',
       confirmado: 'bg-yellow-100 text-yellow-800',
