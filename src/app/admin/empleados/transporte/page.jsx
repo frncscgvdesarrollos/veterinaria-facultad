@@ -1,5 +1,5 @@
 import { getTurnsForTransporte } from '@/lib/actions/turnos.empleado.actions';
-import { TransporteClientView } from './TransporteClientView'; // Importamos el nuevo componente cliente
+import { TransporteClientView } from './TransporteClientView.jsx'; 
 
 // Este es un Server Component. Es async y obtiene los datos.
 const TransportePage = async () => {
