@@ -29,7 +29,8 @@ const serializeTurno = (turnoData) => {
     };
 };
 
-// --- FUNCIÓN CORREGIDA PARA TRANSPORTE ---
+
+// --- FUNCIÓN ACTUALIZADA PARA TRANSPORTE (VISTA UNIFICADA) ---
 export async function getTurnsForTransporte() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
@@ -37,7 +38,6 @@ export async function getTurnsForTransporte() {
     const startOfToday = nowInArgentina.startOf('day').toDate();
     const endOfToday = nowInArgentina.endOf('day').toDate();
 
-    // Consulta simplificada: solo por traslado y fecha. El estado lo filtramos en el servidor.
     const turnosSnapshot = await db.collectionGroup('turnos')
       .where('necesitaTraslado', '==', true)
       .where('fecha', '>=', startOfToday)
@@ -46,7 +46,8 @@ export async function getTurnsForTransporte() {
       .get();
 
     if (turnosSnapshot.empty) {
-      return { success: true, data: { recogidas: [], entregas: [] } };
+      // Devuelve un array vacío unificado
+      return { success: true, data: [] }; 
     }
 
     const usersCache = new Map();
@@ -64,12 +65,7 @@ export async function getTurnsForTransporte() {
           if (userDoc.exists) {
             const userData = userDoc.data();
             serializableUser = {
-              id: userDoc.id,
-              nombre: userData.nombre || 'N/A',
-              apellido: userData.apellido || 'N/A',
-              email: userData.email || 'N/A',
-              direccion: userData.direccion || 'N/A', // Añadido
-              telefono: userData.telefono || 'N/A',    // Añadido
+              id: userDoc.id, nombre: userData.nombre || 'N/A', apellido: userData.apellido || 'N/A', email: userData.email || 'N/A', direccion: userData.direccion || 'N/A', telefono: userData.telefono || 'N/A', 
             };
             usersCache.set(userId, serializableUser);
           }
@@ -103,17 +99,15 @@ export async function getTurnsForTransporte() {
 
     const enrichedTurnos = await Promise.all(enrichedTurnosPromises);
 
-    // Filtramos por estado en el código, que es más flexible
-    const recogidas = enrichedTurnos.filter(t => t.estado === 'confirmado');
-    const entregas = enrichedTurnos.filter(t => t.estado === 'peluqueria finalizada');
-
-    return { success: true, data: { recogidas, entregas } };
+    // CORRECCIÓN: Devolvemos la lista unificada en lugar de separar por recogidas/entregas
+    return { success: true, data: enrichedTurnos };
 
   } catch (error) {
     console.error("Error en getTurnsForTransporte:", error);
     return { success: false, error: `Error del servidor: ${error.message}.` };
   }
 }
+
 
 // --- FUNCIÓN CORREGIDA PARA PELUQUERÍA ---
 export async function getTurnsForPeluqueria() {
