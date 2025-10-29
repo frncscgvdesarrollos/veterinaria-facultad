@@ -1,23 +1,21 @@
+// src/app/admin/empleados/transporte/page.jsx
+// Este es un Server Component que se encarga de obtener los datos para la vista de transporte.
+
 import { getTurnsForTransporte } from '@/lib/actions/turnos.empleado.actions';
-import TransporteClientView from './TransporteClientView'; // Corregido: importación por defecto
+import TransporteClientView from './TransporteClientView';
 
-// Este es un Server Component. Es async y obtiene los datos.
 const TransportePage = async () => {
-  // 1. Obtenemos los datos en el servidor
-  const { data, error } = await getTurnsForTransporte();
+  // 1. Obtenemos la lista unificada de turnos desde la server action.
+  const { data: turnos, error } = await getTurnsForTransporte();
 
-  // 2. Manejamos los posibles errores
+  // 2. Manejamos un posible error durante la obtención de datos.
   if (error) {
     return <div className="p-8 text-red-500">Error al cargar los turnos: {error}</div>;
   }
 
-  // Podríamos mostrar un estado de carga aquí, pero Next.js ya maneja el streaming
-  if (!data) {
-    return <div className="p-8 text-white">Cargando turnos...</div>;
-  }
-
-  // 3. Renderizamos el Componente Cliente, pasándole los datos como props
-  return <TransporteClientView recogidas={data.recogidas} entregas={data.entregas} />;
+  // 3. Renderizamos el componente cliente, pasándole la lista completa de turnos.
+  //    Si no hay datos, le pasamos un array vacío para evitar errores.
+  return <TransporteClientView initialTurnos={turnos || []} />;
 };
 
 export default TransportePage;
