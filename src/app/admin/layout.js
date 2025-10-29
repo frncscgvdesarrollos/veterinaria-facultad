@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 
 const SidebarLink = ({ icon: Icon, text, href }) => (
     <Link href={href}>
-        <div className="flex items-center p-3 my-2 rounded-lg text-white hover:bg-gray-700 transition-colors duration-200">
+        <div className="flex items-center p-3 my-2 rounded-lg text-gray-800 hover:bg-gray-300 transition-colors duration-200">
             <Icon className="text-xl" />
             <span className="ml-4 font-medium">{text}</span>
         </div>
@@ -37,10 +37,10 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 bg-gray-100 text-white flex-col p-4 hidden md:flex">
+      <aside className="w-64 bg-gray-100 text-gray-800 flex-col p-4 hidden md:flex">
         <div className="mb-10">
             <Link href="/admin">
-              <span className="text-2xl font-bold text-white">Panel de Admin</span>
+              <span className="text-2xl font-bold text-gray-800">Panel de Admin</span>
             </Link>
         </div>
         <nav>
@@ -53,7 +53,7 @@ export default function AdminLayout({ children }) {
       
       <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-100">
         <header className="md:hidden flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-white">Admin</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Admin</h1>
         </header>
         {children}
       </main>
