@@ -20,13 +20,13 @@ export default function AdminLayout({ children }) {
 
     useEffect(() => {
         if (!loading) {
-            if (!user || user.role !== 'admin' || user.role !== 'peluqueria' || user.role !== 'transporte') {
+            if (!user || user?.role !== 'admin' || user?.role !== 'peluqueria' || user?.role !== 'transporte') {
                 router.push('/');
             }
         }
     }, [user, loading, router]);
 
-    if (loading || !user || user.role !== 'admin' || user.role !== 'peluqueria' || user.role !== 'transporte') {
+    if (loading || !user || user?.role !== 'admin' || user?.role !== 'peluqueria' || user?.role !== 'transporte') {
         return null; // No mostrar nada hasta que la verificación esté completa
     }
 
