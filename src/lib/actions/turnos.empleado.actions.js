@@ -46,7 +46,6 @@ export async function getTurnsForTransporte() {
       .get();
 
     if (turnosSnapshot.empty) {
-      // Devuelve un array vacío unificado
       return { success: true, data: [] }; 
     }
 
@@ -55,11 +54,12 @@ export async function getTurnsForTransporte() {
 
     const enrichedTurnosPromises = turnosSnapshot.docs.map(async (doc) => {
       const turnoData = doc.data();
+      // CORRECCIÓN: Se asigna el valor de 'clienteId' (de la BD) a la variable 'userId' para unificar.
       const userId = turnoData.clienteId;
       const mascotaId = turnoData.mascotaId;
       
       let serializableUser = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', direccion: 'N/A', telefono: 'N/A' };
-      if (userId) {
+      if (userId) { // Se usa la variable 'userId' que ya tiene el valor correcto.
         if (!usersCache.has(userId)) {
           const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
@@ -99,7 +99,6 @@ export async function getTurnsForTransporte() {
 
     const enrichedTurnos = await Promise.all(enrichedTurnosPromises);
 
-    // CORRECCIÓN: Devolvemos la lista unificada en lugar de separar por recogidas/entregas
     return { success: true, data: enrichedTurnos };
 
   } catch (error) {
