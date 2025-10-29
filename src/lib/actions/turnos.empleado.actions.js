@@ -11,15 +11,26 @@ dayjs.extend(timezone);
 
 const db = admin.firestore();
 
-// Helper para convertir Timestamps de Firestore a ISO Strings
-const toISOStringOrNull = (timestamp) => {
+// Helper robusto para convertir Timestamps de Firestore a ISO Strings
+const toISOStringSafe = (timestamp) => {
   if (timestamp && typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toISOString();
   }
-  return null;
+  // Si ya es un string (o cualquier otra cosa), lo devolvemos tal cual o como null
+  return typeof timestamp === 'string' ? timestamp : null;
 };
 
-// Función para obtener los turnos para la vista del empleado de Transporte
+// Serializa un objeto turno completo, convirtiendo todas las fechas conocidas
+const serializeTurno = (turnoData) => {
+    if (!turnoData) return null;
+    return {
+        ...turnoData,
+        fecha: toISOStringSafe(turnoData.fecha),
+        creadoEn: toISOStringSafe(turnoData.creadoEn), // Aseguramos la conversión de creadoEn
+    };
+};
+
+
 export async function getTurnsForTransporte() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
@@ -85,8 +96,7 @@ export async function getTurnsForTransporte() {
 
       return {
         id: doc.id,
-        ...turnoData,
-        fecha: toISOStringOrNull(turnoData.fecha),
+        ...serializeTurno(turnoData), // Usamos el serializador aquí
         user: serializableUser,
         mascota: serializableMascota,
       };
@@ -113,7 +123,7 @@ export async function getTurnsForTransporte() {
   }
 }
 
-// Función para obtener los turnos para la vista del empleado de Peluquería
+
 export async function getTurnsForPeluqueria() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
@@ -121,7 +131,6 @@ export async function getTurnsForPeluqueria() {
     const startOfToday = nowInArgentina.startOf('day').toDate();
     const endOfToday = nowInArgentina.endOf('day').toDate();
 
-    // Estados relevantes para el peluquero: desde que está confirmado hasta que llega a la veterinaria
     const estadosRelevantes = ['confirmado', 'buscando', 'buscado', 'enVeterinaria'];
 
     const turnosSnapshot = await db.collectionGroup('turnos')
@@ -144,7 +153,7 @@ export async function getTurnsForPeluqueria() {
       const mascotaId = turnoData.mascotaId;
       
       let serializableUser = { id: userId, nombre: 'Usuario', apellido: 'Eliminado' };
-      if (userId) {
+       if (userId) {
         if (usersCache.has(userId)) {
           serializableUser = usersCache.get(userId);
         } else {
@@ -160,7 +169,7 @@ export async function getTurnsForPeluqueria() {
       let serializableMascota = { id: mascotaId, nombre: 'Mascota Eliminada' };
       if (userId && mascotaId) {
         const mascotaCacheKey = `${userId}-${mascotaId}`;
-        if (mascotasCache.has(mascotaCacheKey)) {
+        if (mascotasCache.has(mascotasCacheKey)) {
           serializableMascota = mascotasCache.get(mascotaCacheKey);
         } else {
           const mascotaDoc = await db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).get();
@@ -174,8 +183,7 @@ export async function getTurnsForPeluqueria() {
 
       return {
         id: doc.id,
-        ...turnoData,
-        fecha: toISOStringOrNull(turnoData.fecha),
+        ...serializeTurno(turnoData), // Usamos el serializador aquí
         user: serializableUser,
         mascota: serializableMascota,
       };
@@ -192,7 +200,6 @@ export async function getTurnsForPeluqueria() {
 }
 
 
-// Función para que el empleado actualice el estado de un turno
 export async function updateTurnoStatusByEmpleado({ userId, mascotaId, turnoId, newStatus }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
@@ -203,22 +210,20 @@ export async function updateTurnoStatusByEmpleado({ userId, mascotaId, turnoId, 
     
     let updateData = { estado: newStatus };
 
-    await db.runTransaction(async (transaction) => {
-        transaction.update(turnoRef, updateData);
+    // Lógica específica de transición de estados
+    if (newStatus === 'buscado') {
+      updateData.estado = 'enVeterinaria'; // Transición automática
+    } else if (newStatus === 'retirado entregado') {
+        updateData.estado = 'finalizado'; // Transición automática
+    }
 
-        if (newStatus === 'buscado') {
-            transaction.update(turnoRef, { estado: 'enVeterinaria' });
-        } else if (newStatus === 'retirado entregado') {
-            transaction.update(turnoRef, { estado: 'finalizado' });
-        }
-    });
+    await turnoRef.update(updateData);
 
-    // Revalidar las rutas para que todos los roles vean el cambio
     revalidatePath('/admin/turnos');
     revalidatePath('/admin/empleados/transporte');
     revalidatePath('/admin/empleados/peluqueria');
     
-    return { success: true, message: `Turno actualizado a ${newStatus}.` };
+    return { success: true, message: `Turno actualizado a ${updateData.estado}.` };
 
   } catch (error) {
     console.error("Error en updateTurnoStatusByEmpleado:", error);
