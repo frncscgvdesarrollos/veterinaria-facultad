@@ -87,7 +87,7 @@ const TurnosTable = ({ title, turnos, tipo, onUpdateStatus }) => {
 
 
 // --- Componente Principal de la Vista del Cliente de Transporte ---
-const TransporteClientView = ({ recogidas, entregas }) => {
+export default function TransporteClientView  ({ recogidas, entregas })  {
     const [currentRecogidas, setCurrentRecogidas] = useState(recogidas);
     const [currentEntregas, setCurrentEntregas] = useState(entregas);
 
@@ -164,5 +164,3 @@ const TransporteClientView = ({ recogidas, entregas }) => {
         </div>
     );
 };
-
-export default TransporteClientView;
