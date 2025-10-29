@@ -28,33 +28,85 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+    // useEffect(() => {
+    //     const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
+    //         try {
+    //             if (userAuth) {
+    //                 // 1. Create server-side session cookie
+    //                 const idToken = await userAuth.getIdToken();
+    //                 await fetch('/api/auth/session', {
+    //                     method: 'POST',
+    //                     headers: { 'Content-Type': 'application/json' },
+    //                     body: JSON.stringify({ idToken }),
+    //                 });
+                    
+    //                 // 2. Get user data from Firestore
+    //                 const userDocRef = doc(db, 'users', userAuth.uid);
+    //                 const userDocSnap = await getDoc(userDocRef);
+
+    //                 if (userDocSnap.exists()) {
+    //                     const userData = userDocSnap.data();
+    //                     setUser({ ...userAuth, ...userData });
+    //                 } else {
+    //                     // This case is mainly for Google Sign-in where the user might not be in our DB yet
+    //                     const newUser = {
+    //                         uid: userAuth.uid,
+    //                         email: userAuth.email,
+    //                         displayName: userAuth.displayName || 'Sin Nombre',
+    //                         photoURL: userAuth.photoURL || null,
+    //                         role: 'dueño',
+    //                         profileCompleted: false,
+    //                         createdAt: new Date(),
+    //                     };
+    //                     await setDoc(userDocRef, newUser);
+    //                     setUser({ ...userAuth, ...newUser });
+    //                 }
+    //                 setIsLoggedIn(true);
+
+    //             } else {
+    //                 // User is signed out, clear server-side session cookie
+    //                 await fetch('/api/auth/session', { method: 'DELETE' });
+    //                 setUser(null);
+    //                 setIsLoggedIn(false);
+    //             }
+    //         } catch (error) {
+    //             console.error("Error en onAuthStateChanged:", error);
+    //             // Also clear session on error
+    //             await fetch('/api/auth/session', { method: 'DELETE' });
+    //             setUser(null);
+    //             setIsLoggedIn(false);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     });
+
+    //     return () => unsubscribe();
+    // }, []);
+
+    // These functions now just trigger the Firebase SDK methods.
+    // The onAuthStateChanged listener above handles all the session and state logic.
+
     useEffect(() => {
+        // El listener 'onAuthStateChanged' del SDK de Firebase es nuestra ÚNICA fuente de verdad.
         const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
             try {
                 if (userAuth) {
-                    // 1. Create server-side session cookie
-                    const idToken = await userAuth.getIdToken();
-                    await fetch('/api/auth/session', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ idToken }),
-                    });
-                    
-                    // 2. Get user data from Firestore
+                    // Si el usuario está autenticado según Firebase, buscamos sus datos en Firestore.
                     const userDocRef = doc(db, 'users', userAuth.uid);
                     const userDocSnap = await getDoc(userDocRef);
 
                     if (userDocSnap.exists()) {
+                        // El usuario ya tiene un perfil en Firestore, combinamos los datos.
                         const userData = userDocSnap.data();
                         setUser({ ...userAuth, ...userData });
                     } else {
-                        // This case is mainly for Google Sign-in where the user might not be in our DB yet
+                        // Es un usuario nuevo (ej. primer login con Google), creamos su perfil.
                         const newUser = {
                             uid: userAuth.uid,
                             email: userAuth.email,
                             displayName: userAuth.displayName || 'Sin Nombre',
                             photoURL: userAuth.photoURL || null,
-                            role: 'dueño',
+                            role: 'dueño', // Rol por defecto para nuevos usuarios
                             profileCompleted: false,
                             createdAt: new Date(),
                         };
@@ -64,27 +116,26 @@ export const AuthProvider = ({ children }) => {
                     setIsLoggedIn(true);
 
                 } else {
-                    // User is signed out, clear server-side session cookie
-                    await fetch('/api/auth/session', { method: 'DELETE' });
+                    // El usuario no está autenticado. Limpiamos el estado.
                     setUser(null);
                     setIsLoggedIn(false);
                 }
             } catch (error) {
                 console.error("Error en onAuthStateChanged:", error);
-                // Also clear session on error
-                await fetch('/api/auth/session', { method: 'DELETE' });
+                // Ante cualquier error, nos aseguramos de que el usuario esté deslogueado.
                 setUser(null);
                 setIsLoggedIn(false);
             } finally {
+                // Terminamos de cargar, ya sea con éxito o con error.
                 setLoading(false);
             }
         });
 
+        // Limpiamos la suscripción cuando el componente se desmonte.
         return () => unsubscribe();
     }, []);
 
-    // These functions now just trigger the Firebase SDK methods.
-    // The onAuthStateChanged listener above handles all the session and state logic.
+
 
     const loginWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
