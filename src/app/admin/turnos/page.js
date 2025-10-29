@@ -4,15 +4,12 @@ import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
 import { getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
-import TurnosTable from './TurnosTable'; // Importamos la nueva tabla
-import FilterInput from './FilterInput'; // Importamos el nuevo filtro
+import TurnosTable from './TurnosTable';
+import FilterInput from './FilterInput';
 
-// --- Iconos para la UI ---
 const IconoClinica = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 const IconoPeluqueria = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121a3 3 0 10-4.242 0M12 18.5V19m0-16v.5m-5.071 2.929l.354.354M17.425 5.575l-.354.354M4 12H3.5m17 0h-.5" /></svg>;
 
-
-// --- Componente de Tarjeta de Turno (para vista móvil) ---
 function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
   const statusStyles = {
     pendiente: 'bg-yellow-200 text-yellow-800',
@@ -28,13 +25,12 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
     devolviendo: 'bg-amber-200 text-amber-800',
     'servicio terminado': 'bg-green-200 text-green-800',
   };
-
   const cardBorder = { clinica: 'border-blue-500', peluqueria: 'border-pink-500' };
 
   const handleAction = (newStatus) => {
     onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus);
   };
-  
+
   const formattedDate = () => {
     const date = new Date(turno.fecha);
     if (currentView === 'hoy') return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + 'hs';
@@ -68,47 +64,27 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
   );
 }
 
-// --- Componente de Lista de Turnos (para vista móvil) ---
-function TurnosList({ titulo, turnos, tipoIcono, onUpdate, isUpdating, currentView }) {
-  const Icono = tipoIcono === 'clinica' ? IconoClinica : IconoPeluqueria;
-  return (
-    <div className="bg-gray-50 p-4 rounded-lg flex-1">
-      <div className="flex items-center mb-4">
-        <Icono />
-        <h2 className="text-xl font-bold text-gray-700">{titulo} ({turnos.length})</h2>
-      </div>
-      {turnos.length > 0 ? (
-        turnos.map(turno => <TurnoCard key={turno.id} turno={turno} onUpdate={onUpdate} isUpdating={isUpdating} currentView={currentView} />)
-      ) : (
-        <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
-      )}
-    </div>
-  );
-}
-
-// --- Página Principal ---
 export default function AdminTurnosDashboard() {
   const [turnos, setTurnos] = useState({ hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [] });
   const [vistaActual, setVistaActual] = useState('hoy');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el filtro
+  const [searchTerm, setSearchTerm] = useState('');
   const [isUpdating, startTransition] = useTransition();
 
   const cargarTurnos = async () => {
-      setError(null);
-      setLoading(true);
-      try {
-        const resultado = await getTurnsForAdminDashboard();
-        if (resultado.success) setTurnos(resultado.data);
-        else setError(resultado.error || "Ocurrió un error desconocido.");
-      } catch (err) {
-        console.error("Error catastrófico al cargar turnos:", err);
-        setError("No se pudo establecer conexión con el servidor. Inténtalo de nuevo.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    setError(null);
+    setLoading(true);
+    try {
+      const resultado = await getTurnsForAdminDashboard();
+      if (resultado.success) setTurnos(resultado.data);
+      else setError(resultado.error || "Ocurrió un error desconocido.");
+    } catch (err) {
+      setError("No se pudo establecer conexión con el servidor. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     cargarTurnos();
@@ -117,12 +93,11 @@ export default function AdminTurnosDashboard() {
   const handleUpdateStatus = (userId, mascotaId, turnoId, newStatus) => {
     startTransition(async () => {
       const result = await updateTurnoStatus({ userId, mascotaId, turnoId, newStatus });
-      if (result.success) await cargarTurnos(); 
+      if (result.success) await cargarTurnos();
       else setError(result.error);
     });
   };
 
-  // Lógica de filtrado
   const filteredTurnos = (turnos[vistaActual] || []).filter(turno => {
     const term = searchTerm.toLowerCase();
     return (
@@ -133,9 +108,12 @@ export default function AdminTurnosDashboard() {
     );
   });
 
+  const turnosClinica = filteredTurnos.filter(t => t.tipo === 'clinica');
+  const turnosPeluqueria = filteredTurnos.filter(t => t.tipo === 'peluqueria');
+
   if (loading && !isUpdating) return <div className="text-center p-10 font-semibold text-lg text-gray-600">Cargando turnos...</div>;
   if (error) return <div className="text-center p-10 text-red-600 bg-red-100 rounded-lg shadow-md"><strong>Error:</strong> {error}</div>;
-  
+
   const getTabStyle = (tabName) => `px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ${vistaActual === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
   const getReprogramarTabStyle = () => {
     const baseStyle = 'px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ';
@@ -148,17 +126,17 @@ export default function AdminTurnosDashboard() {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-        <div className="mb-6">
-            <Link href="/admin">
-                <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
-                    <FaArrowLeft className="mr-2" />
-                    Volver al Panel Principal
-                </span>
-            </Link>
-        </div>
+      <div className="mb-6">
+        <Link href="/admin">
+          <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+            <FaArrowLeft className="mr-2" />
+            Volver al Panel Principal
+          </span>
+        </Link>
+      </div>
 
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Panel de Administración de Turnos</h1>
-      
+
       <div className="flex border-b-2 border-blue-600 mb-6 flex-wrap">
         <button className={getTabStyle('hoy')} onClick={() => setVistaActual('hoy')}>Turnos del Día</button>
         <button className={getTabStyle('proximos')} onClick={() => setVistaActual('proximos')}>Próximos a Confirmar</button>
@@ -167,35 +145,47 @@ export default function AdminTurnosDashboard() {
         <button className={getTabStyle('finalizados')} onClick={() => setVistaActual('finalizados')}>Historial</button>
       </div>
 
-      <FilterInput 
-        value={searchTerm} 
-        onChange={setSearchTerm} 
-        placeholder="Buscar por mascota, dueño, servicio..." 
-      />
+      <FilterInput value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por mascota, dueño, servicio..." />
 
       {isUpdating && <div className='text-center mb-4 text-blue-600 font-semibold'>Actualizando...</div>}
-      
-      {/* Vista de Tabla para Escritorio */}
-      <div className="hidden md:block">
-        <TurnosTable 
-          turnos={filteredTurnos}
-          onUpdate={handleUpdateStatus}
-          isUpdating={isUpdating}
-          currentView={vistaActual}
-        />
-      </div>
 
-      {/* Vista de Tarjetas para Móvil */}
-      <div className="md:hidden">
-        <TurnosList 
-            titulo="Turnos" 
-            turnos={filteredTurnos} 
-            onUpdate={handleUpdateStatus} 
-            isUpdating={isUpdating} 
-            currentView={vistaActual} 
-        />
-      </div>
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Columna Clínica */}
+        <div className="bg-gray-50 p-4 rounded-lg flex-1">
+          <div className="flex items-center mb-4">
+            <IconoClinica />
+            <h2 className="text-xl font-bold text-gray-700">Turnos de Clínica ({turnosClinica.length})</h2>
+          </div>
+          <div className="hidden md:block">
+            <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
+          </div>
+          <div className="md:hidden">
+            {turnosClinica.length > 0 ? (
+              turnosClinica.map(turno => <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />)
+            ) : (
+              <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
+            )}
+          </div>
+        </div>
 
+        {/* Columna Peluquería */}
+        <div className="bg-gray-50 p-4 rounded-lg flex-1">
+          <div className="flex items-center mb-4">
+            <IconoPeluqueria />
+            <h2 className="text-xl font-bold text-gray-700">Turnos de Peluquería ({turnosPeluqueria.length})</h2>
+          </div>
+          <div className="hidden md:block">
+            <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
+          </div>
+          <div className="md:hidden">
+            {turnosPeluqueria.length > 0 ? (
+              turnosPeluqueria.map(turno => <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />)
+            ) : (
+              <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
