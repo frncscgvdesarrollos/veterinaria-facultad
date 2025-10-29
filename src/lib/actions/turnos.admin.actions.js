@@ -108,15 +108,27 @@ export async function getTurnsForAdminDashboard() {
     const reprogramar = [];
     const mensual = [];
 
+    // Define los estados que se consideran "activos" para el día de hoy.
+    const estadosActivosHoy = [
+      'confirmado', 
+      'buscando', 
+      'buscado', 
+      'veterinaria', 
+      'peluqueria iniciada',
+      'peluqueria finalizada',
+      'devolviendo'
+    ];
+
     for (const turno of enrichedTurnos) {
       if (!turno.fecha) continue;
       const fechaTurno = dayjs(turno.fecha);
 
       if (turno.estado === 'reprogramar') {
         reprogramar.push(turno);
-      } else if (turno.estado === 'finalizado' || turno.estado === 'cancelado') {
+      } else if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || turno.estado === 'servicio terminado') {
         finalizados.push(turno);
-      } else if (fechaTurno.isAfter(startOfTodayInArgentina) && fechaTurno.isBefore(endOfTodayInArgentina) && turno.estado === 'confirmado') {
+      // Condición CORREGIDA para los turnos de hoy
+      } else if (fechaTurno.isAfter(startOfTodayInArgentina) && fechaTurno.isBefore(endOfTodayInArgentina) && estadosActivosHoy.includes(turno.estado)) {
         hoy.push(turno);
       } else if (fechaTurno.isAfter(nowInArgentina) && turno.estado === 'pendiente') {
         proximos.push(turno);
@@ -127,6 +139,7 @@ export async function getTurnsForAdminDashboard() {
         fechaTurno.isBefore(endOfMonthInArgentina)
       ) {
         mensual.push(turno);
+      // Mueve los turnos pasados no finalizados a "finalizados" para limpieza
       } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
         finalizados.push(turno);
       }
@@ -165,7 +178,10 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus,
 
     await turnoRef.update(updateData);
     
+    // Revalidar las rutas afectadas para que Next.js actualice la caché.
     revalidatePath('/admin/turnos');
+    revalidatePath('/admin/empleados/transporte');
+    revalidatePath('/admin/empleados/peluqueria');
     
     return { success: true, message: `Turno actualizado.` };
 
