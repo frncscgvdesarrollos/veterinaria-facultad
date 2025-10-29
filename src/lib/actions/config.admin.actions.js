@@ -2,6 +2,13 @@
 
 import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// Extend dayjs with timezone plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const db = admin.firestore();
 
@@ -9,30 +16,6 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
   if (!Array.isArray(nuevasFechas)) {
     return { success: false, error: 'El formato de los datos proporcionados es incorrecto.' };
   }
-
-  // --- INICIO DE BLOQUE DE DEPURACIÓN MANUAL ---
-  console.log("--- INICIANDO DEPURACIÓN MANUAL ---");
-  const debugTurnoPath = 'usuarios/iTxgmrZ85tRCQWA9pyXRWiO2BzF3/mascotas/IjRZ1ckfrVRESOvBePQL/turnos/FIhaH41i2JDbOKBNSk8A';
-  try {
-    const debugTurnoDoc = await db.doc(debugTurnoPath).get();
-    if (debugTurnoDoc.exists) {
-      const data = debugTurnoDoc.data();
-      console.log("DATOS DEL TURNO DE PRUEBA (lectura directa):");
-      console.log(`- Estado: ${data.estado} (Tipo: ${typeof data.estado})`);
-      // Verificamos si la fecha es un objeto Timestamp de Firestore
-      if (data.fecha && typeof data.fecha.toDate === 'function') {
-        console.log(`- Fecha (ISO String UTC): ${data.fecha.toDate().toISOString()}`);
-      } else {
-        console.log(`- ADVERTENCIA: El campo 'fecha' NO es un Timestamp de Firestore. Es de tipo: ${typeof data.fecha}`);
-      }
-    } else {
-      console.log("Error de depuración: El turno de prueba NO se encontró en la ruta especificada.");
-    }
-  } catch (e) {
-    console.error("Error fatal al leer el turno de prueba:", e);
-  }
-  console.log("--- FIN DE DEPURACIÓN MANUAL ---");
-  // --- FIN DE BLOQUE DE DEPURACIÓN MANUAL ---
 
   const configRef = db.collection('configuracion').doc('disponibilidad');
 
@@ -43,8 +26,6 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
       const configDoc = await transaction.get(configRef);
       const fechasAntiguas = configDoc.exists ? (configDoc.data().diasNoDisponibles || []) : [];
       
-      // --- ¡CORRECCIÓN DE DUPLICADOS! ---
-      // Se eliminan fechas duplicadas que vienen del cliente para asegurar datos limpios.
       const fechasUnicas = Array.from(new Set(nuevasFechas));
       console.log(`Fechas recibidas del cliente: ${nuevasFechas.length}. Fechas únicas a procesar: ${fechasUnicas.length}`);
 
@@ -52,12 +33,16 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
 
       if (fechasRecienBloqueadas.length > 0) {
         console.log(`Días recién bloqueados detectados: ${fechasRecienBloqueadas.join(', ')}. Buscando turnos para reprogramar...`);
+        
+        const timeZone = 'America/Argentina/Buenos_Aires';
 
         for (const fechaStr of fechasRecienBloqueadas) {
-            const startOfDay = new Date(`${fechaStr}T00:00:00.000Z`);
-            const endOfDay = new Date(`${fechaStr}T23:59:59.999Z`);
+            // --- CORRECCIÓN DE ZONA HORARIA ---
+            // Se define el inicio y fin del día en la zona horaria de Argentina.
+            const startOfDay = dayjs.tz(fechaStr, timeZone).startOf('day').toDate();
+            const endOfDay = dayjs.tz(fechaStr, timeZone).endOf('day').toDate();
 
-            console.log(`Buscando turnos entre ${startOfDay.toISOString()} y ${endOfDay.toISOString()}`);
+            console.log(`Buscando turnos en zona horaria de Argentina entre ${startOfDay.toISOString()} y ${endOfDay.toISOString()}`);
 
             const turnosAfectadosQuery = db.collectionGroup('turnos')
               .where('estado', 'in', ['pendiente', 'confirmado'])
@@ -67,11 +52,11 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
             const turnosAfectadosSnapshot = await turnosAfectadosQuery.get();
             
             if (turnosAfectadosSnapshot.empty) {
-                console.log("La consulta no encontró ningún turno que cumpla los criterios.");
+                console.log(`No se encontraron turnos para el día ${fechaStr}.`);
             } else {
-              console.log(`¡ÉXITO! La consulta encontró ${turnosAfectadosSnapshot.size} turno(s).`);
+              console.log(`¡Éxito! La consulta encontró ${turnosAfectadosSnapshot.size} turno(s) para el día ${fechaStr}.`);
               turnosAfectadosSnapshot.forEach(doc => {
-                console.log(`Marcando para reprogramar: Turno ID ${doc.id}`);
+                console.log(`Marcando para reprogramar: Turno ID ${doc.id} en la ruta ${doc.ref.path}`);
                 transaction.update(doc.ref, { estado: 'reprogramar' });
                 reprogramadosCount++;
               });
