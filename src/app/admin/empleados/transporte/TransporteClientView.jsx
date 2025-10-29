@@ -42,9 +42,9 @@ const TransporteClientView = ({ recogidas, entregas }) => {
     const [turnos, setTurnos] = useState(initialState);
     const [loadingTurnoId, setLoadingTurnoId] = useState(null);
 
-    const handleStatusUpdate = async ({ userId, mascotaId, turnoId, newStatus }) => {
+    const handleStatusUpdate = async ({ clienteId, mascotaId, turnoId, newStatus }) => {
         setLoadingTurnoId(turnoId);
-        const result = await updateTurnoStatusByEmpleado({ userId, mascotaId, turnoId, newStatus });
+        const result = await updateTurnoStatusByEmpleado({ clienteId, mascotaId, turnoId, newStatus });
         
         if (result.success) {
             setTurnos(prevTurnos =>
