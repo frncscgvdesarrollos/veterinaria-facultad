@@ -46,16 +46,21 @@ function ReprogramarTurnoComponent() {
             }
             
             setLoading(true);
-            const detailsResult = await getTurnoDetailsForReprogramming(turnoInfo);
+            // Cargar detalles del turno y días no laborales en paralelo
+            const [detailsResult, diasResult] = await Promise.all([
+                getTurnoDetailsForReprogramming(turnoInfo),
+                getDiasNoLaborales()
+            ]);
+
             if (detailsResult.success) {
                 setTurnoDetails(detailsResult.data);
             } else {
                 setError(detailsResult.error);
             }
 
-            const diasResult = await getDiasNoLaborales();
             if (diasResult.success) {
-                setDiasNoLaborales(diasResult.data.map(d => new Date(d)));
+                // Se normalizan las fechas a la zona horaria local
+                setDiasNoLaborales(diasResult.data.map(d => new Date(`${d}T00:00:00`)));
             }
             setLoading(false);
         }
@@ -64,36 +69,40 @@ function ReprogramarTurnoComponent() {
     }, [turnoInfo]);
 
     const disabledDays = useMemo(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        tomorrow.setHours(0, 0, 0, 0);
         return [
             ...diasNoLaborales,
-            { before: today },
+            { before: tomorrow },
             { dayOfWeek: [0, 6] }
         ];
     }, [diasNoLaborales]);
 
-    // --- ¡FUNCIÓN CLAVE MODIFICADA! --- 
-    // Ahora busca horarios disponibles en el servidor al seleccionar un día
     const handleDaySelect = async (day) => {
-        setSelectedDay(day);
-        setSelectedTime(null);
-        setFinalDate(null);
-        setAvailableSlots([]); // Resetea horarios
-        setSlotsError(null);
-
         if (!day || !turnoDetails) return;
         
+        // Comprobación para evitar clics en días deshabilitados
         const isDayDisabled = disabledDays.some(matcher => {
-            if (matcher instanceof Date && matcher.getTime() === day.getTime()) return true;
-            if (typeof matcher === 'object' && matcher.before && day < matcher.before) return true;
-            if (typeof matcher === 'object' && matcher.dayOfWeek && matcher.dayOfWeek.includes(day.getDay())) return true;
+            if (dayjs(day).isSame(dayjs(matcher), 'day')) return true;
+            if (matcher.before && dayjs(day).isBefore(dayjs(matcher.before), 'day')) return true;
+            if (matcher.after && dayjs(day).isAfter(dayjs(matcher.after), 'day')) return true;
+            if (matcher.dayOfWeek && matcher.dayOfWeek.includes(day.getDay())) return true;
             return false;
         });
 
-        if (isDayDisabled) return;
+        if (isDayDisabled) {
+            console.log("Día deshabilitado seleccionado, no se hace nada.");
+            return; 
+        }
 
+        setSelectedDay(day);
+        setSelectedTime(null);
+        setFinalDate(null);
+        setAvailableSlots([]); 
+        setSlotsError(null);
         setSlotsLoading(true);
+
         const result = await getAvailableSlotsForReprogramming({
             fecha: dayjs(day).format('YYYY-MM-DD'),
             tipo: turnoDetails.tipo,
@@ -101,7 +110,6 @@ function ReprogramarTurnoComponent() {
             mascota: turnoDetails.mascota,
             turnoId: turnoInfo.turnoId,
         });
-        
         
         if (result.success) {
             setAvailableSlots(result.data.horarios);
@@ -168,7 +176,7 @@ function ReprogramarTurnoComponent() {
                                 {time}{turnoDetails.tipo === 'clinica' ? ' hs' : ''}
                             </button>
                         ))}
-                         {!slotsLoading && selectedDay && <p className="col-span-3 text-center text-sm text-red-500 bg-red-50 p-2 rounded-md">{slotsError}</p>}
+                         {!slotsLoading && selectedDay && slotsError && <p className="col-span-3 text-center text-sm text-red-500 bg-red-50 p-2 rounded-md">{slotsError}</p>}
                     </div>
                 </div>
             </div>
