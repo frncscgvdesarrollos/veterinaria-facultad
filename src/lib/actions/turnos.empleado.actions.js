@@ -29,7 +29,8 @@ const serializeTurno = (turnoData) => {
     };
 };
 
-// --- FUNCIÓN ACTUALIZADA PARA TRANSPORTE (CON CONSULTA SIMPLIFICADA) ---
+
+// --- FUNCIÓN PARA TRANSPORTE (USA EL ÍNDICE COMPUESTO) ---
 export async function getTurnsForTransporte() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
@@ -37,32 +38,24 @@ export async function getTurnsForTransporte() {
     const startOfToday = nowInArgentina.startOf('day').toDate();
     const endOfToday = nowInArgentina.endOf('day').toDate();
 
-    // 1. CONSULTA SIMPLIFICADA: Traemos todos los turnos del día.
+    // Esta consulta ahora funcionará gracias al índice que has creado.
     const turnosSnapshot = await db.collectionGroup('turnos')
+      .where('necesitaTraslado', '==', true)
       .where('fecha', '>=', startOfToday)
       .where('fecha', '<=', endOfToday)
       .orderBy('fecha', 'asc')
       .get();
 
     if (turnosSnapshot.empty) {
-      return { success: true, data: [] }; 
+      return { success: true, data: [] };
     }
 
-    // 2. FILTRO EN CÓDIGO: Filtramos los que necesitan traslado después de obtenerlos.
-    const turnosParaTraslado = turnosSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(turno => turno.necesitaTraslado === true);
-    
-    if (turnosParaTraslado.length === 0) {
-        return { success: true, data: [] };
-    }
-
-    // 3. ENRIQUECIMIENTO: Continuamos solo con los turnos filtrados.
     const usersCache = new Map();
     const mascotasCache = new Map();
 
-    const enrichedTurnosPromises = turnosParaTraslado.map(async (turnoData) => {
-      const userId = turnoData.clienteId;
+    const enrichedTurnosPromises = turnosSnapshot.docs.map(async (doc) => {
+      const turnoData = doc.data();
+      const userId = turnoData.clienteId; // Correcto: usamos clienteId para buscar
       const mascotaId = turnoData.mascotaId;
       
       let serializableUser = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', direccion: 'N/A', telefono: 'N/A' };
@@ -71,7 +64,13 @@ export async function getTurnsForTransporte() {
           const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
             const userData = userDoc.data();
-            serializableUser = { id: userDoc.id, nombre: userData.nombre || 'N/A', apellido: userData.apellido || 'N/A', email: userData.email || 'N/A', direccion: userData.direccion || 'N/A', telefono: userData.telefono || 'N/A' };
+            serializableUser = { 
+              id: userDoc.id, 
+              nombre: userData.nombre || 'N/A', 
+              apellido: userData.apellido || 'N/A', 
+              direccion: userData.direccion || 'N/A', 
+              telefono: userData.telefono || 'N/A' 
+            };
             usersCache.set(userId, serializableUser);
           }
         } else {
@@ -94,18 +93,24 @@ export async function getTurnsForTransporte() {
         }
       }
 
-      return { ...serializeTurno(turnoData), id: turnoData.id, user: serializableUser, mascota: serializableMascota };
+      return { 
+        id: doc.id, 
+        ...serializeTurno(turnoData), 
+        user: serializableUser, 
+        mascota: serializableMascota 
+      };
     });
 
     const enrichedTurnos = await Promise.all(enrichedTurnosPromises);
-
     return { success: true, data: enrichedTurnos };
 
   } catch (error) {
     console.error("Error en getTurnsForTransporte:", error);
+    // Este mensaje de error es el que estabas viendo.
     return { success: false, error: `Error del servidor: ${error.message}.` };
   }
 }
+
 
 // --- FUNCIÓN CORREGIDA PARA PELUQUERÍA ---
 export async function getTurnsForPeluqueria() {
