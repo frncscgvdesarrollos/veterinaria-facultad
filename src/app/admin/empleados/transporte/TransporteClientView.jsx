@@ -3,164 +3,120 @@
 import { useState, useMemo } from 'react';
 import { updateTurnoStatusByEmpleado } from '@/lib/actions/turnos.empleado.actions';
 
-// --- Componente Reutilizable para las Tablas de Turnos ---
-const TurnosTable = ({ title, turnos, tipo, onUpdateStatus }) => {
-  const [loadingTurnoId, setLoadingTurnoId] = useState(null);
+// --- Componente para el Botón de Acción Dinámico ---
+const ActionButton = ({ turno, onUpdate, isLoading }) => {
+    const { estado, userId, mascotaId, id } = turno;
 
-  const handleUpdate = async (turno, newStatus) => {
-    setLoadingTurnoId(turno.id);
-    try {
-      // Pasamos los datos necesarios para la server action
-      await onUpdateStatus(turno.clienteId, turno.mascotaId, turno.id, newStatus);
-    } catch (error) {
-      console.error("Error al actualizar el estado:", error);
-      setLoadingTurnoId(null); // Resetea el estado de carga en caso de error
+    const actions = {
+        confirmado: { text: 'Iniciar Búsqueda', newStatus: 'buscando', className: 'bg-indigo-600 hover:bg-indigo-700' },
+        buscando: { text: 'Marcar Recogido', newStatus: 'buscado', className: 'bg-blue-600 hover:bg-blue-700' },
+        buscado: { text: 'Entregado en Veterinaria', newStatus: 'veterinaria', className: 'bg-cyan-600 hover:bg-cyan-700' },
+        'peluqueria finalizada': { text: 'Retirar de Peluquería', newStatus: 'devolviendo', className: 'bg-purple-600 hover:bg-purple-700' },
+        devolviendo: { text: 'Mascota Entregada', newStatus: 'servicio terminado', className: 'bg-green-600 hover:bg-green-700' },
+    };
+
+    const action = actions[estado];
+
+    if (!action) {
+        return (
+            <span className="text-sm text-gray-500 italic">En progreso...</span>
+        );
     }
-    // El estado de carga se resetea en el componente padre a través de la actualización del estado general
-  };
 
-  // Si no hay turnos, muestra un mensaje amigable
-  if (turnos.length === 0) {
     return (
-      <div>
-        <h3 className="text-xl font-semibold mb-3 text-cyan-400">{title}</h3>
-        <p className="text-gray-400">No hay turnos en esta categoría.</p>
-      </div>
+        <button
+            onClick={() => onUpdate(userId, mascotaId, id, action.newStatus)}
+            disabled={isLoading}
+            className={`text-white font-bold py-2 px-4 rounded transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed ${action.className}`}
+        >
+            {isLoading ? '...' : action.text}
+        </button>
     );
-  }
-
-  return (
-    <div>
-      <h3 className="text-xl font-semibold mb-3 text-cyan-400">{title}</h3>
-      <div className="overflow-x-auto rounded-lg shadow-lg">
-        <table className="min-w-full bg-gray-800">
-          <thead className="bg-gray-900">
-            <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Mascota</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Dueño</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Teléfono</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Dirección</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Estado</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Acción</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {turnos.map((turno) => (
-              <tr key={turno.id} className="hover:bg-gray-700 transition-colors duration-150">
-                <td className="px-4 py-4 text-white font-medium">{turno.mascota.nombre}</td>
-                <td className="px-4 py-4 text-gray-300">{turno.user.nombre} {turno.user.apellido}</td>
-                <td className="px-4 py-4 text-gray-300">{turno.user.telefono || 'N/A'}</td>
-                <td className="px-4 py-4 text-gray-300">{turno.user.direccion || 'N/A'}</td>
-                <td className="px-4 py-4">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-500 text-yellow-900">
-                    {turno.estado}
-                  </span>
-                </td>
-                <td className="px-4 py-4">
-                  {tipo === 'recogida' && turno.estado === 'confirmado' && (
-                    <button
-                      onClick={() => handleUpdate(turno, 'buscando')}
-                      disabled={loadingTurnoId === turno.id}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed"
-                    >
-                      {loadingTurnoId === turno.id ? 'Buscando...' : 'Iniciar Búsqueda'}
-                    </button>
-                  )}
-                  {tipo === 'entrega' && turno.estado === 'peluqueria finalizada' && (
-                     <button
-                      onClick={() => handleUpdate(turno, 'retirado entregado')}
-                      disabled={loadingTurnoId === turno.id}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-all duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed"
-                    >
-                      {loadingTurnoId === turno.id ? 'Devolviendo...' : 'Iniciar Devolución'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
 };
-
 
 // --- Componente Principal de la Vista del Cliente de Transporte ---
 const TransporteClientView = ({ recogidas, entregas }) => {
-    const [currentRecogidas, setCurrentRecogidas] = useState(recogidas);
-    const [currentEntregas, setCurrentEntregas] = useState(entregas);
+    // 1. Fusionamos las props en un único estado
+    const initialState = useMemo(() => [...(recogidas || []), ...(entregas || [])].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)), [recogidas, entregas]);
+    const [turnos, setTurnos] = useState(initialState);
+    const [loadingTurnoId, setLoadingTurnoId] = useState(null);
 
-    // Función que se encarga de llamar a la server action y actualizar el estado local
+    // 2. La función de actualización ahora modifica el estado en lugar de filtrar
     const handleStatusUpdate = async (userId, mascotaId, turnoId, newStatus) => {
+        setLoadingTurnoId(turnoId);
         const result = await updateTurnoStatusByEmpleado({ userId, mascotaId, turnoId, newStatus });
+        
         if (result.success) {
-            // Actualización optimista: filtramos el turno que acaba de ser actualizado para que desaparezca de la UI
-            if (newStatus === 'buscando') {
-                setCurrentRecogidas(prev => prev.filter(t => t.id !== turnoId));
-            } else if (newStatus === 'retirado entregado') {
-                setCurrentEntregas(prev => prev.filter(t => t.id !== turnoId));
-            }
+            setTurnos(prevTurnos =>
+                prevTurnos.map(t =>
+                    t.id === turnoId ? { ...t, estado: newStatus } : t
+                )
+            );
         } else {
             console.error("Fallo al actualizar el turno:", result.error);
-            // Aquí se podría implementar una notificación al usuario (ej: con una librería de toasts)
+            // Opcional: mostrar un toast/alerta de error al usuario
         }
+        setLoadingTurnoId(null);
+    };
+    
+    // Diccionario para dar estilo a las etiquetas de estado
+    const statusColors = {
+      default: 'bg-gray-100 text-gray-800',
+      confirmado: 'bg-yellow-100 text-yellow-800',
+      buscando: 'bg-blue-100 text-blue-800',
+      buscado: 'bg-cyan-100 text-cyan-800',
+      veterinaria: 'bg-indigo-100 text-indigo-800',
+      'peluqueria iniciada': 'bg-pink-100 text-pink-800',
+      'peluqueria finalizada': 'bg-purple-100 text-purple-800',
+      devolviendo: 'bg-orange-100 text-orange-800',
+      'servicio terminado': 'bg-green-100 text-green-800',
     };
 
-    // Usamos useMemo para evitar recalcular los filtros en cada render a menos que los datos cambien
-    const turnosMañana = useMemo(() => ({
-        recogidas: currentRecogidas.filter(t => t.horario === 'mañana'),
-        entregas: currentEntregas.filter(t => t.horario === 'mañana')
-    }), [currentRecogidas, currentEntregas]);
-
-    const turnosTarde = useMemo(() => ({
-        recogidas: currentRecogidas.filter(t => t.horario === 'tarde'),
-        entregas: currentEntregas.filter(t => t.horario === 'tarde')
-    }), [currentRecogidas, currentEntregas]);
-
     return (
-        <div className="p-4 md:p-8 bg-gray-900 min-h-screen">
-            <h1 className="text-3xl font-bold mb-8 text-white">Panel de Transporte - Hoy</h1>
+        <div className="p-4 md:p-8 bg-white text-gray-900 min-h-screen">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Panel de Transporte</h1>
+            <p className="text-gray-600 mb-8">Gestiona los turnos con traslado para el día de hoy.</p>
 
-            <div className="space-y-12">
-                {/* SECCIÓN MAÑANA */}
-                <section id="jornada-manana">
-                    <h2 className="text-2xl font-bold mb-6 text-purple-400 border-b-2 border-purple-500 pb-2">Turnos de Mañana</h2>
-                    <div className="space-y-8">
-                        <TurnosTable
-                            title="Recogidas Pendientes"
-                            turnos={turnosMañana.recogidas}
-                            tipo="recogida"
-                            onUpdateStatus={handleStatusUpdate}
-                        />
-                        <TurnosTable
-                            title="Entregas Pendientes"
-                            turnos={turnosMañana.entregas}
-                            tipo="entrega"
-                            onUpdateStatus={handleStatusUpdate}
-                        />
-                    </div>
-                </section>
-
-                {/* SECCIÓN TARDE */}
-                <section id="jornada-tarde">
-                    <h2 className="text-2xl font-bold mb-6 text-purple-400 border-b-2 border-purple-500 pb-2">Turnos de Tarde</h2>
-                     <div className="space-y-8">
-                        <TurnosTable
-                            title="Recogidas Pendientes"
-                            turnos={turnosTarde.recogidas}
-                            tipo="recogida"
-                            onUpdateStatus={handleStatusUpdate}
-                        />
-                        <TurnosTable
-                            title="Entregas Pendientes"
-                            turnos={turnosTarde.entregas}
-                            tipo="entrega"
-                            onUpdateStatus={handleStatusUpdate}
-                        />
-                    </div>
-                </section>
-            </div>
+            {turnos.length === 0 ? (
+                <p className="text-gray-500 text-center mt-12">No hay turnos con transporte para hoy.</p>
+            ) : (
+                <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                    <table className="min-w-full bg-white">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mascota</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dueño</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado Actual</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Próxima Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {turnos.map((turno) => (
+                                <tr key={turno.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}hs</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{turno.mascota.nombre}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{turno.user.nombre}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{turno.user.direccion}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[turno.estado] || statusColors.default}`}>
+                                          {turno.estado}
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <ActionButton
+                                            turno={turno}
+                                            onUpdate={handleStatusUpdate}
+                                            isLoading={loadingTurnoId === turno.id}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 };
