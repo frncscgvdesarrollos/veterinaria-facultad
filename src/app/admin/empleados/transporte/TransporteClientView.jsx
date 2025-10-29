@@ -5,7 +5,8 @@ import { updateTurnoStatusByEmpleado } from '@/lib/actions/turnos.empleado.actio
 
 // --- Componente para el Botón de Acción Dinámico ---
 const ActionButton = ({ turno, onUpdate, isLoading }) => {
-    const { estado, userId, mascotaId, id } = turno;
+    // CORRECCIÓN: Se lee `clienteId` del objeto turno, que es el nombre correcto de la propiedad.
+    const { estado, clienteId, mascotaId, id } = turno;
 
     const actions = {
         confirmado: { text: 'Iniciar Búsqueda', newStatus: 'buscando', className: 'bg-indigo-600 hover:bg-indigo-700' },
@@ -25,7 +26,8 @@ const ActionButton = ({ turno, onUpdate, isLoading }) => {
 
     return (
         <button
-            onClick={() => onUpdate({userId, mascotaId, turnoId: id, newStatus: action.newStatus})}
+            // CORRECCIÓN: Se pasa `clienteId` como `userId` en el objeto para la server action.
+            onClick={() => onUpdate({ userId: clienteId, mascotaId, turnoId: id, newStatus: action.newStatus })}
             disabled={isLoading}
             className={`text-white font-bold py-2 px-4 rounded transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed ${action.className}`}
         >
@@ -40,7 +42,6 @@ const TransporteClientView = ({ recogidas, entregas }) => {
     const [turnos, setTurnos] = useState(initialState);
     const [loadingTurnoId, setLoadingTurnoId] = useState(null);
 
-    // La función de actualización ahora recibe el objeto directamente
     const handleStatusUpdate = async ({ userId, mascotaId, turnoId, newStatus }) => {
         setLoadingTurnoId(turnoId);
         const result = await updateTurnoStatusByEmpleado({ userId, mascotaId, turnoId, newStatus });
