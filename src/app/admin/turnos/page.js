@@ -2,37 +2,37 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { FaArrowLeft, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 import { getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
+import TurnosTable from './TurnosTable'; // Importamos la nueva tabla
+import FilterInput from './FilterInput'; // Importamos el nuevo filtro
 
 // --- Iconos para la UI ---
 const IconoClinica = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 const IconoPeluqueria = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121a3 3 0 10-4.242 0M12 18.5V19m0-16v.5m-5.071 2.929l.354.354M17.425 5.575l-.354.354M4 12H3.5m17 0h-.5" /></svg>;
 
+
+// --- Componente de Tarjeta de Turno (para vista móvil) ---
 function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
-  // CORRECCIÓN: Se añaden todos los nuevos estados de peluquería y transporte.
   const statusStyles = {
-    // Estados originales
     pendiente: 'bg-yellow-200 text-yellow-800',
     confirmado: 'bg-blue-200 text-blue-800',
     finalizado: 'bg-green-200 text-green-800',
     cancelado: 'bg-red-200 text-red-800',
     reprogramado: 'bg-orange-200 text-orange-800',
-    // Nuevos estados del flujo de empleados
     buscando: 'bg-cyan-200 text-cyan-800',
     buscado: 'bg-sky-200 text-sky-800',
     veterinaria: 'bg-indigo-200 text-indigo-800',
     'peluqueria iniciada': 'bg-pink-200 text-pink-800',
     'peluqueria finalizada': 'bg-purple-200 text-purple-800',
     devolviendo: 'bg-amber-200 text-amber-800',
-    'servicio terminado': 'bg-green-200 text-green-800', // Mismo color que 'finalizado'
+    'servicio terminado': 'bg-green-200 text-green-800',
   };
 
   const cardBorder = { clinica: 'border-blue-500', peluqueria: 'border-pink-500' };
 
   const handleAction = (newStatus) => {
-    // Pasamos el clienteId que ahora es el nombre correcto del campo.
-    onUpdate(turno.clienteId, turno.mascotaId, turno.id, newStatus);
+    onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus);
   };
   
   const formattedDate = () => {
@@ -48,7 +48,6 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
           <p className="font-bold text-lg text-gray-800">{turno.mascota.nombre}</p>
           <p className="text-sm text-gray-600">Dueño: {turno.user.nombre} {turno.user.apellido}</p>
         </div>
-        {/* La clase se aplicará dinámicamente gracias al objeto statusStyles actualizado */}
         <span className={`px-3 py-1 text-sm font-semibold rounded-full ${statusStyles[turno.estado] || 'bg-gray-200 text-gray-800'}`}>{turno.estado}</span>
       </div>
       <p className="text-gray-700 mb-3"><span className="font-semibold">Servicio:</span> {turno.servicioNombre}</p>
@@ -68,7 +67,8 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView }) {
     </div>
   );
 }
-// --- Componente de Lista de Turnos ---
+
+// --- Componente de Lista de Turnos (para vista móvil) ---
 function TurnosList({ titulo, turnos, tipoIcono, onUpdate, isUpdating, currentView }) {
   const Icono = tipoIcono === 'clinica' ? IconoClinica : IconoPeluqueria;
   return (
@@ -92,6 +92,7 @@ export default function AdminTurnosDashboard() {
   const [vistaActual, setVistaActual] = useState('hoy');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState(''); // Estado para el filtro
   const [isUpdating, startTransition] = useTransition();
 
   const cargarTurnos = async () => {
@@ -121,13 +122,20 @@ export default function AdminTurnosDashboard() {
     });
   };
 
+  // Lógica de filtrado
+  const filteredTurnos = (turnos[vistaActual] || []).filter(turno => {
+    const term = searchTerm.toLowerCase();
+    return (
+      turno.mascota.nombre.toLowerCase().includes(term) ||
+      `${turno.user.nombre.toLowerCase()} ${turno.user.apellido.toLowerCase()}`.includes(term) ||
+      turno.servicioNombre.toLowerCase().includes(term) ||
+      turno.estado.toLowerCase().includes(term)
+    );
+  });
+
   if (loading && !isUpdating) return <div className="text-center p-10 font-semibold text-lg text-gray-600">Cargando turnos...</div>;
   if (error) return <div className="text-center p-10 text-red-600 bg-red-100 rounded-lg shadow-md"><strong>Error:</strong> {error}</div>;
-
-  const turnosSeleccionados = turnos[vistaActual] || [];
-  const turnosClinica = turnosSeleccionados.filter(t => t.tipo === 'clinica');
-  const turnosPeluqueria = turnosSeleccionados.filter(t => t.tipo === 'peluqueria');
-
+  
   const getTabStyle = (tabName) => `px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ${vistaActual === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
   const getReprogramarTabStyle = () => {
     const baseStyle = 'px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ';
@@ -159,12 +167,35 @@ export default function AdminTurnosDashboard() {
         <button className={getTabStyle('finalizados')} onClick={() => setVistaActual('finalizados')}>Historial</button>
       </div>
 
+      <FilterInput 
+        value={searchTerm} 
+        onChange={setSearchTerm} 
+        placeholder="Buscar por mascota, dueño, servicio..." 
+      />
+
       {isUpdating && <div className='text-center mb-4 text-blue-600 font-semibold'>Actualizando...</div>}
       
-      <div className="flex flex-col md:flex-row gap-6">
-        <TurnosList titulo="Turnos de Clínica" turnos={turnosClinica} tipoIcono="clinica" onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
-        <TurnosList titulo="Turnos de Peluquería" turnos={turnosPeluqueria} tipoIcono="peluqueria" onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} />
+      {/* Vista de Tabla para Escritorio */}
+      <div className="hidden md:block">
+        <TurnosTable 
+          turnos={filteredTurnos}
+          onUpdate={handleUpdateStatus}
+          isUpdating={isUpdating}
+          currentView={vistaActual}
+        />
       </div>
+
+      {/* Vista de Tarjetas para Móvil */}
+      <div className="md:hidden">
+        <TurnosList 
+            titulo="Turnos" 
+            turnos={filteredTurnos} 
+            onUpdate={handleUpdateStatus} 
+            isUpdating={isUpdating} 
+            currentView={vistaActual} 
+        />
+      </div>
+
     </div>
   );
 }
