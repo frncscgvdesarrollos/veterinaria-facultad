@@ -2,7 +2,7 @@
 
 import admin from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import { verificarDisponibilidadTraslado } from '../logica_traslado';
+import { verificarDisponibilidadTraslado } from '../logica_traslado.js';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
