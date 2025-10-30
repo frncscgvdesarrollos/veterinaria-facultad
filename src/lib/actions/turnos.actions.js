@@ -192,25 +192,31 @@ export async function getAvailableSlotsForNewTurno({ fecha, tipo, numMascotas })
     }
 
     try {
+        const timeZone = 'America/Argentina/Buenos_Aires';
+
         if (tipo === 'clinica') {
-            const dayStart = dayjs(fecha).startOf('day').toDate();
-            const dayEnd = dayjs(fecha).endOf('day').toDate();
+            const startOfDay = dayjs.tz(fecha, timeZone).startOf('day');
+            const endOfDay = startOfDay.endOf('day');
+            
+            const startOfDayTimestamp = admin.firestore.Timestamp.fromDate(startOfDay.toDate());
+            const endOfDayTimestamp = admin.firestore.Timestamp.fromDate(endOfDay.toDate());
 
-            const q = query(
-                collection(db, 'turnos'),
-                where('tipo', '==', 'clinica'),
-                where('fecha', '>=', Timestamp.fromDate(dayStart)),
-                where('fecha', '<=', Timestamp.fromDate(dayEnd))
-            );
+            // --- CORRECCIÓN CLAVE ---
+            // Usamos collectionGroup para buscar en TODAS las subcolecciones de 'turnos'.
+            const q = firestore.collectionGroup('turnos')
+                .where('tipo', '==', 'clinica')
+                .where('fecha', '>=', startOfDayTimestamp)
+                .where('fecha', '<=', endOfDayTimestamp);
 
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await q.get();
             const ocupacionDelDia = {}; // Formato: { '09:00': 1, '10:30': 1 }
 
             querySnapshot.forEach(doc => {
                 const turno = doc.data();
-                // Usamos dayjs para manejar correctamente las zonas horarias
-                const hora = dayjs(turno.fecha.toDate()).format('HH:mm');
-                ocupacionDelDia[hora] = (ocupacionDelDia[hora] || 0) + 1;
+                // El campo 'horario' ya está guardado como HH:mm
+                if (turno.horario) {
+                    ocupacionDelDia[turno.horario] = (ocupacionDelDia[turno.horario] || 0) + 1;
+                }
             });
 
             const horariosDisponibles = horariosConsulta.filter(h => {
