@@ -12,6 +12,15 @@ dayjs.extend(timezone);
 
 const firestore = admin.firestore();
 const TAMAÑO_PRECIOS_MAP = { 'pequeño': 'chico', 'mediano': 'mediano', 'grande': 'grande' };
+// --- Constantes para la lógica de turnos ---
+const VETERINARIOS_DISPONIBLES = 1;
+const horariosConsulta = [
+    '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+    '15:00', '15:30', '16:00'
+];
+
+
+
 
 export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMascotas }) {
     try {
@@ -176,4 +185,53 @@ export async function finalizarTurno({ userId, mascotaId, turnoId }) {
 
 export async function modificarTurno({ userId, mascotaId, turnoId, nuevosDatos }) {
     return updateUserTurno(userId, mascotaId, turnoId, nuevosDatos);
+}
+export async function getAvailableSlotsForNewTurno({ fecha, tipo, numMascotas }) {
+    if (!fecha || !tipo || !numMascotas) {
+        return { success: false, error: "Faltan parámetros para buscar disponibilidad." };
+    }
+
+    try {
+        if (tipo === 'clinica') {
+            const dayStart = dayjs(fecha).startOf('day').toDate();
+            const dayEnd = dayjs(fecha).endOf('day').toDate();
+
+            const q = query(
+                collection(db, 'turnos'),
+                where('tipo', '==', 'clinica'),
+                where('fecha', '>=', Timestamp.fromDate(dayStart)),
+                where('fecha', '<=', Timestamp.fromDate(dayEnd))
+            );
+
+            const querySnapshot = await getDocs(q);
+            const ocupacionDelDia = {}; // Formato: { '09:00': 1, '10:30': 1 }
+
+            querySnapshot.forEach(doc => {
+                const turno = doc.data();
+                // Usamos dayjs para manejar correctamente las zonas horarias
+                const hora = dayjs(turno.fecha.toDate()).format('HH:mm');
+                ocupacionDelDia[hora] = (ocupacionDelDia[hora] || 0) + 1;
+            });
+
+            const horariosDisponibles = horariosConsulta.filter(h => {
+                const ocupados = ocupacionDelDia[h] || 0;
+                // Comprueba si al añadir las nuevas mascotas no se supera el límite de veterinarios
+                return (ocupados + numMascotas) <= VETERINARIOS_DISPONIBLES;
+            });
+
+            return { success: true, data: { horarios: horariosDisponibles } };
+        }
+        
+        if (tipo === 'peluqueria') {
+            // La lógica para peluquería puede ser más compleja e involucrar el tamaño de las mascotas.
+            // Por ahora, asumimos que mañana y tarde siempre están disponibles si el día es seleccionable.
+            return { success: true, data: { horarios: ['mañana', 'tarde'] } };
+        }
+
+        return { success: false, error: "Tipo de servicio no válido." };
+
+    } catch (error) {
+        console.error("Error fetching available slots:", error);
+        return { success: false, error: "No se pudo verificar la disponibilidad. Intente de nuevo." };
+    }
 }
