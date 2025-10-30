@@ -8,6 +8,8 @@ import { es } from 'date-fns/locale';
 import { FaStethoscope, FaCut, FaSun, FaMoon, FaTruck, FaSpinner } from 'react-icons/fa';
 import { getAvailableSlotsForNewTurno } from '@/lib/actions/turnos.actions';
 import toast from 'react-hot-toast';
+import { getAvailableSlotsForNewTurno, verificarDisponibilidadTrasladoAction } from '@/lib/actions/turnos.actions';
+
 
 const HorarioClinicaSelector = ({ horariosDisponibles, fecha, hora, onFechaChange, onHoraChange, disabledDays, modifiers, modifiersStyles, isLoading, error }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
