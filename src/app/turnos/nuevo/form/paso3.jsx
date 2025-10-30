@@ -15,7 +15,7 @@ const ServicioDetalleSelector = ({ mascota, motivo, catalogo, specificServices, 
     }
 
     const getPrecio = (servicio) => {
-        if (motivo === 'clinica') return servicio.precio_base || 0;
+        if (motivo === 'clinica') return servicio.precio || 0; // <-- CORREGIDO
         if (motivo === 'peluqueria') {
             const tamañoKey = TAMAÑO_PRECIOS_MAP[mascota.tamaño.toLowerCase()] || 'chico';
             return servicio.precios[tamañoKey] || 0;
