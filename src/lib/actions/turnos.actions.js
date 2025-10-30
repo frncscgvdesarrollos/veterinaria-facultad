@@ -61,37 +61,60 @@ export async function crearTurnos(user, data) {
     }
 
     const timeZone = 'America/Argentina/Buenos_Aires';
-    const writePromises = []; // Array para guardar cada promesa de escritura
+    const writePromises = [];
+    
+    // --- LÓGICA DE ASIGNACIÓN SECUENCIAL ---
+    // Contador para asignar horarios de clínica uno después del otro.
+    let clinicaSlotIndex = 0; 
 
     try {
         for (const mascota of selectedMascotas) {
             const motivos = motivosPorMascota[mascota.id] || {};
             const serviciosSeleccionados = specificServices[mascota.id] || {};
 
-            // --- Preparar turno de Clínica ---
+            // --- Preparar turno de Clínica (Lógica Modificada) ---
             if (motivos.clinica && serviciosSeleccionados.clinica) {
                 if (!horarioClinica || !horarioClinica.fecha || !horarioClinica.hora) {
                     throw new Error('Falta seleccionar la fecha o la hora para el turno de clínica.');
                 }
-                const [hours, minutes] = horarioClinica.hora.split(':').map(Number);
+                
+                const [startHours, startMinutes] = horarioClinica.hora.split(':').map(Number);
                 const servicioId = serviciosSeleccionados.clinica;
                 const servicioData = catalogoServicios.clinica.find(s => s.id === servicioId);
                 if (!servicioData) throw new Error(`Servicio de clínica ID=${servicioId} no encontrado.`);
 
-                const fechaTurnoClinica = dayjs.tz(horarioClinica.fecha, timeZone).hour(hours).minute(minutes).second(0);
+                // Calcula el desplazamiento en minutos para el turno de ESTA mascota.
+                const offsetMinutes = clinicaSlotIndex * 30; // Asumiendo turnos de 30 mins
+                const fechaTurnoClinica = dayjs.tz(horarioClinica.fecha, timeZone)
+                                            .hour(startHours).minute(startMinutes).second(0)
+                                            .add(offsetMinutes, 'minute');
+
+                const horarioFinal = fechaTurnoClinica.format('HH:mm');
 
                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
                 const turnoClinicaData = {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoClinica.toDate()),
-                    horario: horarioClinica.hora, tipo: 'clinica', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
-                    servicioId: servicioId, servicioNombre: servicioData.nombre, precio: servicioData.precio_base || 0,
-                    metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(), necesitaTraslado: false,
-                    clienteId: user.uid // Campo clave para búsquedas de admin y usuario
+                    horario: horarioFinal, 
+                    tipo: 'clinica', 
+                    mascotaId: mascota.id, 
+                    mascotaNombre: mascota.nombre, 
+                    mascotaTamaño: mascota.tamaño,
+                    servicioId: servicioId, 
+                    servicioNombre: servicioData.nombre, 
+                    precio: servicioData.precio || 0,
+                    metodoPago: metodoPago, 
+                    estado: 'pendiente', 
+                    creadoEn: admin.firestore.FieldValue.serverTimestamp(), 
+                    necesitaTraslado: false,
+                    clienteId: user.uid
                 };
                 writePromises.push(turnoRef.set(turnoClinicaData));
+                
+                // Incrementa el contador para la siguiente mascota de clínica.
+                clinicaSlotIndex++; 
             }
 
-            // --- Preparar turno de Peluquería ---
+            // --- Preparar turno de Peluquería (Sin cambios) ---
             if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
                 if (!horarioPeluqueria || !horarioPeluqueria.fecha || !horarioPeluqueria.turno) {
                     throw new Error('Falta seleccionar la fecha o el turno para el servicio de peluquería.');
@@ -112,7 +135,7 @@ export async function crearTurnos(user, data) {
                     horario: horarioPeluqueria.turno, tipo: 'peluqueria', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: precio, necesitaTraslado: necesitaTraslado,
                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(),
-                    clienteId: user.uid // Campo clave para búsquedas de admin y usuario
+                    clienteId: user.uid
                 };
                 writePromises.push(turnoRef.set(turnoPeluqueriaData));
             }
@@ -122,7 +145,6 @@ export async function crearTurnos(user, data) {
             return { success: false, error: 'No se preparó ningún turno para guardar.' };
         }
 
-        // Ejecutar TODAS las promesas de escritura a la vez
         await Promise.all(writePromises);
 
         revalidatePath('/turnos/mis-turnos');
@@ -135,6 +157,90 @@ export async function crearTurnos(user, data) {
         return { success: false, error: error.message || 'Falló la operación de guardado.' };
     }
 }
+
+
+// export async function crearTurnos(user, data) {
+//     const { selectedMascotas, motivosPorMascota, specificServices, horarioClinica, horarioPeluqueria, necesitaTraslado, metodoPago, catalogoServicios } = data;
+
+//     if (!user || !user.uid) {
+//         return { success: false, error: 'Usuario no autenticado.' };
+//     }
+
+//     const timeZone = 'America/Argentina/Buenos_Aires';
+//     const writePromises = []; // Array para guardar cada promesa de escritura
+
+//     try {
+//         for (const mascota of selectedMascotas) {
+//             const motivos = motivosPorMascota[mascota.id] || {};
+//             const serviciosSeleccionados = specificServices[mascota.id] || {};
+
+//             // --- Preparar turno de Clínica ---
+//             if (motivos.clinica && serviciosSeleccionados.clinica) {
+//                 if (!horarioClinica || !horarioClinica.fecha || !horarioClinica.hora) {
+//                     throw new Error('Falta seleccionar la fecha o la hora para el turno de clínica.');
+//                 }
+//                 const [hours, minutes] = horarioClinica.hora.split(':').map(Number);
+//                 const servicioId = serviciosSeleccionados.clinica;
+//                 const servicioData = catalogoServicios.clinica.find(s => s.id === servicioId);
+//                 if (!servicioData) throw new Error(`Servicio de clínica ID=${servicioId} no encontrado.`);
+
+//                 const fechaTurnoClinica = dayjs.tz(horarioClinica.fecha, timeZone).hour(hours).minute(minutes).second(0);
+
+//                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
+//                 const turnoClinicaData = {
+//                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoClinica.toDate()),
+//                     horario: horarioClinica.hora, tipo: 'clinica', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
+//                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: servicioData.precio_base || 0,
+//                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(), necesitaTraslado: false,
+//                     clienteId: user.uid // Campo clave para búsquedas de admin y usuario
+//                 };
+//                 writePromises.push(turnoRef.set(turnoClinicaData));
+//             }
+
+//             // --- Preparar turno de Peluquería ---
+//             if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
+//                 if (!horarioPeluqueria || !horarioPeluqueria.fecha || !horarioPeluqueria.turno) {
+//                     throw new Error('Falta seleccionar la fecha o el turno para el servicio de peluquería.');
+//                 }
+//                 const servicioId = serviciosSeleccionados.peluqueria;
+//                 const servicioData = catalogoServicios.peluqueria.find(s => s.id === servicioId);
+//                 if (!servicioData) throw new Error(`Servicio de peluquería ID=${servicioId} no encontrado.`);
+                
+//                 const tamañoKey = TAMAÑO_PRECIOS_MAP[mascota.tamaño.toLowerCase()] || 'chico';
+//                 const precio = servicioData.precios[tamañoKey] || 0;
+
+//                 let fechaTurnoPeluqueria = dayjs.tz(horarioPeluqueria.fecha, timeZone);
+//                 fechaTurnoPeluqueria = fechaTurnoPeluqueria.hour(horarioPeluqueria.turno === 'mañana' ? 9 : 14).minute(0).second(0);
+
+//                 const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
+//                 const turnoPeluqueriaData = {
+//                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoPeluqueria.toDate()),
+//                     horario: horarioPeluqueria.turno, tipo: 'peluqueria', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
+//                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: precio, necesitaTraslado: necesitaTraslado,
+//                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(),
+//                     clienteId: user.uid // Campo clave para búsquedas de admin y usuario
+//                 };
+//                 writePromises.push(turnoRef.set(turnoPeluqueriaData));
+//             }
+//         }
+        
+//         if (writePromises.length === 0) {
+//             return { success: false, error: 'No se preparó ningún turno para guardar.' };
+//         }
+
+//         // Ejecutar TODAS las promesas de escritura a la vez
+//         await Promise.all(writePromises);
+
+//         revalidatePath('/turnos/mis-turnos');
+//         revalidatePath('/admin/turnos');
+
+//         return { success: true, message: '¡Todos los turnos se guardaron con éxito!' };
+
+//     } catch (error) {
+//         console.error("Error al crear los turnos:", error);
+//         return { success: false, error: error.message || 'Falló la operación de guardado.' };
+//     }
+// }
 
 async function updateUserTurno(userId, mascotaId, turnoId, updateData) {
     // Esta función parece ser para el admin, la dejamos como está por ahora
@@ -190,52 +296,53 @@ export async function getAvailableSlotsForNewTurno({ fecha, tipo, numMascotas })
     if (!fecha || !tipo || !numMascotas) {
         return { success: false, error: "Faltan parámetros para buscar disponibilidad." };
     }
-
     try {
         const timeZone = 'America/Argentina/Buenos_Aires';
-
         if (tipo === 'clinica') {
             const startOfDay = dayjs.tz(fecha, timeZone).startOf('day');
             const endOfDay = startOfDay.endOf('day');
             
             const startOfDayTimestamp = admin.firestore.Timestamp.fromDate(startOfDay.toDate());
             const endOfDayTimestamp = admin.firestore.Timestamp.fromDate(endOfDay.toDate());
-
-            // --- CORRECCIÓN CLAVE ---
-            // Usamos collectionGroup para buscar en TODAS las subcolecciones de 'turnos'.
             const q = firestore.collectionGroup('turnos')
                 .where('tipo', '==', 'clinica')
                 .where('fecha', '>=', startOfDayTimestamp)
                 .where('fecha', '<=', endOfDayTimestamp);
-
             const querySnapshot = await q.get();
-            const ocupacionDelDia = {}; // Formato: { '09:00': 1, '10:30': 1 }
-
+            const ocupacionDelDia = {}; 
             querySnapshot.forEach(doc => {
                 const turno = doc.data();
-                // El campo 'horario' ya está guardado como HH:mm
                 if (turno.horario) {
                     ocupacionDelDia[turno.horario] = (ocupacionDelDia[turno.horario] || 0) + 1;
                 }
             });
-
-            const horariosDisponibles = horariosConsulta.filter(h => {
-                const ocupados = ocupacionDelDia[h] || 0;
-                // Comprueba si al añadir las nuevas mascotas no se supera el límite de veterinarios
-                return (ocupados + numMascotas) <= VETERINARIOS_DISPONIBLES;
-            });
-
+            // --- NUEVA LÓGICA DE BLOQUES CONSECUTIVOS ---
+            const horariosDisponibles = [];
+            // Itera sobre los horarios de consulta para encontrar un bloque inicial.
+            for (let i = 0; i <= horariosConsulta.length - numMascotas; i++) {
+                const horaInicioBloque = horariosConsulta[i];
+                let bloqueDisponible = true;
+                // Verifica si el bloque de 'numMascotas' slots consecutivos está libre.
+                for (let j = 0; j < numMascotas; j++) {
+                    const horarioAVerificar = horariosConsulta[i + j];
+                    const ocupados = ocupacionDelDia[horarioAVerificar] || 0;
+                    if (ocupados >= VETERINARIOS_DISPONIBLES) {
+                        bloqueDisponible = false;
+                        break; 
+                    }
+                }
+                if (bloqueDisponible) {
+                    horariosDisponibles.push(horaInicioBloque);
+                }
+            }
+            
             return { success: true, data: { horarios: horariosDisponibles } };
         }
         
         if (tipo === 'peluqueria') {
-            // La lógica para peluquería puede ser más compleja e involucrar el tamaño de las mascotas.
-            // Por ahora, asumimos que mañana y tarde siempre están disponibles si el día es seleccionable.
             return { success: true, data: { horarios: ['mañana', 'tarde'] } };
         }
-
         return { success: false, error: "Tipo de servicio no válido." };
-
     } catch (error) {
         console.error("Error fetching available slots:", error);
         return { success: false, error: "No se pudo verificar la disponibilidad. Intente de nuevo." };
