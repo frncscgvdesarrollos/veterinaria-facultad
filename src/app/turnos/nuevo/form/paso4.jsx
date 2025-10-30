@@ -6,7 +6,6 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { es } from 'date-fns/locale';
 import { FaStethoscope, FaCut, FaSun, FaMoon, FaTruck, FaSpinner } from 'react-icons/fa';
-import { getAvailableSlotsForNewTurno } from '@/lib/actions/turnos.actions';
 import toast from 'react-hot-toast';
 import { getAvailableSlotsForNewTurno, verificarDisponibilidadTrasladoAction } from '@/lib/actions/turnos.actions';
 
